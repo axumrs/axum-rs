@@ -1,0 +1,8 @@
+/target
+.vscode
+.idea
+.atom
+/.env
+*.log
+.DS_Store
+/templates

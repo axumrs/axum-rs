@@ -17,3 +17,13 @@ pub struct Create {
     pub price: u32,
     pub status: Option<model::SubjectStatus>,
 }
+
+#[derive(Deserialize)]
+pub struct List {
+    pub name: Option<String>,
+    pub slug: Option<String>,
+    pub status: Option<model::SubjectStatus>,
+    pub is_del: Option<bool>,
+    pub page: u32,
+    pub page_size: u32,
+}

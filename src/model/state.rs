@@ -1,5 +1,7 @@
+use std::sync::Arc;
+
 use sqlx::MySqlPool;
 
 pub struct State {
-    pub pool: MySqlPool,
+    pub pool: Arc<MySqlPool>,
 }

@@ -29,7 +29,9 @@ async fn main() {
                 .allow_methods(Any)
                 .allow_origin(Any),
         )
-        .layer(Extension(Arc::new(State { pool })));
+        .layer(Extension(Arc::new(State {
+            pool: Arc::new(pool),
+        })));
 
     axum::Server::bind(&cfg.web.addr.parse().unwrap())
         .serve(app.into_make_service())

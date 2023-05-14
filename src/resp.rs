@@ -41,3 +41,8 @@ impl<T: Serialize> Response<T> {
 }
 
 pub type JsonRespone<T> = Json<Response<T>>;
+
+#[derive(Serialize)]
+pub struct IDResponse {
+    pub id: u32,
+}

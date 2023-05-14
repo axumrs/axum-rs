@@ -7,6 +7,7 @@ pub enum Kind {
     Database,
     AlreadyExists,
     Config,
+    NotFound,
 }
 #[derive(Debug)]
 pub struct Error {
@@ -26,8 +27,14 @@ impl Error {
     pub fn with_cause(cause: Box<dyn std::error::Error>, kind: Kind) -> Self {
         Self::new(cause.to_string(), Some(cause), kind)
     }
+    pub fn from_str(msg: &str, kind: Kind) -> Self {
+        Self::new(msg.to_string(), None, kind)
+    }
     pub fn already_exists(msg: &str) -> Self {
-        Self::new(msg.to_string(), None, Kind::AlreadyExists)
+        Self::from_str(msg, Kind::AlreadyExists)
+    }
+    pub fn not_found(msg: &str) -> Self {
+        Self::from_str(msg, Kind::NotFound)
     }
 }
 

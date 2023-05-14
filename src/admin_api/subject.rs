@@ -10,7 +10,7 @@ use crate::{
     form::subject as form,
     handler_helper::{get_conn, log_error},
     model::{self, State, Subject},
-    IDResponse, JsonRespone, Response, Result,
+    Error, IDResponse, JsonRespone, Response, Result,
 };
 
 pub async fn add(
@@ -84,4 +84,45 @@ pub async fn restore(
         .await
         .map_err(log_error(handler_name))?;
     Ok(Response::ok(IDResponse { id }).to_json())
+}
+
+pub async fn find(
+    Extension(state): Extension<Arc<State>>,
+    Path(id): Path<u32>,
+) -> Result<JsonRespone<model::Subject>> {
+    let handler_name = "admin/subject/find";
+
+    let conn = get_conn(&state);
+
+    let s = subject::find(&conn, model::SubjectFindBy::ID(id), None)
+        .await
+        .map_err(log_error(handler_name))?;
+    match s {
+        Some(s) => Ok(Response::ok(s).to_json()),
+        None => Err(Error::not_found("不存在的专题")),
+    }
+}
+
+pub async fn update(
+    Extension(state): Extension<Arc<State>>,
+    Json(frm): Json<form::Update>,
+) -> Result<JsonRespone<IDResponse>> {
+    let handler_name = "admin/subject/update";
+
+    let conn = get_conn(&state);
+    let m = model::Subject {
+        id: frm.id,
+        name: frm.name,
+        slug: frm.slug,
+        summary: frm.summary,
+        cover: frm.cover,
+        price: frm.price * 100,
+        status: frm.status,
+        ..Default::default()
+    };
+
+    subject::update(&conn, &m)
+        .await
+        .map_err(log_error(handler_name))?;
+    Ok(Response::ok(IDResponse { id: frm.id }).to_json())
 }

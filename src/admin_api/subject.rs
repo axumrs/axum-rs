@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use axum::{extract::Query, Extension, Json};
+use axum::{
+    extract::{Path, Query},
+    Extension, Json,
+};
 
 use crate::{
     db::{subject, Paginate},
@@ -56,4 +59,29 @@ pub async fn list(
     .await
     .map_err(log_error(handler_name))?;
     Ok(Response::ok(p).to_json())
+}
+
+pub async fn del(
+    Extension(state): Extension<Arc<State>>,
+    Path(id): Path<u32>,
+) -> Result<JsonRespone<IDResponse>> {
+    let handler_name = "admin/subject/del";
+
+    let conn = get_conn(&state);
+    subject::del_or_restore(&conn, id, true)
+        .await
+        .map_err(log_error(handler_name))?;
+    Ok(Response::ok(IDResponse { id }).to_json())
+}
+pub async fn restore(
+    Extension(state): Extension<Arc<State>>,
+    Path(id): Path<u32>,
+) -> Result<JsonRespone<IDResponse>> {
+    let handler_name = "admin/subject/restore";
+
+    let conn = get_conn(&state);
+    subject::del_or_restore(&conn, id, false)
+        .await
+        .map_err(log_error(handler_name))?;
+    Ok(Response::ok(IDResponse { id }).to_json())
 }

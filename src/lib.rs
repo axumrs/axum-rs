@@ -2,6 +2,7 @@ pub mod admin_api;
 mod config;
 pub mod db;
 mod err;
+pub mod form;
 pub mod handler_helper;
 pub mod model;
 mod resp;

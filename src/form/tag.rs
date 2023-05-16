@@ -14,3 +14,11 @@ pub struct Create {
     #[validate(length(max = 100))]
     pub name: String,
 }
+
+#[derive(Deserialize, Validate)]
+pub struct Update {
+    #[validate(range(min = 1))]
+    pub id: u32,
+    #[validate(length(max = 100))]
+    pub name: String,
+}

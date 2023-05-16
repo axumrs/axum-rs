@@ -1,11 +1,17 @@
 use crate::{model, Error, Result};
 
-pub async fn exists<'a, C>(conn: C, name: &'a str) -> Result<bool>
+pub async fn exists<'a, C>(conn: C, name: &'a str, id: Option<u32>) -> Result<bool>
 where
     C: sqlx::MySqlExecutor<'a>,
 {
-    let count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM tag WHERE name=?")
-        .bind(name)
+    let mut q = sqlx::QueryBuilder::new("SELECT COUNT(*) FROM tag WHERE name=");
+    q.push_bind(name);
+
+    if let Some(id) = id {
+        q.push(" AND id<>").push_bind(id);
+    }
+    let count: (i64,) = q
+        .build_query_as()
         .fetch_one(conn)
         .await
         .map_err(Error::from)?;
@@ -13,7 +19,7 @@ where
 }
 
 pub async fn add(conn: &sqlx::MySqlPool, m: &model::Tag) -> Result<u32> {
-    if exists(conn, &m.name).await? {
+    if exists(conn, &m.name, None).await? {
         return Err(Error::already_exists("相同的tag已存在"));
     }
     let id = sqlx::query("INSERT INTO tag (name) VALUES (?) ON DUPLICATE KEY UPDATE name=name")
@@ -121,8 +127,49 @@ pub async fn list(
     ))
 }
 
-pub async fn del_or_restore(conn: &sqlx::MySqlPool, id: u32, is_del: bool) -> Result<u64> {
-    super::del_or_restore(conn, "tag", super::DelOrRestorePrimaryKey::Int(id), is_del).await
+pub async fn del_or_restore(conn: &sqlx::MySqlPool, id: u32, is_del: bool) -> Result<()> {
+    let mut tx = conn.begin().await.map_err(Error::from)?;
+
+    // 删除/恢复标签
+    if let Err(err) = sqlx::query("UPDATE tag SET is_del=? WHERE id=?")
+        .bind(is_del)
+        .bind(id)
+        .execute(&mut tx)
+        .await
+    {
+        tx.rollback().await.map_err(Error::from)?;
+        return Err(Error::from(err));
+    }
+
+    // 从文章中删除/恢复标签
+    if let Err(err) = sqlx::query("UPDATE topic_tag SET is_del=? WHERE tag_id=?")
+        .bind(is_del)
+        .bind(id)
+        .execute(&mut tx)
+        .await
+    {
+        tx.rollback().await.map_err(Error::from)?;
+        return Err(Error::from(err));
+    }
+
+    tx.commit().await.map_err(Error::from)?;
+
+    Ok(())
+}
+
+pub async fn edit(conn: &sqlx::MySqlPool, m: &model::Tag) -> Result<u64> {
+    if exists(conn, &m.name, Some(m.id)).await? {
+        return Err(Error::already_exists("相同的tag已存在"));
+    }
+    let aff = sqlx::query("UPDATE tag SET  name=? WHERE id=?")
+        .bind(&m.name)
+        .bind(&m.id)
+        .execute(conn)
+        .await
+        .map_err(Error::from)?
+        .rows_affected();
+
+    Ok(aff)
 }
 
 #[cfg(test)]

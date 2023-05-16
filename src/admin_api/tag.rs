@@ -97,3 +97,24 @@ pub async fn add(
 
     Ok(Response::ok(IDResponse { id }).to_json())
 }
+
+pub async fn edit(
+    Extension(state): Extension<Arc<model::State>>,
+    Json(frm): Json<form::Update>,
+) -> Result<JsonRespone<IDResponse>> {
+    let handler_name = "admin/tag/edit";
+
+    let conn = get_conn(&state);
+    tag::edit(
+        &conn,
+        &model::Tag {
+            id: frm.id,
+            name: frm.name,
+            ..Default::default()
+        },
+    )
+    .await
+    .map_err(log_error(handler_name))?;
+
+    Ok(Response::ok(IDResponse { id: frm.id }).to_json())
+}

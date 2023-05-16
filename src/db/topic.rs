@@ -250,7 +250,7 @@ pub async fn find2edit(conn: &sqlx::MySqlPool, id: u64) -> Result<Option<model::
 }
 
 pub async fn get_tags(conn: &sqlx::MySqlPool, id: u64) -> Result<Vec<model::Tag2TopicEdit>> {
-    let r = sqlx::query_as("SELECT t.name FROM tag as t INNER JOIN topic_tag as tt ON t.id=tt.tag_id WHERE tt.topic_id =?").bind(id).fetch_all(conn).await.map_err(Error::from)?;
+    let r = sqlx::query_as("SELECT t.name FROM tag as t INNER JOIN topic_tag as tt ON t.id=tt.tag_id WHERE tt.topic_id =? AND tt.is_del=?").bind(id).bind(false).fetch_all(conn).await.map_err(Error::from)?;
 
     Ok(r)
 }

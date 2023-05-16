@@ -30,7 +30,12 @@ pub fn init() -> Router {
         );
 
     let tag_router = Router::new()
-        .route("/", get(super::tag::list).post(super::tag::add))
+        .route(
+            "/",
+            get(super::tag::list)
+                .post(super::tag::add)
+                .put(super::tag::edit),
+        )
         .route(
             "/:id",
             get(super::tag::find)

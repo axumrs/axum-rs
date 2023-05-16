@@ -29,12 +29,14 @@ pub fn init() -> Router {
                 .patch(super::topic::restore),
         );
 
-    let tag_router = Router::new().route("/", get(super::tag::list)).route(
-        "/:id",
-        get(super::tag::find)
-            .delete(super::tag::del)
-            .patch(super::tag::restore),
-    );
+    let tag_router = Router::new()
+        .route("/", get(super::tag::list).post(super::tag::add))
+        .route(
+            "/:id",
+            get(super::tag::find)
+                .delete(super::tag::del)
+                .patch(super::tag::restore),
+        );
 
     Router::new()
         .nest("/subject", subject_router)

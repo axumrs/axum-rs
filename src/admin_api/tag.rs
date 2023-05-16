@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use axum::{
     extract::{Path, Query},
-    Extension,
+    Extension, Json,
 };
 
 use crate::{
@@ -63,6 +63,7 @@ pub async fn del(
 
     Ok(Response::ok(IDResponse { id }).to_json())
 }
+
 pub async fn restore(
     Extension(state): Extension<Arc<model::State>>,
     Path(id): Path<u32>,
@@ -73,6 +74,26 @@ pub async fn restore(
     tag::del_or_restore(&conn, id, false)
         .await
         .map_err(log_error(handler_name))?;
+
+    Ok(Response::ok(IDResponse { id }).to_json())
+}
+
+pub async fn add(
+    Extension(state): Extension<Arc<model::State>>,
+    Json(frm): Json<form::Create>,
+) -> Result<JsonRespone<IDResponse>> {
+    let handler_name = "admin/tag/add";
+
+    let conn = get_conn(&state);
+    let id = tag::add(
+        &conn,
+        &model::Tag {
+            name: frm.name,
+            ..Default::default()
+        },
+    )
+    .await
+    .map_err(log_error(handler_name))?;
 
     Ok(Response::ok(IDResponse { id }).to_json())
 }

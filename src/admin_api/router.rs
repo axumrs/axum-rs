@@ -15,7 +15,14 @@ pub fn init() -> Router {
                 .patch(super::subject::restore),
         );
 
-    let topic_router = Router::new().route("/", get(super::topic::list).post(super::topic::add));
+    let topic_router = Router::new()
+        .route("/", get(super::topic::list).post(super::topic::add))
+        .route(
+            "/:id",
+            get(super::topic::find)
+                .delete(super::topic::del)
+                .patch(super::topic::restore),
+        );
 
     let tag_router = Router::new().route("/", get(super::tag::list));
 

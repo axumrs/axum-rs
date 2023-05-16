@@ -30,3 +30,14 @@ pub struct Create {
 
     pub tags: Vec<String>,
 }
+
+#[derive(Deserialize)]
+pub struct List2Admin {
+    pub title: Option<String>,
+    pub slug: Option<String>,
+    pub subject_name: Option<String>,
+    pub try_readable: Option<bool>,
+    pub is_del: Option<bool>,
+    pub page: u32,
+    pub page_size: u32,
+}

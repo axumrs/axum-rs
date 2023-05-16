@@ -1,5 +1,7 @@
 use crate::{model, Error, Result};
 
+use super::Paginate;
+
 pub async fn exists<'a, C>(
     conn: C,
     slug: &'a str,
@@ -162,4 +164,82 @@ pub async fn edit(
 
     tx.commit().await.map_err(Error::from)?;
     Ok(aff)
+}
+
+pub async fn list2admin(
+    conn: &sqlx::MySqlPool,
+    with: &model::Topic2AdminListWith,
+) -> Result<Paginate<model::Topic2AdminList>> {
+    let mut q = sqlx::QueryBuilder::new(
+        r"SELECT id, title, slug, hit, dateline, try_readable, is_del, cover, subject_name, subject_slug FROM v_topic_admin_list WHERE 1=1",
+    );
+    let mut qc = sqlx::QueryBuilder::new("SELECT COUNT(*) FROM v_topic_admin_list WHERE 1=1");
+
+    if let Some(title) = &with.title {
+        let sql = " AND title LIKE ";
+        let arg = format!("%{}%", title);
+
+        q.push(sql).push_bind(arg.clone());
+        qc.push(sql).push_bind(arg);
+    }
+    if let Some(slug) = &with.slug {
+        let sql = " AND slug LIKE ";
+        let arg = format!("%{}%", slug);
+
+        q.push(sql).push_bind(arg.clone());
+        qc.push(sql).push_bind(arg);
+    }
+    if let Some(subject_name) = &with.subject_name {
+        let sql = " AND subject_name LIKE ";
+        let arg = format!("%{}%", subject_name);
+
+        q.push(sql).push_bind(arg.clone());
+        qc.push(sql).push_bind(arg);
+    }
+    if let Some(try_readable) = &with.try_readable {
+        let sql = " AND try_readable=";
+
+        q.push(sql).push_bind(try_readable);
+        qc.push(sql).push_bind(try_readable);
+    }
+    if let Some(is_del) = &with.is_del {
+        let sql = " AND is_del=";
+
+        q.push(sql).push_bind(is_del);
+        qc.push(sql).push_bind(is_del);
+    }
+
+    q.push(" ORDER BY id DESC ")
+        .push(" LIMIT ")
+        .push_bind(with.page_size)
+        .push(" OFFSET ")
+        .push_bind(with.page * with.page_size);
+
+    let count: (i64,) = qc
+        .build_query_as()
+        .fetch_one(conn)
+        .await
+        .map_err(Error::from)?;
+    let data = q
+        .build_query_as()
+        .fetch_all(conn)
+        .await
+        .map_err(Error::from)?;
+
+    Ok(Paginate::new(
+        count.0 as u32,
+        with.page,
+        with.page_size,
+        data,
+    ))
+}
+
+pub async fn del_or_restore(conn: &sqlx::MySqlPool, id: u64, is_del: bool) -> Result<u64> {
+    super::del_or_restore(
+        conn,
+        "topic",
+        super::DelOrRestorePrimaryKey::BigInt(id),
+        is_del,
+    )
+    .await
 }

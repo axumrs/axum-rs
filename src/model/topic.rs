@@ -47,3 +47,17 @@ pub struct Topic2AdminListWith {
     pub page: u32,
     pub page_size: u32,
 }
+
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow)]
+pub struct Topic2Edit {
+    pub id: u64,
+    pub title: String,
+    pub subject_id: u32,
+    pub slug: String,
+    pub summary: String,
+    pub author: String,
+    pub src: String,
+    pub cover: String,
+    pub md: String,
+    pub try_readable: bool,
+}

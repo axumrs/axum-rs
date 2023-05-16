@@ -243,3 +243,14 @@ pub async fn del_or_restore(conn: &sqlx::MySqlPool, id: u64, is_del: bool) -> Re
     )
     .await
 }
+
+pub async fn find2edit(conn: &sqlx::MySqlPool, id: u64) -> Result<Option<model::Topic2Edit>> {
+    let r = sqlx::query_as("SELECT id, title, subject_id, slug, summary, author, src, try_readable, cover,md FROM topic AS t INNER JOIN topic_content AS tc ON t.id=tc.topic_id WHERE id=?").bind(id).fetch_optional(conn).await.map_err(Error::from)?;
+    Ok(r)
+}
+
+pub async fn get_tags(conn: &sqlx::MySqlPool, id: u64) -> Result<Vec<model::Tag2TopicEdit>> {
+    let r = sqlx::query_as("SELECT t.name FROM tag as t INNER JOIN topic_tag as tt ON t.id=tt.tag_id WHERE tt.topic_id =?").bind(id).fetch_all(conn).await.map_err(Error::from)?;
+
+    Ok(r)
+}

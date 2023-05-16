@@ -16,7 +16,12 @@ pub fn init() -> Router {
         );
 
     let topic_router = Router::new()
-        .route("/", get(super::topic::list).post(super::topic::add))
+        .route(
+            "/",
+            get(super::topic::list)
+                .post(super::topic::add)
+                .put(super::topic::edit),
+        )
         .route(
             "/:id",
             get(super::topic::find)

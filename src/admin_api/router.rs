@@ -15,5 +15,12 @@ pub fn init() -> Router {
                 .patch(super::subject::restore),
         );
 
-    Router::new().nest("/subject", subject_router)
+    let topic_router = Router::new().route("/", get(super::topic::list).post(super::topic::add));
+
+    let tag_router = Router::new().route("/", get(super::tag::list));
+
+    Router::new()
+        .nest("/subject", subject_router)
+        .nest("/topic", topic_router)
+        .nest("/tag", tag_router)
 }

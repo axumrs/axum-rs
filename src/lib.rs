@@ -4,6 +4,7 @@ pub mod db;
 mod err;
 pub mod form;
 pub mod handler_helper;
+pub mod md;
 pub mod model;
 mod resp;
 

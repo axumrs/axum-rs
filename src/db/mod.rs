@@ -2,6 +2,7 @@ mod del_restore;
 mod paginate;
 pub mod subject;
 pub mod tag;
+pub mod topic;
 
 pub const DEFAULT_PAGE_SIZE: u32 = 30;
 pub const MAX_PAGE_SIZE: u32 = 500;

@@ -46,3 +46,7 @@ pub type JsonRespone<T> = Json<Response<T>>;
 pub struct IDResponse {
     pub id: u32,
 }
+#[derive(Serialize)]
+pub struct ID64Response {
+    pub id: u64,
+}

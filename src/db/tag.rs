@@ -121,6 +121,10 @@ pub async fn list(
     ))
 }
 
+pub async fn del_or_restore(conn: &sqlx::MySqlPool, id: u32, is_del: bool) -> Result<u64> {
+    super::del_or_restore(conn, "tag", super::DelOrRestorePrimaryKey::Int(id), is_del).await
+}
+
 #[cfg(test)]
 mod test {
     use std::env;

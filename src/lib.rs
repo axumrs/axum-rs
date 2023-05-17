@@ -7,6 +7,7 @@ pub mod handler_helper;
 pub mod md;
 pub mod model;
 mod resp;
+pub mod web_api;
 
 pub use crate::config::*;
 pub use err::Error;

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::{Extension, Router};
-use axum_rs::{admin_api, model::State, Config};
+use axum_rs::{admin_api, model::State, web_api, Config};
 use dotenv::dotenv;
 use tower_http::cors::{Any, CorsLayer};
 
@@ -22,9 +22,11 @@ async fn main() {
 
     tracing::info!("Web服务监听于{}", &cfg.web.addr);
 
+    let web_router = web_api::router::init();
     let admin_router = admin_api::router::init();
 
     let app = Router::new()
+        .nest("/web", web_router)
         .nest("/admin", admin_router)
         .layer(
             CorsLayer::new()

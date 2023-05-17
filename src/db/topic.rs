@@ -254,3 +254,58 @@ pub async fn get_tags(conn: &sqlx::MySqlPool, id: u64) -> Result<Vec<model::Tag2
 
     Ok(r)
 }
+
+pub async fn list2web(
+    conn: &sqlx::MySqlPool,
+    with: &model::Topic2WebListWith,
+) -> Result<Paginate<model::Topic2WebList>> {
+    let mut q = sqlx::QueryBuilder::new("SELECT id, title, slug, try_readable, cover, summary, subject_name, subject_slug, tag_names FROM v_topic_web_list WHERE 1=1");
+    let mut qc = sqlx::QueryBuilder::new("SELECT COUNT(*) FROM v_topic_web_list WHERE 1=1");
+
+    if let Some(title) = &with.title {
+        let sql = " AND title LIKE";
+        let arg = format!("%{}%", title);
+
+        q.push(sql).push_bind(arg.clone());
+        qc.push(sql).push_bind(arg);
+    }
+
+    if let Some(subject_name) = &with.subject_name {
+        let sql = " AND subject_name LIKE";
+        let arg = format!("%{}%", subject_name);
+
+        q.push(sql).push_bind(arg.clone());
+        qc.push(sql).push_bind(arg);
+    }
+
+    let order_by = if with.order_by_hit {
+        " ORDER BY hit DESC"
+    } else {
+        " ORDER BY id DESC"
+    };
+
+    q.push(order_by)
+        .push(" LIMIT ")
+        .push_bind(with.page_size)
+        .push(" OFFSET ")
+        .push_bind(with.page * with.page_size);
+
+    let count: (i64,) = qc
+        .build_query_as()
+        .fetch_one(conn)
+        .await
+        .map_err(Error::from)?;
+
+    let data = q
+        .build_query_as()
+        .fetch_all(conn)
+        .await
+        .map_err(Error::from)?;
+
+    Ok(Paginate::new(
+        count.0 as u32,
+        with.page,
+        with.page_size,
+        data,
+    ))
+}

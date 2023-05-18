@@ -27,3 +27,15 @@ pub struct TagListWith {
 pub struct Tag2TopicEdit {
     pub name: String,
 }
+
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow)]
+pub struct Tag2WebList {
+    pub topic_total: i64,
+    pub name: String,
+}
+
+#[derive(Default)]
+pub struct Tag2WebListWith {
+    pub page: u32,
+    pub page_size: u32,
+}

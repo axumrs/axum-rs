@@ -172,6 +172,38 @@ pub async fn edit(conn: &sqlx::MySqlPool, m: &model::Tag) -> Result<u64> {
     Ok(aff)
 }
 
+pub async fn list2web(
+    conn: &sqlx::MySqlPool,
+    with: &model::Tag2WebListWith,
+) -> Result<super::Paginate<model::Tag2WebList>> {
+    let mut q = sqlx::QueryBuilder::new("SELECT topic_total, name FROM v_tag_web_list WHERE 1=1");
+    let mut qc = sqlx::QueryBuilder::new("SELECT COUNT(*) FROM v_tag_web_list WHERE 1=1");
+
+    q.push(" ORDER BY id DESC")
+        .push(" LIMIT ")
+        .push_bind(with.page_size)
+        .push(" OFFSET ")
+        .push_bind(with.page * with.page_size);
+
+    let count: (i64,) = qc
+        .build_query_as()
+        .fetch_one(conn)
+        .await
+        .map_err(Error::from)?;
+    let data = q
+        .build_query_as()
+        .fetch_all(conn)
+        .await
+        .map_err(Error::from)?;
+
+    Ok(super::Paginate::new(
+        count.0 as u32,
+        with.page,
+        with.page_size,
+        data,
+    ))
+}
+
 #[cfg(test)]
 mod test {
     use std::env;

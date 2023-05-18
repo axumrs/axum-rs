@@ -10,7 +10,9 @@ pub fn init() -> Router {
         .route("/top10", get(super::topic::top10))
         .route("/", get(super::topic::list));
 
-    let tag_router = Router::new().route("/", get(super::tag::list));
+    let tag_router = Router::new()
+        .route("/", get(super::tag::list))
+        .route("/:name", get(super::tag::detail));
 
     Router::new()
         .nest("/subject", subject_router)

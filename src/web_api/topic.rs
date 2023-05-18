@@ -46,6 +46,7 @@ pub async fn list(
             page_size: frm.page_size,
             order_by_hit: frm.order_by_hit.unwrap_or(false),
             title: frm.title,
+            tag_name: frm.tag_name,
         },
     )
     .await

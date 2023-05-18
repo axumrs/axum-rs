@@ -277,6 +277,15 @@ pub async fn list2web(
         q.push(sql).push_bind(arg.clone());
         qc.push(sql).push_bind(arg);
     }
+
+    if let Some(tag_name) = &with.tag_name {
+        let sql = " AND tag_names LIKE";
+        let arg = format!("%,{},%", tag_name);
+
+        q.push(sql).push_bind(arg.clone());
+        qc.push(sql).push_bind(arg);
+    }
+
     if let Some(subject_slug) = &with.subject_slug {
         let sql = " AND subject_slug =";
 

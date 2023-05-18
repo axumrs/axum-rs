@@ -80,6 +80,7 @@ pub struct Topic2WebListWith {
     pub title: Option<String>,
     pub subject_name: Option<String>,
     pub subject_slug: Option<String>,
+    pub tag_name: Option<String>,
     pub order_by_hit: bool,
     pub page: u32,
     pub page_size: u32,

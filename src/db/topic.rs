@@ -296,7 +296,11 @@ pub async fn list2web(
     let order_by = if with.order_by_hit {
         " ORDER BY hit DESC"
     } else {
-        " ORDER BY id DESC"
+        if with.asc_order {
+            " ORDER BY id ASC"
+        } else {
+            " ORDER BY id DESC"
+        }
     };
 
     q.push(order_by)

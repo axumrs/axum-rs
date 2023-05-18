@@ -83,6 +83,7 @@ pub struct List2Web {
     pub subject_slug: Option<String>,
     pub tag_name: Option<String>,
     pub order_by_hit: Option<bool>,
+    pub asc_order: Option<bool>,
     pub page: u32,
     pub page_size: u32,
 }

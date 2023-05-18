@@ -50,6 +50,7 @@ pub async fn list(
             order_by_hit: frm.order_by_hit.unwrap_or(false),
             title: frm.title,
             tag_name: frm.tag_name,
+            asc_order: frm.asc_order.unwrap_or(false),
         },
     )
     .await

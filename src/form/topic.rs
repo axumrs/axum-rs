@@ -75,3 +75,13 @@ pub struct Update {
 
     pub tags: Vec<String>,
 }
+
+#[derive(Deserialize)]
+pub struct List2Web {
+    pub title: Option<String>,
+    pub subject_name: Option<String>,
+    pub subject_slug: Option<String>,
+    pub order_by_hit: Option<bool>,
+    pub page: u32,
+    pub page_size: u32,
+}

@@ -277,6 +277,12 @@ pub async fn list2web(
         q.push(sql).push_bind(arg.clone());
         qc.push(sql).push_bind(arg);
     }
+    if let Some(subject_slug) = &with.subject_slug {
+        let sql = " AND subject_slug =";
+
+        q.push(sql).push_bind(subject_slug);
+        qc.push(sql).push_bind(subject_slug);
+    }
 
     let order_by = if with.order_by_hit {
         " ORDER BY hit DESC"

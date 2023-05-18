@@ -1,13 +1,16 @@
 use std::sync::Arc;
 
-use axum::{extract::Query, Extension};
+use axum::{
+    extract::{Path, Query},
+    Extension,
+};
 
 use crate::{
     db::{subject, Paginate},
     form::subject as form,
     handler_helper::{get_conn, log_error},
     model::{self, State},
-    JsonRespone, Response, Result,
+    Error, JsonRespone, Response, Result,
 };
 
 pub async fn top4(
@@ -51,4 +54,21 @@ pub async fn list(
     .map_err(log_error(handler_name))?;
 
     Ok(Response::ok(p).to_json())
+}
+
+pub async fn detail(
+    Extension(state): Extension<Arc<State>>,
+    Path(slug): Path<String>,
+) -> Result<JsonRespone<model::Subject>> {
+    let handler_name = "web/subject/detail";
+
+    let conn = get_conn(&state);
+    let s = subject::find(&conn, model::SubjectFindBy::Slug(&slug), Some(false))
+        .await
+        .map_err(log_error(handler_name))?;
+
+    match s {
+        Some(s) => Ok(Response::ok(s).to_json()),
+        None => Err(Error::not_found("不存在的专题")),
+    }
 }

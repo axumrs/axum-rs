@@ -324,3 +324,26 @@ pub async fn list2web(
         data,
     ))
 }
+
+pub async fn detail2web(
+    conn: &sqlx::MySqlPool,
+    slug: &str,
+    subject_slug: &str,
+) -> Result<Option<model::Topic2WebDetail>> {
+    let mut tx = conn.begin().await.map_err(Error::from)?;
+
+    if let Err(err) = sqlx::query("UPDATE topic SET hit=hit+1 WHERE slug=?")
+        .bind(slug)
+        .execute(&mut tx)
+        .await
+    {
+        tx.rollback().await.map_err(Error::from)?;
+        return Err(Error::from(err));
+    }
+
+    let t = sqlx::query_as("SELECT id, title, slug, try_readable, cover, hit, dateline, html, subject_name, subject_slug, tag_names FROM v_topic_web_detail WHERE slug=? AND subject_slug=? LIMIT 1").bind(slug).bind(subject_slug).fetch_optional(&mut tx).await.map_err(Error::from)?;
+
+    tx.commit().await.map_err(Error::from)?;
+
+    Ok(t)
+}

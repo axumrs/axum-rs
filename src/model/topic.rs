@@ -85,3 +85,18 @@ pub struct Topic2WebListWith {
     pub page: u32,
     pub page_size: u32,
 }
+
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow)]
+pub struct Topic2WebDetail {
+    pub id: u64,
+    pub title: String,
+    pub slug: String,
+    pub cover: String,
+    pub try_readable: bool,
+    pub hit: u64,
+    pub dateline: chrono::DateTime<chrono::Local>,
+    pub html: String,
+    pub subject_name: String,
+    pub subject_slug: String,
+    pub tag_names: String,
+}

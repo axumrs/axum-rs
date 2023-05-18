@@ -1,13 +1,16 @@
 use std::sync::Arc;
 
-use axum::{extract::Query, Extension};
+use axum::{
+    extract::{Path, Query},
+    Extension,
+};
 
 use crate::{
     db::{topic, Paginate},
     form::topic as form,
     handler_helper::{get_conn, log_error},
     model::{self, State},
-    JsonRespone, Response, Result,
+    Error, JsonRespone, Response, Result,
 };
 
 pub async fn top10(
@@ -53,4 +56,20 @@ pub async fn list(
     .map_err(log_error(handler_name))?;
 
     Ok(Response::ok(p).to_json())
+}
+
+pub async fn detail(
+    Extension(state): Extension<Arc<State>>,
+    Path(frm): Path<form::Detail>,
+) -> Result<JsonRespone<model::Topic2WebDetail>> {
+    let handler_name = "web/topic/detail";
+
+    let conn = get_conn(&state);
+    let t = topic::detail2web(&conn, &frm.slug, &frm.subject_slug)
+        .await
+        .map_err(log_error(handler_name))?;
+    match t {
+        Some(t) => Ok(Response::ok(t).to_json()),
+        None => Err(Error::not_found("不存在的文章")),
+    }
 }

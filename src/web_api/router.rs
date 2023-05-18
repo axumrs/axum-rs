@@ -8,7 +8,8 @@ pub fn init() -> Router {
 
     let topic_router = Router::new()
         .route("/top10", get(super::topic::top10))
-        .route("/", get(super::topic::list));
+        .route("/", get(super::topic::list))
+        .route("/:subject_slug/:slug", get(super::topic::detail));
 
     let tag_router = Router::new()
         .route("/", get(super::tag::list))

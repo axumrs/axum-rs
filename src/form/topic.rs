@@ -86,3 +86,9 @@ pub struct List2Web {
     pub page: u32,
     pub page_size: u32,
 }
+
+#[derive(Deserialize)]
+pub struct Detail {
+    pub slug: String,
+    pub subject_slug: String,
+}

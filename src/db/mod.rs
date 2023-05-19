@@ -1,3 +1,4 @@
+pub mod admin;
 mod del_restore;
 mod paginate;
 pub mod subject;

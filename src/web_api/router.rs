@@ -6,10 +6,12 @@ pub fn init() -> Router {
         .route("/", get(super::subject::list))
         .route("/:slug", get(super::subject::detail));
 
+    let topic_detail_router =
+        Router::new().route("/:subject_slug/:slug", get(super::topic::detail));
     let topic_router = Router::new()
         .route("/top10", get(super::topic::top10))
         .route("/", get(super::topic::list))
-        .route("/:subject_slug/:slug", get(super::topic::detail));
+        .nest("/", topic_detail_router);
 
     let tag_router = Router::new()
         .route("/", get(super::tag::list))

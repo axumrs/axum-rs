@@ -43,8 +43,23 @@ pub fn init() -> Router {
                 .patch(super::tag::restore),
         );
 
+    let admin_router = Router::new()
+        .route(
+            "/",
+            get(super::admin::list)
+                .post(super::admin::add)
+                .put(super::admin::edit),
+        )
+        .route(
+            "/:id",
+            get(super::admin::find)
+                .delete(super::admin::del)
+                .patch(super::admin::restore),
+        );
+
     Router::new()
         .nest("/subject", subject_router)
         .nest("/topic", topic_router)
         .nest("/tag", tag_router)
+        .nest("/admin", admin_router)
 }

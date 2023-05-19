@@ -5,7 +5,10 @@ mod err;
 pub mod form;
 pub mod handler_helper;
 pub mod md;
+pub mod middleware;
 pub mod model;
+pub mod password;
+pub mod rdb;
 mod resp;
 pub mod web_api;
 

@@ -8,6 +8,8 @@ pub enum Kind {
     AlreadyExists,
     Config,
     NotFound,
+    Bcrypt,
+    Redis,
 }
 #[derive(Debug)]
 pub struct Error {
@@ -55,6 +57,18 @@ impl From<sqlx::Error> for Error {
 impl From<config::ConfigError> for Error {
     fn from(e: config::ConfigError) -> Self {
         Self::with_cause(Box::new(e), Kind::Config)
+    }
+}
+
+impl From<bcrypt::BcryptError> for Error {
+    fn from(e: bcrypt::BcryptError) -> Self {
+        Self::with_cause(Box::new(e), Kind::Bcrypt)
+    }
+}
+
+impl From<redis::RedisError> for Error {
+    fn from(e: redis::RedisError) -> Self {
+        Self::with_cause(Box::new(e), Kind::Redis)
     }
 }
 

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::{Extension, Router};
-use axum_rs::{admin_api, model::State, web_api, Config};
+use axum_rs::{admin_api, auth_api, model::State, web_api, Config};
 use dotenv::dotenv;
 use tower_http::cors::{Any, CorsLayer};
 
@@ -20,14 +20,17 @@ async fn main() {
         .map_err(|e| tracing::error!("初始化数据库失败：{}", e.to_string()))
         .unwrap();
 
-    tracing::info!("Web服务监听于{}", &cfg.web.addr);
+    let web_addr = &cfg.web.addr.clone();
+    tracing::info!("Web服务监听于{}", web_addr);
 
     let web_router = web_api::router::init();
     let admin_router = admin_api::router::init();
+    let auth_router = auth_api::router::init();
 
     let app = Router::new()
         .nest("/web", web_router)
         .nest("/admin", admin_router)
+        .nest("/auth", auth_router)
         .layer(
             CorsLayer::new()
                 .allow_headers(Any)
@@ -36,9 +39,10 @@ async fn main() {
         )
         .layer(Extension(Arc::new(State {
             pool: Arc::new(pool),
+            cfg: Arc::new(cfg),
         })));
 
-    axum::Server::bind(&cfg.web.addr.parse().unwrap())
+    axum::Server::bind(&web_addr.parse().unwrap())
         .serve(app.into_make_service())
         .await
         .unwrap();

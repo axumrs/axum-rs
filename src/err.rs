@@ -10,6 +10,9 @@ pub enum Kind {
     NotFound,
     Bcrypt,
     Redis,
+    Reqwest,
+    Serde,
+    Captcha,
 }
 #[derive(Debug)]
 pub struct Error {
@@ -37,6 +40,9 @@ impl Error {
     }
     pub fn not_found(msg: &str) -> Self {
         Self::from_str(msg, Kind::NotFound)
+    }
+    pub fn captcha_failed() -> Self {
+        Self::from_str("人机验证失败", Kind::Captcha)
     }
 }
 
@@ -69,6 +75,18 @@ impl From<bcrypt::BcryptError> for Error {
 impl From<redis::RedisError> for Error {
     fn from(e: redis::RedisError) -> Self {
         Self::with_cause(Box::new(e), Kind::Redis)
+    }
+}
+
+impl From<reqwest::Error> for Error {
+    fn from(e: reqwest::Error) -> Self {
+        Self::with_cause(Box::new(e), Kind::Reqwest)
+    }
+}
+
+impl From<serde_json::Error> for Error {
+    fn from(e: serde_json::Error) -> Self {
+        Self::with_cause(Box::new(e), Kind::Serde)
     }
 }
 

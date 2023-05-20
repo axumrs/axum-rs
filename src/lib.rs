@@ -1,4 +1,6 @@
 pub mod admin_api;
+pub mod auth_api;
+pub mod captcha;
 mod config;
 pub mod db;
 mod err;

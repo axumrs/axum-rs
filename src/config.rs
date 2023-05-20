@@ -17,6 +17,7 @@ pub struct Mysql {
 pub struct Jwt {
     pub secret_key: String,
     pub expired: u32,
+    pub sub: String,
 }
 
 #[derive(Deserialize)]
@@ -40,7 +41,7 @@ pub struct ReCaptcha {
 pub struct Config {
     pub web: Web,
     pub mysql: Mysql,
-    pub jwt: Jwt,
+    pub admin_jwt: Jwt,
     pub redis: Redis,
     pub hcaptcha: HCaptcha,
     pub recaptcha: ReCaptcha,

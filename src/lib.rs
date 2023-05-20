@@ -6,6 +6,7 @@ pub mod db;
 mod err;
 pub mod form;
 pub mod handler_helper;
+pub mod jwt;
 pub mod md;
 pub mod middleware;
 pub mod model;

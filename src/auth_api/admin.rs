@@ -7,6 +7,7 @@ use crate::{
     db::admin,
     form::auth as form,
     handler_helper::{get_conn, log_error},
+    jwt,
     model::{self, State},
     password, Error, JsonRespone, Response, Result,
 };
@@ -14,7 +15,7 @@ use crate::{
 pub async fn login(
     Extension(state): Extension<Arc<State>>,
     Json(frm): Json<form::AdminLogin>,
-) -> Result<JsonRespone<model::Admin>> {
+) -> Result<JsonRespone<jwt::AuthBody>> {
     let handler_name = "admin/auth/login";
 
     let cpt = Captcha::new_hcaptcha(&state.cfg.hcaptcha.secret_key);
@@ -41,5 +42,15 @@ pub async fn login(
         return Err(Error::not_found("用户名或密码错误2"));
     }
 
-    Ok(Response::ok(adm).to_json())
+    let key = jwt::Key::from_cfg(&state.cfg.admin_jwt);
+    let claims = jwt::Claims::from_cfg(
+        &state.cfg.admin_jwt,
+        jwt::AdminClaimsData {
+            id: adm.id,
+            username: adm.username,
+        },
+    );
+    let auth_body = claims.token(&key)?;
+
+    Ok(Response::ok(auth_body).to_json())
 }

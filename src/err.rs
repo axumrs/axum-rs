@@ -13,6 +13,7 @@ pub enum Kind {
     Reqwest,
     Serde,
     Captcha,
+    Jwt,
 }
 #[derive(Debug)]
 pub struct Error {
@@ -87,6 +88,12 @@ impl From<reqwest::Error> for Error {
 impl From<serde_json::Error> for Error {
     fn from(e: serde_json::Error) -> Self {
         Self::with_cause(Box::new(e), Kind::Serde)
+    }
+}
+
+impl From<jsonwebtoken::errors::Error> for Error {
+    fn from(e: jsonwebtoken::errors::Error) -> Self {
+        Self::with_cause(Box::new(e), Kind::Jwt)
     }
 }
 

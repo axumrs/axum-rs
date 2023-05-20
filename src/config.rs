@@ -42,6 +42,7 @@ pub struct Config {
     pub web: Web,
     pub mysql: Mysql,
     pub admin_jwt: Jwt,
+    pub user_jwt: Jwt,
     pub redis: Redis,
     pub hcaptcha: HCaptcha,
     pub recaptcha: ReCaptcha,

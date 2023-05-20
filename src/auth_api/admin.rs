@@ -42,15 +42,13 @@ pub async fn login(
         return Err(Error::not_found("用户名或密码错误2"));
     }
 
-    let key = jwt::Key::from_cfg(&state.cfg.admin_jwt);
-    let claims = jwt::Claims::from_cfg(
+    let auth_body = jwt::token::encode(
         &state.cfg.admin_jwt,
         jwt::AdminClaimsData {
             id: adm.id,
             username: adm.username,
         },
-    );
-    let auth_body = claims.token(&key)?;
+    )?;
 
     Ok(Response::ok(auth_body).to_json())
 }

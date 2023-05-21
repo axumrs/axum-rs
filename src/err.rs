@@ -99,6 +99,11 @@ impl From<jsonwebtoken::errors::Error> for Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
-        Response::<()>::err(&self).to_json().into_response()
+        match &self.kind {
+            &Kind::Jwt => Response::<()>::err_with_code(9527, &self),
+            _ => Response::<()>::err(&self),
+        }
+        .to_json()
+        .into_response()
     }
 }

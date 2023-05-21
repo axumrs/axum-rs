@@ -1,4 +1,6 @@
-use axum::{routing::get, Router};
+use axum::{middleware, routing::get, Router};
+
+use crate::middleware::admin_auth;
 
 pub fn init() -> Router {
     let subject_router = Router::new()
@@ -62,4 +64,5 @@ pub fn init() -> Router {
         .nest("/topic", topic_router)
         .nest("/tag", tag_router)
         .nest("/admin", admin_router)
+        .layer(middleware::from_fn(admin_auth))
 }

@@ -7,7 +7,7 @@ use crate::{
     Error, Result,
 };
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Claims<T> {
     /// 主题
     pub sub: String,

@@ -5,6 +5,7 @@ pub mod auth;
 pub mod subject;
 pub mod tag;
 pub mod topic;
+pub mod user;
 
 #[derive(Deserialize)]
 pub struct PaginateForm {

@@ -1,4 +1,8 @@
-use axum::{middleware, routing::get, Router};
+use axum::{
+    middleware,
+    routing::{get, put},
+    Router,
+};
 
 use crate::middleware::admin_auth;
 
@@ -59,10 +63,28 @@ pub fn init() -> Router {
                 .patch(super::admin::restore),
         );
 
+    let user_router = Router::new()
+        .route(
+            "/",
+            get(super::user::list)
+                .post(super::user::add)
+                .put(super::user::edit),
+        )
+        .route(
+            "/:id",
+            get(super::user::find)
+                .delete(super::user::del)
+                .patch(super::user::restore),
+        )
+        .route("/freeze/:id", put(super::user::freeze))
+        .route("/active/:id", put(super::user::active))
+        .route("/pending/:id", put(super::user::pending));
+
     Router::new()
         .nest("/subject", subject_router)
         .nest("/topic", topic_router)
         .nest("/tag", tag_router)
         .nest("/admin", admin_router)
+        .nest("/user", user_router)
         .layer(middleware::from_fn(admin_auth))
 }

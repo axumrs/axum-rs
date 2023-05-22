@@ -19,6 +19,7 @@ async fn main() {
         .await
         .map_err(|e| tracing::error!("初始化数据库失败：{}", e.to_string()))
         .unwrap();
+    let rds = redis::Client::open(cfg.redis.dsn.as_str()).unwrap();
 
     let web_addr = &cfg.web.addr.clone();
     tracing::info!("Web服务监听于{}", web_addr);
@@ -40,6 +41,7 @@ async fn main() {
         .layer(Extension(Arc::new(State {
             pool: Arc::new(pool),
             cfg: Arc::new(cfg),
+            rds: Arc::new(rds),
         })));
 
     axum::Server::bind(&web_addr.parse().unwrap())

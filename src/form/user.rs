@@ -17,6 +17,10 @@ pub struct Create {
     pub sub_exp: chrono::DateTime<chrono::Local>,
     #[validate(range(min = "std::u32::MIN", max = "std::u32::MAX"))]
     pub points: u32,
+    #[validate(range(min = 1, max = 3))]
+    pub allow_device_num: u8,
+    #[validate(range(min = 0, max = 120))]
+    pub jwt_exp: u8,
 }
 
 #[derive(Deserialize)]
@@ -45,4 +49,8 @@ pub struct Update {
     pub sub_exp: chrono::DateTime<chrono::Local>,
     #[validate(range(min = "std::u32::MIN", max = "std::u32::MAX"))]
     pub points: u32,
+    #[validate(range(min = 1, max = 3))]
+    pub allow_device_num: u8,
+    #[validate(range(min = 0, max = 120))]
+    pub jwt_exp: u8,
 }

@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::{Error, Result};
+use crate::{model, Error, Result};
 
 #[derive(Deserialize)]
 pub struct Web {
@@ -13,7 +13,7 @@ pub struct Mysql {
     pub dsn: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct Jwt {
     pub secret_key: String,
     pub expired: u32,
@@ -38,6 +38,15 @@ pub struct ReCaptcha {
 }
 
 #[derive(Deserialize)]
+pub struct User {
+    pub register_default_status: model::UserStatus,
+    pub redis_prefix: String,
+    pub redis_allow_drive_prefix: String,
+    pub redis_jwt_exp_prefix: String,
+    pub redis_online_prefix: String,
+}
+
+#[derive(Deserialize)]
 pub struct Config {
     pub web: Web,
     pub mysql: Mysql,
@@ -46,6 +55,7 @@ pub struct Config {
     pub redis: Redis,
     pub hcaptcha: HCaptcha,
     pub recaptcha: ReCaptcha,
+    pub users: User,
 }
 
 impl Config {

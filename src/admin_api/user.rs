@@ -56,6 +56,8 @@ pub async fn add(
             types: frm.types.unwrap_or_default(),
             sub_exp: frm.sub_exp,
             points: frm.points,
+            allow_device_num: frm.allow_device_num,
+            jwt_exp: frm.jwt_exp,
             ..Default::default()
         },
     )
@@ -72,7 +74,7 @@ pub async fn find(
     let handler_name = "admin/user/find";
 
     let conn = get_conn(&state);
-    let u = user::find(&conn, &model::UserFindBy::ID(id), None)
+    let u = user::find(&*conn, &model::UserFindBy::ID(id), None)
         .await
         .map_err(log_error(handler_name))?;
 
@@ -100,6 +102,8 @@ pub async fn edit(
             types: frm.types,
             sub_exp: frm.sub_exp,
             points: frm.points,
+            allow_device_num: frm.allow_device_num,
+            jwt_exp: frm.jwt_exp,
         },
     )
     .await

@@ -14,6 +14,9 @@ pub enum Kind {
     Serde,
     Captcha,
     Jwt,
+    Validator,
+    UserAgent,
+    NoAvailableDevice,
 }
 #[derive(Debug)]
 pub struct Error {
@@ -44,6 +47,19 @@ impl Error {
     }
     pub fn captcha_failed() -> Self {
         Self::from_str("人机验证失败", Kind::Captcha)
+    }
+    pub fn no_available_device() -> Self {
+        Self::from_str(
+            "没有足够的登录配额，请退出其它已登录设备后再重试",
+            Kind::NoAvailableDevice,
+        )
+    }
+    pub fn code(&self) -> i32 {
+        match &self.kind {
+            &Kind::Jwt => 9527,
+            &Kind::Validator => 9528,
+            _ => -1,
+        }
     }
 }
 
@@ -97,13 +113,28 @@ impl From<jsonwebtoken::errors::Error> for Error {
     }
 }
 
+impl From<validator::ValidationError> for Error {
+    fn from(e: validator::ValidationError) -> Self {
+        Self::with_cause(Box::new(e), Kind::Validator)
+    }
+}
+
+impl From<validator::ValidationErrors> for Error {
+    fn from(e: validator::ValidationErrors) -> Self {
+        Self::with_cause(Box::new(e), Kind::Validator)
+    }
+}
+
+impl From<uaparser::Error> for Error {
+    fn from(e: uaparser::Error) -> Self {
+        Self::from_str(&e.to_string(), Kind::UserAgent)
+    }
+}
+
 impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
-        match &self.kind {
-            &Kind::Jwt => Response::<()>::err_with_code(9527, &self),
-            _ => Response::<()>::err(&self),
-        }
-        .to_json()
-        .into_response()
+        Response::<()>::err_with_code(self.code(), &self)
+            .to_json()
+            .into_response()
     }
 }

@@ -49,7 +49,7 @@ pub async fn add(conn: &sqlx::MySqlPool, u: &model::User) -> Result<u32> {
 
     let pwd = password::hash(&u.password)?;
 
-    let id = sqlx::query("INSERT INTO `user` (email, nickname, password, status, dateline, types, sub_exp, points) VALUES(?,?,?,?,?,?,?,?);
+    let id = sqlx::query("INSERT INTO `user` (email, nickname, password, status, dateline, types, sub_exp, points,allow_device_num,jwt_exp) VALUES(?,?,?,?,?,?,?,?,?,?);
 ")
     .bind(&u.email)
     .bind(&u.nickname)
@@ -59,6 +59,8 @@ pub async fn add(conn: &sqlx::MySqlPool, u: &model::User) -> Result<u32> {
     .bind(&u.types)
     .bind(&u.sub_exp)
     .bind(&u.points)
+    .bind(&u.allow_device_num)
+    .bind(&u.jwt_exp)
     .execute(conn).await.map_err(Error::from)?.last_insert_id();
 
     Ok(id as u32)
@@ -83,7 +85,11 @@ pub async fn edit(conn: &sqlx::MySqlPool, u: &model::UserEdit2Admin) -> Result<u
         .push(", sub_exp=")
         .push_bind(u.sub_exp)
         .push(", points=")
-        .push_bind(&u.points);
+        .push_bind(&u.points)
+        .push(", allow_device_num=")
+        .push_bind(&u.allow_device_num)
+        .push(", jwt_exp=")
+        .push_bind(&u.jwt_exp);
 
     if let Some(pwd) = &u.password {
         let pwd = password::hash(pwd)?;
@@ -139,12 +145,15 @@ pub async fn del_or_restore(conn: &sqlx::MySqlPool, id: u32, is_del: bool) -> Re
     .await
 }
 
-pub async fn find<'a>(
-    conn: &'a sqlx::MySqlPool,
+pub async fn find<'a, T>(
+    conn: T,
     by: &'a model::UserFindBy<'a>,
     is_del: Option<bool>,
-) -> Result<Option<model::User>> {
-    let mut q = sqlx::QueryBuilder::new("SELECT id, email, nickname, password, status, dateline, types, sub_exp, points, is_del FROM `user` WHERE 1=1");
+) -> Result<Option<model::User>>
+where
+    T: sqlx::MySqlExecutor<'a>,
+{
+    let mut q = sqlx::QueryBuilder::new("SELECT id, email, nickname, password, status, dateline, types, sub_exp, points, is_del,allow_device_num,jwt_exp FROM `user` WHERE 1=1");
 
     match by {
         &model::UserFindBy::ID(id) => q.push(" AND id=").push_bind(id),
@@ -171,7 +180,7 @@ pub async fn list(
     conn: &sqlx::MySqlPool,
     with: &model::UserListWith,
 ) -> Result<Paginate<model::User>> {
-    let mut q = sqlx::QueryBuilder::new("SELECT id, email, nickname, password, status, dateline, types, sub_exp, points, is_del FROM `user` WHERE 1=1");
+    let mut q = sqlx::QueryBuilder::new("SELECT id, email, nickname, password, status, dateline, types, sub_exp, points, is_del,allow_device_num,jwt_exp FROM `user` WHERE 1=1");
     let mut qc = sqlx::QueryBuilder::new("SELECT COUNT(*) FROM `user` WHERE 1=1");
 
     if let Some(email) = &with.email {
@@ -235,4 +244,97 @@ pub async fn list(
         with.page_size,
         data,
     ))
+}
+
+pub async fn login<'a>(
+    conn: &'a sqlx::MySqlPool,
+    meta: &'a model::UserLoginMeta,
+) -> Result<model::User> {
+    let mut tx = conn.begin().await.map_err(Error::from)?;
+
+    let u = find(&mut tx, &model::UserFindBy::Email(&meta.email), Some(false)).await?;
+    if u.is_none() {
+        tx.rollback().await.map_err(Error::from)?;
+        return Err(Error::not_found("用户名或密码错误"));
+    }
+
+    let mut u = u.unwrap();
+    if !password::verify(&meta.password, &u.password)? {
+        tx.rollback().await.map_err(Error::from)?;
+        return Err(Error::not_found("用户名或密码错误"));
+    }
+
+    match &u.status {
+        &model::UserStatus::Actived => {
+            // pass
+        }
+        &model::UserStatus::Freezed => {
+            tx.rollback().await.map_err(Error::from)?;
+            return Err(Error::not_found("你的账号已被冻结"));
+        }
+        &model::UserStatus::Pending => {
+            tx.rollback().await.map_err(Error::from)?;
+            return Err(Error::not_found("你的账号尚未激活"));
+        }
+    };
+
+    // 登录日志
+    let id = match sqlx::query("INSERT INTO user_login_log (user_id, ip, browser, os, device, dateline, is_del) VALUES(?,?,?,?,?,?,?)")
+    .bind(&u.id)
+    .bind(&meta.ip)
+    .bind(&meta.uai.browser)
+    .bind(&meta.uai.os)
+    .bind(&meta.uai.device)
+    .bind(chrono::Local::now())
+    .bind(false)
+    .execute(&mut tx).await {
+        Ok(r) => r.last_insert_id(),
+        Err(err) => {
+             tx.rollback().await.map_err(Error::from)?;
+            return Err(Error::from(err));
+        }
+    };
+
+    if let Err(err) =
+        sqlx::query("INSERT INTO user_login_log_agent (log_id, user_agent) VALUES(?,?)")
+            .bind(id)
+            .bind(&meta.ua)
+            .execute(&mut tx)
+            .await
+    {
+        tx.rollback().await.map_err(Error::from)?;
+        return Err(Error::from(err));
+    }
+
+    // 如果已过期
+
+    match &u.types {
+        &model::UserTypes::Normal => {
+            // pass
+        }
+        &model::UserTypes::Subscriber => {
+            if (&u.sub_exp).lt(&chrono::Local::now()) {
+                if let Err(err) =
+                    sqlx::query("UPDATE `user` SET types=?,allow_device_num=1,jwt_exp=0 WHERE id=?")
+                        .bind(model::UserTypes::Normal)
+                        .bind(u.id)
+                        .execute(&mut tx)
+                        .await
+                {
+                    tx.rollback().await.map_err(Error::from)?;
+                    return Err(Error::from(err));
+                }
+                u = model::User {
+                    types: model::UserTypes::Normal,
+                    allow_device_num: 1,
+                    jwt_exp: 0,
+                    ..u
+                };
+            }
+        }
+    }
+
+    tx.commit().await.map_err(Error::from)?;
+
+    Ok(u)
 }

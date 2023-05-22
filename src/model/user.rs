@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Deserialize, Serialize, sqlx::Type)]
+use crate::uap;
+
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::Type, Clone, Copy)]
 #[repr(u8)]
 pub enum UserStatus {
     /// 待激活
@@ -32,6 +34,8 @@ pub struct User {
     pub types: UserTypes,
     pub sub_exp: chrono::DateTime<chrono::Local>,
     pub points: u32,
+    pub allow_device_num: u8,
+    pub jwt_exp: u8,
     pub is_del: bool,
 }
 #[derive(Debug, Default, Deserialize, Serialize, sqlx::Type, sqlx::FromRow)]
@@ -43,6 +47,8 @@ pub struct UserEdit2Admin {
     pub status: UserStatus,
     pub types: UserTypes,
     pub sub_exp: chrono::DateTime<chrono::Local>,
+    pub allow_device_num: u8,
+    pub jwt_exp: u8,
     pub points: u32,
 }
 
@@ -61,4 +67,12 @@ pub struct UserListWith {
     pub is_del: Option<bool>,
     pub page: u32,
     pub page_size: u32,
+}
+#[derive(Default)]
+pub struct UserLoginMeta {
+    pub email: String,
+    pub password: String,
+    pub ip: String,
+    pub uai: uap::UserAgentInfo,
+    pub ua: String,
 }

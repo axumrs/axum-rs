@@ -14,6 +14,7 @@ pub mod password;
 pub mod rdb;
 mod resp;
 pub mod serde_with;
+pub mod uap;
 pub mod web_api;
 
 pub use crate::config::*;

@@ -20,7 +20,8 @@ pub fn init() -> Router {
         .route("/:name", get(super::tag::detail));
 
     let user_router = Router::new()
-        .route("/", get(super::user::index))
+        .route("/online_derive", get(super::user::online_derive))
+        .route("/login_log", get(super::user::login_log))
         .route("/subscribe", get(super::user::subscribe))
         .route("/logout", get(super::user::logout))
         .layer(from_extractor::<UserAuth>());

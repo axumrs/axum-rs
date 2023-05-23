@@ -1,16 +1,49 @@
 use std::sync::Arc;
 
-use axum::Extension;
+use axum::{extract::Query, Extension};
 
 use crate::{
-    handler_helper::log_error, jwt, middleware::UserAuth, model::State, rdb, JsonRespone, Response,
-    Result,
+    db::{user_login_log, Paginate},
+    handler_helper::{get_conn, log_error},
+    jwt,
+    middleware::UserAuth,
+    model::{self, State},
+    rdb, JsonRespone, Response, Result,
 };
 
-pub async fn index(Extension(state): Extension<Arc<State>>) -> Result<JsonRespone<String>> {
-    let handler_name = "web/user/index";
+pub async fn online_derive(
+    Extension(state): Extension<Arc<State>>,
+    UserAuth(cd): UserAuth,
+) -> Result<JsonRespone<Vec<jwt::UserClaimsData>>> {
+    let handler_name = "web/user/online_derive";
 
-    Ok(Response::ok(handler_name.to_string()).to_json())
+    let list = rdb::user::get_online_list(&state.rds, &state.cfg, &cd.email)
+        .await
+        .map_err(log_error(handler_name))?;
+
+    Ok(Response::ok(list).to_json())
+}
+
+pub async fn login_log(
+    Extension(state): Extension<Arc<State>>,
+    UserAuth(cd): UserAuth,
+    Query(frm): Query<crate::form::PaginateForm>,
+) -> Result<JsonRespone<Paginate<model::UserLoginLogFull>>> {
+    let handler_name = "web/user/login_log";
+
+    let conn = get_conn(&state);
+    let p = user_login_log::list(
+        &conn,
+        &model::PaginateWith {
+            page: frm.page,
+            page_size: frm.page_size,
+        },
+        cd.id,
+    )
+    .await
+    .map_err(log_error(handler_name))?;
+
+    Ok(Response::ok(p).to_json())
 }
 
 pub async fn subscribe(

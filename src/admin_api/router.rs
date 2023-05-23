@@ -78,7 +78,9 @@ pub fn init() -> Router {
         )
         .route("/freeze/:id", put(super::user::freeze))
         .route("/active/:id", put(super::user::active))
-        .route("/pending/:id", put(super::user::pending));
+        .route("/pending/:id", put(super::user::pending))
+        .route("/online/:email", get(super::user::online_drive))
+        .route("/login_log/:id", get(super::user::login_log));
 
     Router::new()
         .nest("/subject", subject_router)

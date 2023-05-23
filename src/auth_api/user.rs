@@ -11,7 +11,7 @@ use crate::{
     handler_helper::{get_conn, log_error},
     jwt::{self, AuthBody},
     model::{self, State},
-    rdb, uap, Error, IDResponse, JsonRespone, Response, Result,
+    rdb, uap, uuid, Error, IDResponse, JsonRespone, Response, Result,
 };
 
 pub async fn register(
@@ -99,21 +99,20 @@ pub async fn login(
     // db
     let conn = get_conn(&state);
     let uai = uap::parse(user_agent.as_str()).map_err(log_error(handler_name))?;
-    let u = user::login(
-        &conn,
-        &model::UserLoginMeta {
-            email: frm.email,
-            password: frm.password,
-            ip: frm.ip,
-            uai,
-            ua: user_agent.to_string(),
-        },
-    )
-    .await
-    .map_err(log_error(handler_name))?;
+    let login_meta = model::UserLoginMeta {
+        email: frm.email,
+        password: frm.password,
+        ip: frm.ip,
+        uai: uai.clone(),
+        ua: user_agent.to_string(),
+    };
+    let (u, login_id) = user::login(&conn, &login_meta)
+        .await
+        .map_err(log_error(handler_name))?;
 
     let email = u.email.clone();
     let allow_driver = u.allow_device_num;
+    let online_id = uuid::new();
 
     let cd = jwt::UserClaimsData {
         id: u.id,
@@ -126,6 +125,10 @@ pub async fn login(
         points: u.points,
         allow_device_num: u.allow_device_num,
         available_device_num,
+        login_id,
+        uai,
+        online_id: online_id.clone(),
+        ip: login_meta.ip.clone(),
     };
 
     // rds: 添加到在线设备数、写入登录设置
@@ -135,9 +138,16 @@ pub async fn login(
     rdb::user::set_jwt_exp(&state.rds, &state.cfg, &email, user_jwt_exp as u8)
         .await
         .map_err(log_error(handler_name))?;
-    rdb::user::set_online(&state.rds, &state.cfg, &email, &cd, user_jwt_exp)
-        .await
-        .map_err(log_error(handler_name))?;
+    rdb::user::set_online(
+        &state.rds,
+        &state.cfg,
+        &email,
+        &cd,
+        user_jwt_exp,
+        &online_id,
+    )
+    .await
+    .map_err(log_error(handler_name))?;
 
     // token
     let auth_body = jwt::token::encode(

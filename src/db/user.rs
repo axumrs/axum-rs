@@ -249,7 +249,7 @@ pub async fn list(
 pub async fn login<'a>(
     conn: &'a sqlx::MySqlPool,
     meta: &'a model::UserLoginMeta,
-) -> Result<model::User> {
+) -> Result<(model::User, u64)> {
     let mut tx = conn.begin().await.map_err(Error::from)?;
 
     let u = find(&mut tx, &model::UserFindBy::Email(&meta.email), Some(false)).await?;
@@ -336,5 +336,5 @@ pub async fn login<'a>(
 
     tx.commit().await.map_err(Error::from)?;
 
-    Ok(u)
+    Ok((u, id))
 }

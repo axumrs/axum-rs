@@ -6,11 +6,12 @@ use axum::{
 };
 
 use crate::{
-    db::{user, Paginate},
+    db::{user, user_login_log, Paginate},
     form::user as form,
     handler_helper::{get_conn, log_error},
+    jwt,
     model::{self, State},
-    Error, IDResponse, JsonRespone, Response, Result,
+    rdb, Error, IDResponse, JsonRespone, Response, Result,
 };
 
 pub async fn list(
@@ -179,4 +180,39 @@ pub async fn pending(
         .map_err(log_error(handler_name))?;
 
     Ok(Response::ok(IDResponse { id }).to_json())
+}
+
+pub async fn online_drive(
+    Extension(state): Extension<Arc<State>>,
+    Path(email): Path<String>,
+) -> Result<JsonRespone<Vec<jwt::UserClaimsData>>> {
+    let handler_name = "admin/user/online_drive";
+
+    let list = rdb::user::get_online_list(&state.rds, &state.cfg, &email)
+        .await
+        .map_err(log_error(handler_name))?;
+
+    Ok(Response::ok(list).to_json())
+}
+
+pub async fn login_log(
+    Extension(state): Extension<Arc<State>>,
+    Path(user_id): Path<u32>,
+    Query(frm): Query<crate::form::PaginateForm>,
+) -> Result<JsonRespone<Paginate<model::UserLoginLogFull>>> {
+    let handler_name = "admin/user/login_log";
+
+    let conn = get_conn(&state);
+    let p = user_login_log::list(
+        &conn,
+        &model::PaginateWith {
+            page: frm.page,
+            page_size: frm.page_size,
+        },
+        user_id,
+    )
+    .await
+    .map_err(log_error(handler_name))?;
+
+    Ok(Response::ok(p).to_json())
 }

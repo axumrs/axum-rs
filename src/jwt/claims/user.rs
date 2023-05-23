@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::model;
+use crate::{model, uap};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct UserClaimsData {
@@ -14,4 +14,8 @@ pub struct UserClaimsData {
     pub points: u32,
     pub allow_device_num: u8,
     pub available_device_num: u8,
+    pub login_id: u64,
+    pub online_id: String,
+    pub ip: String,
+    pub uai: uap::UserAgentInfo,
 }

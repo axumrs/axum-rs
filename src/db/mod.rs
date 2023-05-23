@@ -5,6 +5,7 @@ pub mod subject;
 pub mod tag;
 pub mod topic;
 pub mod user;
+pub mod user_login_log;
 
 pub const DEFAULT_PAGE_SIZE: u32 = 30;
 pub const MAX_PAGE_SIZE: u32 = 500;

@@ -1,10 +1,11 @@
+use serde::{Deserialize, Serialize};
 use uaparser::{Parser, UserAgentParser};
 
 use crate::{Error, Result};
 
 const DEFAULT_YAML_PATH: &str = "./ua-reg.yaml";
 
-#[derive(Default)]
+#[derive(Default, Serialize, Deserialize, Debug, Clone)]
 pub struct UserAgentInfo {
     pub device: String,
     pub os: String,

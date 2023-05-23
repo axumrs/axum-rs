@@ -54,6 +54,9 @@ impl Error {
             Kind::NoAvailableDevice,
         )
     }
+    pub fn no_token() -> Self {
+        Self::from_str("未提供有效凭证", Kind::Jwt)
+    }
     pub fn code(&self) -> i32 {
         match &self.kind {
             &Kind::Jwt => 9527,

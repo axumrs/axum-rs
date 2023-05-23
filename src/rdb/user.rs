@@ -73,3 +73,9 @@ pub async fn set_online(
     let secs = (exp_mins * 60) as usize;
     super::set_json_ex(client, &key, cd, secs).await
 }
+
+pub async fn del_online(client: &Client, cfg: &Config, email: &str, online_id: &str) -> Result<()> {
+    let key = format!("{}::{}", email, online_id);
+    let key = super::user_keyname(cfg, &cfg.users.redis_online_prefix, &key);
+    super::del(client, &key).await
+}

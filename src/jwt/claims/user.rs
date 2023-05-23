@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{model, uap};
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Default)]
 pub struct UserClaimsData {
     pub id: u32,
     pub email: String,

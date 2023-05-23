@@ -1,4 +1,6 @@
-use axum::{routing::get, Router};
+use axum::{middleware::from_extractor, routing::get, Router};
+
+use crate::middleware::UserAuth;
 
 pub fn init() -> Router {
     let subject_router = Router::new()
@@ -17,8 +19,15 @@ pub fn init() -> Router {
         .route("/", get(super::tag::list))
         .route("/:name", get(super::tag::detail));
 
+    let user_router = Router::new()
+        .route("/", get(super::user::index))
+        .route("/subscribe", get(super::user::subscribe))
+        .route("/logout", get(super::user::logout))
+        .layer(from_extractor::<UserAuth>());
+
     Router::new()
         .nest("/subject", subject_router)
         .nest("/topic", topic_router)
         .nest("/tag", tag_router)
+        .nest("/user", user_router)
 }

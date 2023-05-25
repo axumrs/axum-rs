@@ -17,6 +17,7 @@ pub enum Kind {
     Validator,
     UserAgent,
     NoAvailableDevice,
+    Base16,
 }
 #[derive(Debug)]
 pub struct Error {
@@ -131,6 +132,12 @@ impl From<validator::ValidationErrors> for Error {
 impl From<uaparser::Error> for Error {
     fn from(e: uaparser::Error) -> Self {
         Self::from_str(&e.to_string(), Kind::UserAgent)
+    }
+}
+
+impl From<base16ct::Error> for Error {
+    fn from(e: base16ct::Error) -> Self {
+        Self::from_str(&e.to_string(), Kind::Base16)
     }
 }
 

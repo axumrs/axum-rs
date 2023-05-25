@@ -1,5 +1,6 @@
 pub mod admin;
 mod del_restore;
+pub mod order;
 mod paginate;
 pub mod subject;
 pub mod tag;

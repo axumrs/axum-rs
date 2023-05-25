@@ -1,4 +1,5 @@
 mod admin;
+mod order;
 mod state;
 mod subject;
 mod tag;
@@ -7,6 +8,7 @@ mod user;
 mod user_login_log;
 
 pub use admin::*;
+pub use order::*;
 pub use state::*;
 pub use subject::*;
 pub use tag::*;

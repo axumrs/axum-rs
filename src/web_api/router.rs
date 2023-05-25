@@ -24,6 +24,8 @@ pub fn init() -> Router {
         .route("/login_log", get(super::user::login_log))
         .route("/subscribe", get(super::user::subscribe))
         .route("/logout", get(super::user::logout))
+        .route("/order", get(super::order::list).post(super::order::create))
+        .route("/order/:id", get(super::order::find))
         .layer(from_extractor::<UserAuth>());
 
     Router::new()

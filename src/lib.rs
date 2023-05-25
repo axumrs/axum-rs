@@ -10,6 +10,7 @@ pub mod jwt;
 pub mod md;
 pub mod middleware;
 pub mod model;
+pub mod order_meta;
 pub mod password;
 pub mod rdb;
 mod resp;

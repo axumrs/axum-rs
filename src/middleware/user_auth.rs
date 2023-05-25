@@ -17,7 +17,7 @@ where
 {
     type Rejection = Error;
 
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         tracing::debug!("user_auth middleware");
 
         let auth_header = parts

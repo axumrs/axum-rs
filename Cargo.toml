@@ -30,3 +30,6 @@ jsonwebtoken="8"
 headers="0.3"
 uaparser="0.6"
 uuid =  {  version = "1", features = ["v4", "serde"]}
+xid="1"
+sha2="0.10"
+base16ct="0.2"

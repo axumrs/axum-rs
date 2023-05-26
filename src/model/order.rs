@@ -89,3 +89,15 @@ pub struct OrderListWith {
     pub page: u32,
     pub page_size: u32,
 }
+
+// [{"type":"订阅","service":"成为尊贵的订阅用户","serviceID":1,"price":1,"number":1,"idx":1,"id":"订阅成为尊贵的订阅用户1"}]
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct OrderSnapItem {
+    #[serde(rename = "type")]
+    pub types: String,
+    pub service: String,
+    #[serde(rename = "serviceID")]
+    pub server_id: u32,
+    pub price: u32,
+    pub number: u32,
+}

@@ -78,3 +78,34 @@ pub async fn list(
 
     Ok(Response::ok(p).to_json())
 }
+
+pub async fn pay(
+    Extension(state): Extension<Arc<State>>,
+    UserAuth(claims): UserAuth,
+    Json(frm): Json<crate::form::pay::Create>,
+) -> Result<JsonRespone<ID64Response>> {
+    let handler_name = "web/order/pay";
+
+    let conn = get_conn(&state);
+
+    order::update_with_pay(
+        &conn,
+        frm.order_id,
+        claims.id,
+        &model::Pay {
+            order_id: frm.order_id,
+            user_id: claims.id,
+            price: frm.price,
+            currency: frm.currency,
+            types: frm.types,
+            tx_id: frm.tx_id,
+            status: frm.status,
+            dateline: chrono::Local::now(),
+            ..Default::default()
+        },
+    )
+    .await
+    .map_err(log_error(handler_name))?;
+
+    Ok(Response::ok(ID64Response { id: frm.order_id }).to_json())
+}

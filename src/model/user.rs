@@ -76,3 +76,9 @@ pub struct UserLoginMeta {
     pub uai: uap::UserAgentInfo,
     pub ua: String,
 }
+
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::Type, sqlx::FromRow)]
+pub struct UserSubscribeInfo {
+    pub types: UserTypes,
+    pub sub_exp: chrono::DateTime<chrono::Local>,
+}

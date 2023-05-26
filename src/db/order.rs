@@ -1,6 +1,6 @@
 use crate::{model, Error, Result};
 
-use super::Paginate;
+use super::{pay, Paginate};
 
 pub async fn add(conn: &sqlx::MySqlPool, m: &model::Order, s: &model::OrderSnap) -> Result<u64> {
     let mut tx = conn.begin().await.map_err(Error::from)?;
@@ -31,6 +31,35 @@ pub async fn add(conn: &sqlx::MySqlPool, m: &model::Order, s: &model::OrderSnap)
     {
         tx.rollback().await.map_err(Error::from)?;
         return Err(Error::from(err));
+    }
+
+    // 解析交易快照
+    let snap_items: Vec<model::OrderSnapItem> = match serde_json::from_str(&s.snap) {
+        Ok(r) => r,
+        Err(err) => {
+            tx.rollback().await.map_err(Error::from)?;
+            return Err(Error::from(err));
+        }
+    };
+
+    for item in snap_items.iter() {
+        let service_type = if &item.types == "订阅" {
+            model::UserPurchasedServiceType::Subscriber
+        } else {
+            model::UserPurchasedServiceType::Subject
+        };
+        if let Err(err) = sqlx::query("INSERT INTO user_purchased_service (order_id, user_id, service_id, service_type, server_num, dateline,status) VALUES(?,?,?,?,?,?,?)")
+        .bind(id)
+        .bind(&m.user_id)
+        .bind(&item.server_id)
+        .bind(&service_type)
+        .bind(&item.number)
+        .bind(chrono::Local::now())
+        .bind(&model::UserPurchasedServiceStatus::Pending)
+        .execute(&mut tx).await {
+            tx.rollback().await.map_err(Error::from)?;
+            return Err(Error::from(err));
+        }
     }
 
     tx.commit().await.map_err(Error::from)?;
@@ -152,4 +181,109 @@ pub async fn list(
         .map_err(Error::from)?;
 
     Ok(Paginate::new(count.0 as u32, w.page, w.page_size, data))
+}
+
+pub async fn update_with_pay(
+    conn: &sqlx::MySqlPool,
+    id: u64,
+    user_id: u32,
+    pay: &model::Pay,
+) -> Result<u64> {
+    let mut tx = conn.begin().await.map_err(Error::from)?;
+
+    // 已购买服务
+    let purchased_services:Vec<model::UserPurchasedService> = match sqlx::query_as("SELECT id, order_id, user_id, service_id, service_type, server_num, status, dateline FROM user_purchased_service WHERE order_id=? AND user_id=?").bind(id).bind(user_id).fetch_all(&mut tx).await {
+    Ok(list) => list,
+    Err(err) => {
+            tx.rollback().await.map_err(Error::from)?;
+            return Err(Error::from(err));
+        }
+   };
+
+    let process_services = match &pay.status {
+        &model::PayStatus::Finished => true,
+        _ => false,
+    };
+    if process_services {
+        for service in purchased_services.iter() {
+            // 更新状态
+            if let Err(err) = sqlx::query(
+                "UPDATE user_purchased_service SET status=? WHERE order_id=? AND user_id=?",
+            )
+            .bind(model::UserPurchasedServiceStatus::Finished)
+            .bind(id)
+            .bind(user_id)
+            .execute(&mut tx)
+            .await
+            {
+                tx.rollback().await.map_err(Error::from)?;
+                return Err(Error::from(err));
+            }
+            // 处理订阅
+            match &service.service_type {
+                &model::UserPurchasedServiceType::Subject => {}
+                &model::UserPurchasedServiceType::Subscriber => {
+                    let user_subscribe_info: model::UserSubscribeInfo =
+                        match sqlx::query_as("SELECT types,sub_exp FROM `user` WHERE id=?")
+                            .bind(user_id)
+                            .fetch_one(&mut tx)
+                            .await
+                        {
+                            Ok(i) => i,
+                            Err(err) => {
+                                tx.rollback().await.map_err(Error::from)?;
+                                return Err(Error::from(err));
+                            }
+                        };
+                    let now = chrono::Local::now();
+                    let sub_exp_base = if (&user_subscribe_info.sub_exp).lt(&now) {
+                        &now
+                    } else {
+                        &user_subscribe_info.sub_exp
+                    };
+                    let sub_exp = *sub_exp_base + chrono::Duration::days(30);
+                    if let Err(err) = sqlx::query("UPDATE `user` SET types=?, sub_exp=? WHERE id=?")
+                        .bind(model::UserTypes::Subscriber)
+                        .bind(sub_exp)
+                        .bind(user_id)
+                        .execute(&mut tx)
+                        .await
+                    {
+                        tx.rollback().await.map_err(Error::from)?;
+                        return Err(Error::from(err));
+                    }
+                }
+            }
+        }
+    }
+
+    //插入支付表
+    let pay_id = match pay::add_result(&mut tx, pay).await {
+        Ok(r) => r.last_insert_id(),
+        Err(err) => {
+            tx.rollback().await.map_err(Error::from)?;
+            return Err(Error::from(err));
+        }
+    };
+
+    // 设置状态
+    let order_status = match &pay.status {
+        &model::PayStatus::Finished => model::OrderStatus::Finished,
+        _ => model::OrderStatus::Pending,
+    };
+
+    // 更新订单表
+    if let Err(err) = sqlx::query("UPDATE `order` SET status=?,pay_id=? WHERE id=?")
+        .bind(order_status)
+        .bind(pay_id)
+        .bind(id)
+        .execute(&mut tx)
+        .await
+    {
+        tx.rollback().await.map_err(Error::from)?;
+        return Err(Error::from(err));
+    }
+
+    tx.commit().await.map_err(Error::from)?;
+    Ok(id)
 }

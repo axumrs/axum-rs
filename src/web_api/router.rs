@@ -1,4 +1,8 @@
-use axum::{middleware::from_extractor, routing::get, Router};
+use axum::{
+    middleware::from_extractor,
+    routing::{get, post},
+    Router,
+};
 
 use crate::middleware::UserAuth;
 
@@ -26,6 +30,7 @@ pub fn init() -> Router {
         .route("/logout", get(super::user::logout))
         .route("/order", get(super::order::list).post(super::order::create))
         .route("/order/:id", get(super::order::find))
+        .route("/order/pay", post(super::order::pay))
         .layer(from_extractor::<UserAuth>());
 
     Router::new()

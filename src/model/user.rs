@@ -82,3 +82,16 @@ pub struct UserSubscribeInfo {
     pub types: UserTypes,
     pub sub_exp: chrono::DateTime<chrono::Local>,
 }
+
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::Type, sqlx::FromRow)]
+pub struct UserBasicInfo {
+    pub id: u32,
+    pub email: String,
+    pub nickname: String,
+    pub dateline: chrono::DateTime<chrono::Local>,
+    pub types: UserTypes,
+    pub sub_exp: chrono::DateTime<chrono::Local>,
+    pub points: u32,
+    pub allow_device_num: u8,
+    pub jwt_exp: u8,
+}

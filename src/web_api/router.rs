@@ -26,11 +26,12 @@ pub fn init() -> Router {
     let user_router = Router::new()
         .route("/online_derive", get(super::user::online_derive))
         .route("/login_log", get(super::user::login_log))
-        .route("/subscribe", get(super::user::subscribe))
         .route("/logout", get(super::user::logout))
         .route("/order", get(super::order::list).post(super::order::create))
         .route("/order/:id", get(super::order::find))
         .route("/order/pay", post(super::order::pay))
+        .route("/info", get(super::user::basic_info))
+        .route("/check-in", get(super::user::check_in))
         .layer(from_extractor::<UserAuth>());
 
     Router::new()

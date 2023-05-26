@@ -1,6 +1,6 @@
-use crate::{model, password, Error, Result};
-
 use super::Paginate;
+use crate::{model, password, Error, Result};
+use chrono::{Local, TimeZone};
 
 pub async fn exists(conn: &sqlx::MySqlPool, email: &str, id: Option<u32>) -> Result<bool> {
     let mut q = sqlx::QueryBuilder::new("SELECT COUNT(*) FROM `user` WHERE email=");
@@ -337,4 +337,76 @@ pub async fn login<'a>(
     tx.commit().await.map_err(Error::from)?;
 
     Ok((u, id))
+}
+
+pub async fn basic_info(conn: &sqlx::MySqlPool, id: u32) -> Result<model::UserBasicInfo> {
+    let u = sqlx::query_as("SELECT id, email, nickname, dateline, types, sub_exp, points,allow_device_num,jwt_exp FROM `user` WHERE is_del=? AND status=? AND id=? LIMIT 1")
+        .bind(&false)
+        .bind(&model::UserStatus::Actived)
+        .bind(&id)
+        .fetch_one(conn)
+        .await
+        .map_err(Error::from)?;
+
+    Ok(u)
+}
+
+pub async fn check_in(conn: &sqlx::MySqlPool, id: u32, points: u32) -> Result<u64> {
+    let mut tx = conn.begin().await.map_err(Error::from)?;
+    let fmt = "%Y-%m-%d %H:%M:%S";
+    let now = Local::now().format("%Y-%m-%d").to_string();
+
+    let start = format!("{} 00:00:00", now);
+    let start = Local.datetime_from_str(&start, fmt).map_err(Error::from)?;
+
+    let end = format!("{} 23:59:59", now);
+    let end = Local.datetime_from_str(&end, fmt).map_err(Error::from)?;
+
+    let count: (i64,) = match sqlx::query_as(
+        "SELECT COUNT(*) FROM user_check_in WHERE user_id=? AND (dateline BETWEEN ? AND ?)",
+    )
+    .bind(id)
+    .bind(&start)
+    .bind(&end)
+    .fetch_one(&mut tx)
+    .await
+    {
+        Ok(r) => r,
+        Err(err) => {
+            tx.rollback().await.map_err(Error::from)?;
+            return Err(Error::from(err));
+        }
+    };
+
+    if count.0 > 0 {
+        tx.rollback().await.map_err(Error::from)?;
+        return Err(Error::already_exists("你今天已经签过到了"));
+    }
+
+    let id = match sqlx::query("INSERT INTO user_check_in(user_id,points,dateline) VALUES(?,?,?)")
+        .bind(id)
+        .bind(points)
+        .bind(&now)
+        .execute(&mut tx)
+        .await
+    {
+        Ok(r) => r.last_insert_id(),
+        Err(err) => {
+            tx.rollback().await.map_err(Error::from)?;
+            return Err(Error::from(err));
+        }
+    };
+
+    if let Err(err) = sqlx::query("UPDATE `user` SET points=points+? WHERE id=?")
+        .bind(points)
+        .bind(id)
+        .execute(&mut tx)
+        .await
+    {
+        tx.rollback().await.map_err(Error::from)?;
+        return Err(Error::from(err));
+    }
+
+    tx.commit().await.map_err(Error::from)?;
+    Ok(id)
 }

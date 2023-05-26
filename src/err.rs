@@ -18,6 +18,7 @@ pub enum Kind {
     UserAgent,
     NoAvailableDevice,
     Base16,
+    Chrono,
 }
 #[derive(Debug)]
 pub struct Error {
@@ -138,6 +139,11 @@ impl From<uaparser::Error> for Error {
 impl From<base16ct::Error> for Error {
     fn from(e: base16ct::Error) -> Self {
         Self::from_str(&e.to_string(), Kind::Base16)
+    }
+}
+impl From<chrono::ParseError> for Error {
+    fn from(e: chrono::ParseError) -> Self {
+        Self::with_cause(Box::new(e), Kind::Chrono)
     }
 }
 

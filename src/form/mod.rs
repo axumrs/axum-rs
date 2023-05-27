@@ -4,6 +4,7 @@ pub mod admin;
 pub mod auth;
 pub mod order;
 pub mod pay;
+pub mod pay_apply;
 pub mod subject;
 pub mod tag;
 pub mod topic;

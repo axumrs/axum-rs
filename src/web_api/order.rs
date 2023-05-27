@@ -4,6 +4,7 @@ use axum::{
     extract::{Path, Query},
     Extension, Json,
 };
+use validator::Validate;
 
 use crate::{
     db::{order, Paginate},
@@ -85,6 +86,10 @@ pub async fn pay(
     Json(frm): Json<crate::form::pay::Create>,
 ) -> Result<JsonRespone<ID64Response>> {
     let handler_name = "web/order/pay";
+
+    frm.validate()
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
 
     let conn = get_conn(&state);
 

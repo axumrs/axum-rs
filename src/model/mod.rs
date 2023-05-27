@@ -1,6 +1,7 @@
 mod admin;
 mod order;
 mod pay;
+mod pay_apply;
 mod state;
 mod subject;
 mod tag;
@@ -13,6 +14,7 @@ mod user_purchased_service;
 pub use admin::*;
 pub use order::*;
 pub use pay::*;
+pub use pay_apply::*;
 pub use state::*;
 pub use subject::*;
 pub use tag::*;

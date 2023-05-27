@@ -63,6 +63,7 @@ impl Error {
         match &self.kind {
             &Kind::Jwt => 9527,
             &Kind::Validator => 9528,
+            &Kind::NotFound => 9529,
             _ => -1,
         }
     }

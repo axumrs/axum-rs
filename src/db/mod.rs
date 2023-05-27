@@ -3,6 +3,7 @@ mod del_restore;
 pub mod order;
 mod paginate;
 pub mod pay;
+pub mod pay_apply;
 pub mod subject;
 pub mod tag;
 pub mod topic;

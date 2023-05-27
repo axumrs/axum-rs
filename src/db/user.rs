@@ -410,3 +410,116 @@ pub async fn check_in(conn: &sqlx::MySqlPool, id: u32, points: u32) -> Result<u6
     tx.commit().await.map_err(Error::from)?;
     Ok(id)
 }
+
+fn check_pwd(u: &model::User, pwd: &str) -> Result<bool> {
+    password::verify(pwd, &u.password)
+}
+
+pub async fn change_pwd(conn: &sqlx::MySqlPool, pwd: &str, new_pwd: &str, id: u32) -> Result<u64> {
+    let u = find(conn, &model::UserFindBy::ID(id), Some(false)).await?;
+    if u.is_none() {
+        return Err(Error::not_found("不存在的用户"));
+    }
+
+    let u = u.unwrap();
+
+    if !check_pwd(&u, pwd)? {
+        return Err(Error::not_found("密码错误"));
+    }
+
+    let hashed_new_pwd = password::hash(new_pwd)?;
+
+    let aff = sqlx::query("UPDATE `user` SET password=? WHERE id=?")
+        .bind(&hashed_new_pwd)
+        .bind(id)
+        .execute(conn)
+        .await
+        .map_err(Error::from)?
+        .rows_affected();
+
+    Ok(aff)
+}
+
+pub async fn update_profile(conn: &sqlx::MySqlPool, up: &model::User2Profile) -> Result<u64> {
+    let u = find(conn, &model::UserFindBy::ID(up.id), Some(false)).await?;
+    if u.is_none() {
+        return Err(Error::not_found("不存在的用户"));
+    }
+
+    let u = u.unwrap();
+
+    if !check_pwd(&u, &up.password)? {
+        return Err(Error::not_found("密码错误"));
+    }
+
+    let mut tx = conn.begin().await.map_err(Error::from)?;
+    let email_count: (i64,) =
+        match sqlx::query_as("SELECT COUNT(*) FROM `user` WHERE email=? AND id<>?")
+            .bind(&up.email)
+            .bind(&up.id)
+            .fetch_one(&mut tx)
+            .await
+        {
+            Ok(r) => r,
+            Err(err) => {
+                tx.rollback().await.map_err(Error::from)?;
+                return Err(Error::from(err));
+            }
+        };
+
+    let nickname_count: (i64,) =
+        match sqlx::query_as("SELECT COUNT(*) FROM `user` WHERE nickname=? AND id<>?")
+            .bind(&up.nickname)
+            .bind(&up.id)
+            .fetch_one(&mut tx)
+            .await
+        {
+            Ok(r) => r,
+            Err(err) => {
+                tx.rollback().await.map_err(Error::from)?;
+                return Err(Error::from(err));
+            }
+        };
+
+    if email_count.0 > 0 {
+        tx.rollback().await.map_err(Error::from)?;
+        return Err(Error::already_exists("email已存在"));
+    }
+
+    if nickname_count.0 > 0 {
+        tx.rollback().await.map_err(Error::from)?;
+        return Err(Error::already_exists("昵称已存在"));
+    }
+
+    // email, nickname, password, status, dateline, types, sub_exp, points, is_del,allow_device_num,jwt_exp
+    let q = match &u.types {
+        &model::UserTypes::Normal => sqlx::query("UPDATE `user` SET email=?,nickname=? WHERE id=?")
+            .bind(&up.email)
+            .bind(&up.nickname)
+            .bind(&up.id),
+        &model::UserTypes::Subscriber => sqlx::query(
+            "UPDATE `user` SET email=?,nickname=?,allow_device_num=?,jwt_exp=? WHERE id=?",
+        )
+        .bind(&up.email)
+        .bind(&up.nickname)
+        .bind(&up.allow_device_num)
+        .bind(&up.jwt_exp)
+        .bind(&up.id),
+    };
+
+    let aff = match q.execute(&mut tx).await {
+        Ok(r) => r.rows_affected(),
+        Err(err) => {
+            tx.rollback().await.map_err(Error::from)?;
+            return Err(Error::from(err));
+        }
+    };
+
+    tx.commit().await.map_err(Error::from)?;
+    Ok(aff)
+}
+
+pub async fn profile(conn: &sqlx::MySqlPool, id: u32) -> Result<Option<model::User2Profile>> {
+    let up = sqlx::query_as("SELECT id, email, nickname, password, allow_device_num, jwt_exp FROM `user` WHERE is_del=? AND status=? AND id=? LIMIT 1").bind(false).bind(&model::UserStatus::Actived).bind(id).fetch_optional(conn).await.map_err(Error::from)?;
+    Ok(up)
+}

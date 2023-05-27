@@ -64,6 +64,7 @@ impl Error {
             &Kind::Jwt => 9527,
             &Kind::Validator => 9528,
             &Kind::NotFound => 9529,
+            &Kind::AlreadyExists => 9530,
             _ => -1,
         }
     }

@@ -54,3 +54,30 @@ pub struct Update {
     #[validate(range(min = 0, max = 120))]
     pub jwt_exp: u8,
 }
+
+#[derive(Deserialize, Validate)]
+pub struct Profile {
+    pub id: u32,
+    #[validate(length(max = 255))]
+    pub email: String,
+    #[validate(length(max = 30))]
+    pub nickname: String,
+    #[validate(length(min = 6))]
+    pub password: String,
+    #[validate(range(min = 1, max = 3))]
+    pub allow_device_num: u8,
+    #[validate(range(min = 0, max = 120))]
+    pub jwt_exp: u8,
+}
+
+#[derive(Deserialize, Validate)]
+pub struct ChangePassword {
+    #[validate(length(min = 6))]
+    pub password: String,
+
+    #[validate(length(min = 6))]
+    pub new_password: String,
+
+    #[validate(must_match(other = "new_password", message = "两次输入的密码不一致"))]
+    pub re_password: String,
+}

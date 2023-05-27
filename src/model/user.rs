@@ -95,3 +95,14 @@ pub struct UserBasicInfo {
     pub allow_device_num: u8,
     pub jwt_exp: u8,
 }
+
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::Type, sqlx::FromRow)]
+pub struct User2Profile {
+    pub id: u32,
+    pub email: String,
+    pub nickname: String,
+    #[serde(skip_serializing)]
+    pub password: String,
+    pub allow_device_num: u8,
+    pub jwt_exp: u8,
+}

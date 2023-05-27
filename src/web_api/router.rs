@@ -34,6 +34,7 @@ pub fn init() -> Router {
         .route("/check-in", get(super::user::check_in))
         .route("/pay-apply", post(super::pay_apply::add))
         .route("/pay-apply/:order_id", get(super::pay_apply::find))
+        .route("/pay/:id", get(super::pay::find))
         .layer(from_extractor::<UserAuth>());
 
     Router::new()

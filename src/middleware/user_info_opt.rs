@@ -14,13 +14,15 @@ where
     type Rejection = Error;
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        tracing::debug!("user_info_opt middleware");
+        // tracing::debug!("user_info_opt middleware");
 
         let cd = get_auth::claims_from_header(
             &parts.headers,
             parts.extensions.get::<Arc<State>>().unwrap(),
         )
         .await?;
+
+        // tracing::debug!("{:?}", cd);
 
         Ok(Self(cd))
     }

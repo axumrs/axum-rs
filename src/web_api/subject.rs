@@ -6,9 +6,10 @@ use axum::{
 };
 
 use crate::{
-    db::{subject, Paginate},
+    db::{subject, user_purchased_subject, Paginate},
     form::subject as form,
     handler_helper::{get_conn, log_error},
+    middleware::{PurchaseSubject, UserInfoOption},
     model::{self, State},
     Error, JsonRespone, Response, Result,
 };
@@ -37,10 +38,14 @@ pub async fn top4(
 pub async fn list(
     Extension(state): Extension<Arc<State>>,
     Query(frm): Query<form::List>,
-) -> Result<JsonRespone<Paginate<model::Subject>>> {
+    UserInfoOption(user_info): UserInfoOption,
+) -> Result<JsonRespone<Paginate<model::SubjectIfPurchased>>> {
     let handler_name = "web/subject/list";
 
+    // tracing::debug!("{:?}", user_info);
+
     let conn = get_conn(&state);
+
     let p = subject::list(
         &conn,
         model::SubjectListWith {
@@ -53,14 +58,52 @@ pub async fn list(
     .await
     .map_err(log_error(handler_name))?;
 
-    Ok(Response::ok(p).to_json())
+    let mut subject_ids = Vec::with_capacity(p.data.len());
+    for s in p.data.iter() {
+        subject_ids.push(s.id);
+    }
+
+    let user_purchased_subject_list = match user_info {
+        Some(claims) => {
+            // tracing::debug!("claims: {:?}", claims);
+            user_purchased_subject::select_in(&conn, &subject_ids, claims.data.id, Some(false))
+                .await
+                .map_err(log_error(handler_name))?
+        }
+        None => vec![],
+    };
+
+    let mut subject_if_purchased_list: Vec<model::SubjectIfPurchased> =
+        Vec::with_capacity(p.data.len());
+    for s in p.data.iter() {
+        let ups = user_purchased_subject_list.iter().find(|&i| i.id == s.id);
+        tracing::debug!("subject {:?}, ups {:?}", s, ups);
+        if let Some(ups_item) = ups {
+            subject_if_purchased_list.push(ups_item.into());
+        } else {
+            subject_if_purchased_list.push(s.into());
+        }
+    }
+
+    Ok(Response::ok(Paginate::new(
+        p.total,
+        p.page,
+        p.page_size,
+        subject_if_purchased_list,
+    ))
+    .to_json())
 }
 
 pub async fn detail(
     Extension(state): Extension<Arc<State>>,
     Path(slug): Path<String>,
-) -> Result<JsonRespone<model::Subject>> {
+    PurchaseSubject(purchased_subject): PurchaseSubject,
+) -> Result<JsonRespone<model::SubjectIfPurchased>> {
     let handler_name = "web/subject/detail";
+
+    if let Some(purchased_subject) = purchased_subject {
+        return Ok(Response::ok(purchased_subject.into()).to_json());
+    }
 
     let conn = get_conn(&state);
     let s = subject::find(&conn, model::SubjectFindBy::Slug(&slug), Some(false))
@@ -68,7 +111,7 @@ pub async fn detail(
         .map_err(log_error(handler_name))?;
 
     match s {
-        Some(s) => Ok(Response::ok(s).to_json()),
+        Some(s) => Ok(Response::ok(s.into()).to_json()),
         None => Err(Error::not_found("不存在的专题")),
     }
 }

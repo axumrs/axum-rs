@@ -10,6 +10,7 @@ mod user;
 mod user_check_in;
 mod user_login_log;
 mod user_purchased_service;
+mod user_purchased_subject;
 mod user_read_history;
 
 pub use admin::*;
@@ -24,6 +25,7 @@ pub use user::*;
 pub use user_check_in::*;
 pub use user_login_log::*;
 pub use user_purchased_service::*;
+pub use user_purchased_subject::*;
 pub use user_read_history::*;
 
 #[derive(Default)]

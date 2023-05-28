@@ -4,16 +4,21 @@ use axum::{
     Router,
 };
 
-use crate::middleware::{UserAuth, UserReadHistory};
+use crate::middleware::{PurchaseSubject, UserAuth, UserInfoOption, UserReadHistory};
 
 pub fn init() -> Router {
+    let subject_detail_router = Router::new()
+        .route("/:slug", get(super::subject::detail))
+        .layer(from_extractor::<PurchaseSubject>());
+
     let subject_router = Router::new()
         .route("/top4", get(super::subject::top4))
         .route("/", get(super::subject::list))
-        .route("/:slug", get(super::subject::detail));
+        .nest("/", subject_detail_router);
 
     let topic_detail_router = Router::new()
         .route("/:subject_slug/:slug", get(super::topic::detail))
+        .layer(from_extractor::<PurchaseSubject>())
         .layer(from_extractor::<UserReadHistory>());
     let topic_router = Router::new()
         .route("/top10", get(super::topic::top10))
@@ -49,4 +54,5 @@ pub fn init() -> Router {
         .nest("/topic", topic_router)
         .nest("/tag", tag_router)
         .nest("/user", user_router)
+        .layer(from_extractor::<UserInfoOption>())
 }

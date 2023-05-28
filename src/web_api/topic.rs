@@ -9,6 +9,7 @@ use crate::{
     db::{topic, Paginate},
     form::topic as form,
     handler_helper::{get_conn, log_error},
+    middleware::PurchaseSubject,
     model::{self, State},
     Error, JsonRespone, Response, Result,
 };
@@ -62,6 +63,7 @@ pub async fn list(
 pub async fn detail(
     Extension(state): Extension<Arc<State>>,
     Path(frm): Path<form::Detail>,
+    PurchaseSubject(purchased_subject): PurchaseSubject,
 ) -> Result<JsonRespone<model::Topic2WebDetail>> {
     let handler_name = "web/topic/detail";
 
@@ -69,8 +71,19 @@ pub async fn detail(
     let t = topic::detail2web(&conn, &frm.slug, &frm.subject_slug)
         .await
         .map_err(log_error(handler_name))?;
-    match t {
-        Some(t) => Ok(Response::ok(t).to_json()),
-        None => Err(Error::not_found("不存在的文章")),
+    if let Some(t) = t {
+        if t.price > 0 && (!(purchased_subject.is_some() || t.try_readable)) {
+            return Ok(Response::err_with_data(
+                &Error::unpurchased(),
+                model::Topic2WebDetail {
+                    html: "你需要购买".to_string(),
+                    ..t
+                },
+            )
+            .to_json());
+        }
+        return Ok(Response::ok(t).to_json());
     }
+
+    return Err(Error::not_found("不存在的文章"));
 }

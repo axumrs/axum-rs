@@ -345,7 +345,7 @@ pub async fn detail2web(
         return Err(Error::from(err));
     }
 
-    let t = sqlx::query_as("SELECT id, title, slug, try_readable, cover, hit, dateline, html, subject_name, subject_slug, tag_names FROM v_topic_web_detail WHERE slug=? AND subject_slug=? LIMIT 1").bind(slug).bind(subject_slug).fetch_optional(&mut tx).await.map_err(Error::from)?;
+    let t = sqlx::query_as("SELECT id, title, slug, try_readable, cover, hit, dateline, html, subject_name, subject_slug, tag_names, price,subject_id FROM v_topic_web_detail WHERE slug=? AND subject_slug=? LIMIT 1").bind(slug).bind(subject_slug).fetch_optional(&mut tx).await.map_err(Error::from)?;
 
     tx.commit().await.map_err(Error::from)?;
 

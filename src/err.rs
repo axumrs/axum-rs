@@ -20,6 +20,7 @@ pub enum Kind {
     Base16,
     Chrono,
     MustSubscribe,
+    UnPurchased,
 }
 #[derive(Debug)]
 pub struct Error {
@@ -66,6 +67,9 @@ impl Error {
     pub fn must_subscribe_default() -> Self {
         Self::must_subscribe("需要订阅")
     }
+    pub fn unpurchased() -> Self {
+        Self::from_str("你没有购买此专题", Kind::UnPurchased)
+    }
     pub fn code(&self) -> i32 {
         match &self.kind {
             &Kind::Jwt => 9527,
@@ -73,6 +77,7 @@ impl Error {
             &Kind::NotFound => 9529,
             &Kind::AlreadyExists => 9530,
             &Kind::MustSubscribe => 9531,
+            &Kind::UnPurchased => 9532,
             _ => -1,
         }
     }

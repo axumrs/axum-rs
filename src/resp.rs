@@ -32,7 +32,10 @@ impl<T: Serialize> Response<T> {
         Self::failed(code, &e.message)
     }
     pub fn err(e: &Error) -> Self {
-        Self::err_with_code(-1, e)
+        Self::err_with_code(e.code(), e)
+    }
+    pub fn err_with_data(e: &Error, data: T) -> Self {
+        Self::new(e.code(), &e.message, Some(data))
     }
 
     pub fn to_json(self) -> JsonRespone<T> {

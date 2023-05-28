@@ -100,4 +100,6 @@ pub struct Topic2WebDetail {
     pub subject_name: String,
     pub subject_slug: String,
     pub tag_names: String,
+    pub price: u32,
+    pub subject_id: u32,
 }

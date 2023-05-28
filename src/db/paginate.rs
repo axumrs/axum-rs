@@ -1,5 +1,7 @@
 use serde::Serialize;
 
+use crate::model::PaginateWith;
+
 #[derive(Serialize)]
 pub struct Paginate<T: Serialize> {
     pub total: u32,
@@ -19,6 +21,9 @@ impl<T: Serialize> Paginate<T> {
             page_size,
             data,
         }
+    }
+    pub fn with(count: &(i64,), pw: &PaginateWith, data: Vec<T>) -> Self {
+        Self::new(count.0 as u32, pw.page, pw.page_size, data)
     }
     pub fn last(&self) -> u32 {
         self.total_page - 1

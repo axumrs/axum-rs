@@ -19,6 +19,7 @@ pub enum Kind {
     NoAvailableDevice,
     Base16,
     Chrono,
+    MustSubscribe,
 }
 #[derive(Debug)]
 pub struct Error {
@@ -59,12 +60,19 @@ impl Error {
     pub fn no_token() -> Self {
         Self::from_str("未提供有效凭证", Kind::Jwt)
     }
+    pub fn must_subscribe(msg: &str) -> Self {
+        Self::from_str(msg, Kind::MustSubscribe)
+    }
+    pub fn must_subscribe_default() -> Self {
+        Self::must_subscribe("需要订阅")
+    }
     pub fn code(&self) -> i32 {
         match &self.kind {
             &Kind::Jwt => 9527,
             &Kind::Validator => 9528,
             &Kind::NotFound => 9529,
             &Kind::AlreadyExists => 9530,
+            &Kind::MustSubscribe => 9531,
             _ => -1,
         }
     }

@@ -4,7 +4,7 @@ use axum::{
     Router,
 };
 
-use crate::middleware::UserAuth;
+use crate::middleware::{UserAuth, UserReadHistory};
 
 pub fn init() -> Router {
     let subject_router = Router::new()
@@ -12,8 +12,9 @@ pub fn init() -> Router {
         .route("/", get(super::subject::list))
         .route("/:slug", get(super::subject::detail));
 
-    let topic_detail_router =
-        Router::new().route("/:subject_slug/:slug", get(super::topic::detail));
+    let topic_detail_router = Router::new()
+        .route("/:subject_slug/:slug", get(super::topic::detail))
+        .layer(from_extractor::<UserReadHistory>());
     let topic_router = Router::new()
         .route("/top10", get(super::topic::top10))
         .route("/", get(super::topic::list))
@@ -40,6 +41,7 @@ pub fn init() -> Router {
             get(super::user::profile).post(super::user::update_profile),
         )
         .route("/change-pwd", post(super::user::change_pwd))
+        .route("/history", get(super::user_read_history::list))
         .layer(from_extractor::<UserAuth>());
 
     Router::new()

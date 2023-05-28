@@ -10,6 +10,7 @@ pub mod topic;
 pub mod user;
 pub mod user_login_log;
 pub mod user_purchased_service;
+pub mod user_read_history;
 
 pub const DEFAULT_PAGE_SIZE: u32 = 30;
 pub const MAX_PAGE_SIZE: u32 = 500;

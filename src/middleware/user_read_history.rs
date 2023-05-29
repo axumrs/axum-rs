@@ -21,26 +21,26 @@ where
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         let handler_name = "middleware/user_read_history";
-        tracing::debug!("{}", handler_name);
+        // tracing::debug!("{}", handler_name);
 
         let url = parts.uri.path();
         let url_parts: Vec<&str> = url.split("/").filter(|p| !p.is_empty()).collect();
 
         if url_parts.len() != 2 {
-            tracing::debug!("参数个数错误");
+            // tracing::debug!("参数个数错误");
             return Ok(Self {});
         }
 
         let subject_slug = url_parts[0];
         let slug = url_parts[1];
 
-        tracing::debug!(
-            "user_read_history url: {}, url_parts: {:?}, subject_slug: {}, slug:{}",
-            url,
-            url_parts,
-            subject_slug,
-            slug
-        );
+        // tracing::debug!(
+        //     "user_read_history url: {}, url_parts: {:?}, subject_slug: {}, slug:{}",
+        //     url,
+        //     url_parts,
+        //     subject_slug,
+        //     slug
+        // );
         let state = parts.extensions.get::<Arc<State>>().unwrap();
 
         let cd = get_auth::claims_from_header(&parts.headers, state)
@@ -48,7 +48,7 @@ where
             .map_err(log_error(handler_name))?;
 
         if cd.is_none() {
-            tracing::debug!("user_read_history 游客");
+            // tracing::debug!("user_read_history 游客");
             return Ok(Self {});
         }
 
@@ -56,7 +56,7 @@ where
         let user_id = cd.data.id;
 
         let conn = get_conn(&state);
-        let id = db::user_read_history::add(
+        let _id = db::user_read_history::add(
             &conn,
             &crate::model::UserReadHistory {
                 user_id,
@@ -70,7 +70,7 @@ where
         .await
         .map_err(log_error(handler_name))?;
 
-        tracing::debug!("user_read_history  user id: {}, history id:{}", user_id, id);
+        // tracing::debug!("user_read_history  user id: {}, history id:{}", user_id, id);
 
         Ok(Self {})
     }

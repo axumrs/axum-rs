@@ -45,6 +45,15 @@ pub struct User {
     pub redis_jwt_exp_prefix: String,
     pub redis_online_prefix: String,
 }
+#[derive(Deserialize)]
+pub struct ProtectedTopic {
+    pub redis_prefix: String,
+    pub redis_expired: u8,
+    pub max_paragraph_num: u8,
+    pub min_content_paragraph_num: u8,
+    pub guest_captcha: model::ProtectedTopic2WebDetailCaptchaType,
+    pub normal_user_captcha: model::ProtectedTopic2WebDetailCaptchaType,
+}
 
 #[derive(Deserialize)]
 pub struct Config {
@@ -56,6 +65,7 @@ pub struct Config {
     pub hcaptcha: HCaptcha,
     pub recaptcha: ReCaptcha,
     pub users: User,
+    pub protected_topic: ProtectedTopic,
 }
 
 impl Config {

@@ -23,7 +23,11 @@ pub fn init() -> Router {
     let topic_router = Router::new()
         .route("/top10", get(super::topic::top10))
         .route("/", get(super::topic::list))
-        .nest("/", topic_detail_router);
+        .nest("/", topic_detail_router)
+        .route(
+            "/protected-content",
+            post(super::topic::get_protected_content),
+        );
 
     let tag_router = Router::new()
         .route("/", get(super::tag::list))

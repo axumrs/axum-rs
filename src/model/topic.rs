@@ -103,3 +103,28 @@ pub struct Topic2WebDetail {
     pub price: u32,
     pub subject_id: u32,
 }
+
+#[derive(Default, Serialize, Deserialize, Clone)]
+pub enum ProtectedTopic2WebDetailCaptchaType {
+    #[default]
+    HCaptcha,
+    ReCaptcha,
+    Turnstile,
+    WithOut,
+}
+#[derive(Default, Serialize)]
+pub struct ProtectedTopic2WebDetail {
+    pub detail: Topic2WebDetail,
+    pub protect_ids: Vec<String>,
+    pub captcha_type: ProtectedTopic2WebDetailCaptchaType,
+}
+
+impl ProtectedTopic2WebDetail {
+    pub fn with_out(detail: Topic2WebDetail) -> Self {
+        Self {
+            detail,
+            protect_ids: vec![],
+            captcha_type: ProtectedTopic2WebDetailCaptchaType::WithOut,
+        }
+    }
+}

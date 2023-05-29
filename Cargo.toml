@@ -33,3 +33,6 @@ uuid =  {  version = "1", features = ["v4", "serde"]}
 xid="1"
 sha2="0.10"
 base16ct="0.2"
+lazy_static="1"
+regex="1"
+rand="0.8"

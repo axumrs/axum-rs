@@ -170,11 +170,6 @@ CREATE TABLE `user_read_history` (
 ENGINE=Archive CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci;
 -- ENGINE=INNODB CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci;
 
--- 初始数据
-
-INSERT INTO `admin` (username, password) VALUES ('axum.rs', '$2b$12$NEBR/1uK0Hz82Ec2kXdsUuxyFLFZfe3cqs2blTuYSVwaOsHJvMS8e');
-INSERT INTO `user` (email,nickname,password,status,types,sub_exp,points,allow_device_num,jwt_exp) VALUES ('team@axum.rs', 'root', '$2b$12$NmTubg.C3UMdWURqX54aDeP6xp0WEfcMHYtMdIT84cEMdDEJunYfq', 1, 1, '2999-12-31 23:59:59', 999999, 3, 120);
-
 -- 视图
 
 CREATE VIEW v_topic_admin_list AS

@@ -61,3 +61,34 @@ pub async fn find(
 
     Ok(r)
 }
+
+/// 拒绝
+pub async fn reject(conn: &sqlx::MySqlPool, id: u64, reason: &str) -> Result<u64> {
+    let aff = sqlx::query("UPDATE pay_apply SET status=?,process_dateline=?, reason=? WHERE id=?")
+        .bind(&model::PayApplyStatus::Reject)
+        .bind(chrono::Local::now())
+        .bind(reason)
+        .bind(id)
+        .execute(conn)
+        .await
+        .map_err(Error::from)?
+        .rows_affected();
+
+    Ok(aff)
+}
+
+/// 接受
+pub async fn accept(
+    conn: &sqlx::MySqlPool,
+    pay_apply: &model::PayApply,
+    pay: &model::Pay,
+) -> Result<u64> {
+    super::order::update_with_pay(
+        conn,
+        pay_apply.order_id,
+        pay_apply.user_id,
+        pay,
+        Some(pay_apply),
+    )
+    .await
+}

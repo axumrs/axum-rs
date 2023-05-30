@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Deserialize, Serialize, sqlx::Type)]
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::Type, Clone)]
 #[repr(u8)]
 pub enum PayCurrency {
     /// USDT TRC-20
@@ -9,7 +9,7 @@ pub enum PayCurrency {
     /// 人民币
     CNY = 1,
 }
-#[derive(Debug, Default, Deserialize, Serialize, sqlx::Type)]
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::Type, Clone)]
 #[repr(u8)]
 pub enum PayTypes {
     /// TronLink 钱包在线支付

@@ -14,3 +14,15 @@ pub struct Create {
     #[validate(length(max = 255))]
     pub img: String,
 }
+#[derive(Deserialize, Validate)]
+pub struct AdminReject {
+    pub id: u64,
+    #[validate(length(max = 255))]
+    pub reason: String,
+}
+#[derive(Deserialize, Validate)]
+pub struct AdminAccept {
+    pub id: u64,
+    #[validate(length(max = 255))]
+    pub reason: String,
+}

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use axum::{extract::Query, Extension};
 
 use crate::{
-    db::{user_read_history, Paginate},
+    db::{self, user_read_history, Paginate},
     handler_helper::{get_conn, log_error},
     middleware::UserAuth,
     model::{self, State},
@@ -32,7 +32,7 @@ pub async fn list(
         user_id: Some(claims.id),
         pw: model::PaginateWith {
             page,
-            page_size: frm.page_size,
+            page_size: db::DEFAULT_PAGE_SIZE,
         },
     };
 

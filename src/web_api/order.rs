@@ -108,6 +108,7 @@ pub async fn pay(
             dateline: chrono::Local::now(),
             ..Default::default()
         },
+        None,
     )
     .await
     .map_err(log_error(handler_name))?;

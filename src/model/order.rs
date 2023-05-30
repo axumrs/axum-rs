@@ -101,3 +101,20 @@ pub struct OrderSnapItem {
     pub price: u32,
     pub number: u32,
 }
+
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::Type, sqlx::FromRow)]
+pub struct OrderFullWithUser {
+    pub id: u64,
+    pub user_id: u32,
+    pub price: u32,
+    pub status: OrderStatus,
+    pub code: String,
+    pub full_code: String,
+    pub order_num: String,
+    pub dateline: chrono::DateTime<chrono::Local>,
+    pub pay_id: u64,
+    pub is_del: bool,
+    pub snap: String,
+    pub email: String,
+    pub nickname: String,
+}

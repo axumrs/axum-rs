@@ -51,6 +51,14 @@ pub fn init() -> Router {
         )
         .route("/change-pwd", post(super::user::change_pwd))
         .route("/history", get(super::user_read_history::list))
+        .route(
+            "/purchased-service",
+            get(super::user_purchased_service::list),
+        )
+        .route(
+            "/purchased-service/:id",
+            get(super::user_purchased_service::find),
+        )
         .layer(from_extractor::<UserAuth>());
 
     Router::new()

@@ -1,6 +1,6 @@
 use axum::{
     middleware,
-    routing::{get, put},
+    routing::{get, post, put},
     Router,
 };
 
@@ -82,11 +82,27 @@ pub fn init() -> Router {
         .route("/online/:email", get(super::user::online_drive))
         .route("/login_log/:id", get(super::user::login_log));
 
+    let order_router = Router::new()
+        .route("/", get(super::order::list))
+        .route("/:id", get(super::order::find));
+
+    let pay_apply_router = Router::new()
+        .route("/:order_id/:user_id", get(super::pay_apply::find))
+        .route("/reject", post(super::pay_apply::reject))
+        .route("/accept", post(super::pay_apply::accept));
+
+    let purchased_service_router = Router::new()
+        .route("/", get(super::user_purchased_service::list))
+        .route("/:id", get(super::user_purchased_service::find));
+
     Router::new()
         .nest("/subject", subject_router)
         .nest("/topic", topic_router)
         .nest("/tag", tag_router)
         .nest("/admin", admin_router)
         .nest("/user", user_router)
+        .nest("/order", order_router)
+        .nest("/pay_apply", pay_apply_router)
+        .nest("/purchased_service", purchased_service_router)
         .layer(middleware::from_fn(admin_auth))
 }

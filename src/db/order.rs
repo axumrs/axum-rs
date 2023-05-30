@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{model, Error, Result};
 
 use super::{pay, Paginate};

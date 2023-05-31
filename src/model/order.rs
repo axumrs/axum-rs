@@ -25,12 +25,12 @@ pub struct Order {
 }
 
 impl Order {
-    pub fn new(user_id: u32, price: u32) -> Result<Self> {
+    pub fn new(user_id: u32, price: u32, mul: bool) -> Result<Self> {
         let order_num = order_meta::order::number();
         let (full_code, code) = order_meta::order::code(&order_num)?;
         Ok(Self {
             user_id,
-            price: price * 100,
+            price: if mul { price * 100 } else { price },
             dateline: chrono::Local::now(),
             order_num,
             full_code,

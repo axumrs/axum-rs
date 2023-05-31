@@ -7,7 +7,7 @@ pub async fn add_result<'a>(
     sqlx::query("INSERT INTO pay (order_id, user_id, price, currency, types, tx_id, status, dateline, is_del) VALUES(?,?,?,?,?,?,?,?,?)")
         .bind(&m.order_id)
         .bind(&m.user_id)
-        .bind(m.price*100)
+        .bind(m.price)
         .bind(&m.currency)
         .bind(&m.types)
         .bind(&m.tx_id)

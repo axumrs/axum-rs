@@ -39,7 +39,7 @@ pub async fn count_online(client: &Client, cfg: &Config, email: &str) -> Result<
 }
 
 pub async fn get_online_keys(client: &Client, cfg: &Config, email: &str) -> Result<Vec<String>> {
-    let key = format!("{}::*", email);
+    let key = format!("{}:*", email);
     let key = super::user_keyname(cfg, &cfg.users.redis_online_prefix, &key);
     super::keys(client, &key).await
 }
@@ -68,14 +68,14 @@ pub async fn set_online(
     exp_mins: u32,
     online_id: &str,
 ) -> Result<()> {
-    let key = format!("{}::{}", email, online_id);
+    let key = format!("{}:{}", email, online_id);
     let key = super::user_keyname(cfg, &cfg.users.redis_online_prefix, &key);
     let secs = (exp_mins * 60) as usize;
     super::set_json_ex(client, &key, cd, secs).await
 }
 
 pub async fn del_online(client: &Client, cfg: &Config, email: &str, online_id: &str) -> Result<()> {
-    let key = format!("{}::{}", email, online_id);
+    let key = format!("{}:{}", email, online_id);
     let key = super::user_keyname(cfg, &cfg.users.redis_online_prefix, &key);
     super::del(client, &key).await
 }

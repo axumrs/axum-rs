@@ -1,0 +1,1 @@
+docker run --name axum-rs-mysql --restart=always -e MYSQL_ROOT_PASSWORD=axum.rs -e MYSQL_DATABASE=axum_rs -p 127.0.0.1:3306:3306 -v /var/docker/axum-rs-mysql:/var/lib/mysql  -d mysql:8-debian --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci

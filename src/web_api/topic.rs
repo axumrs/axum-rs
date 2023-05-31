@@ -91,9 +91,15 @@ pub async fn detail(
             None
         };
 
-        let pc = protected_content(&t.html, &state.cfg, &user_type, &state.rds)
-            .await
-            .map_err(log_error(handler_name))?;
+        let pc = protected_content(
+            &t.html,
+            &state.cfg,
+            &user_type,
+            &state.rds,
+            &purchased_subject,
+        )
+        .await
+        .map_err(log_error(handler_name))?;
 
         let out = if let Some((pc_html, pc_ids)) = pc {
             tracing::debug!("pc ids: {:?}", pc_ids);

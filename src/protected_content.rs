@@ -24,8 +24,17 @@ pub async fn protected_content(
     cfg: &config::Config,
     user_type: &Option<model::UserTypes>,
     rdc: &redis::Client,
+    purchased_subject: &Option<model::UserPurchasedSubject>,
 ) -> Result<Option<(String, Vec<String>)>> {
     // 是否需要内容保护
+
+    // 已购买专题的用户不需要内容保护
+    let is_purchased = purchased_subject.is_some();
+    if is_purchased {
+        return Ok(None);
+    }
+
+    // 订阅用户不需要内容保护
     let need_protect = if let Some(user_type) = user_type {
         match user_type {
             &model::UserTypes::Normal => true,

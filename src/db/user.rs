@@ -383,19 +383,20 @@ pub async fn check_in(conn: &sqlx::MySqlPool, id: u32, points: u32) -> Result<u6
         return Err(Error::already_exists("你今天已经签过到了"));
     }
 
-    let id = match sqlx::query("INSERT INTO user_check_in(user_id,points,dateline) VALUES(?,?,?)")
-        .bind(id)
-        .bind(points)
-        .bind(&now)
-        .execute(&mut tx)
-        .await
-    {
-        Ok(r) => r.last_insert_id(),
-        Err(err) => {
-            tx.rollback().await.map_err(Error::from)?;
-            return Err(Error::from(err));
-        }
-    };
+    let check_in_id: u64 =
+        match sqlx::query("INSERT INTO user_check_in(user_id,points,dateline) VALUES(?,?,?)")
+            .bind(id)
+            .bind(points)
+            .bind(&now)
+            .execute(&mut tx)
+            .await
+        {
+            Ok(r) => r.last_insert_id(),
+            Err(err) => {
+                tx.rollback().await.map_err(Error::from)?;
+                return Err(Error::from(err));
+            }
+        };
 
     if let Err(err) = sqlx::query("UPDATE `user` SET points=points+? WHERE id=?")
         .bind(points)
@@ -408,7 +409,7 @@ pub async fn check_in(conn: &sqlx::MySqlPool, id: u32, points: u32) -> Result<u6
     }
 
     tx.commit().await.map_err(Error::from)?;
-    Ok(id)
+    Ok(check_in_id)
 }
 
 fn check_pwd(u: &model::User, pwd: &str) -> Result<bool> {

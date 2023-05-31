@@ -72,12 +72,15 @@ pub async fn list(
         }
         None => vec![],
     };
-
+    // tracing::debug!(
+    //     "user_purchased_subject_list {:?}",
+    //     user_purchased_subject_list
+    // );
     let mut subject_if_purchased_list: Vec<model::SubjectIfPurchased> =
         Vec::with_capacity(p.data.len());
     for s in p.data.iter() {
         let ups = user_purchased_subject_list.iter().find(|&i| i.id == s.id);
-        tracing::debug!("subject {:?}, ups {:?}", s, ups);
+        //tracing::debug!("subject {:?}, ups {:?}", s, ups);
         if let Some(ups_item) = ups {
             subject_if_purchased_list.push(ups_item.into());
         } else {

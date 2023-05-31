@@ -24,7 +24,7 @@ pub async fn create(
 
     let conn = get_conn(&state);
 
-    let m = model::Order::new(claims.id, frm.price).map_err(log_error(handler_name))?;
+    let m = model::Order::new(claims.id, frm.price, false).map_err(log_error(handler_name))?;
     let s = model::OrderSnap {
         snap: frm.snap,
         ..Default::default()

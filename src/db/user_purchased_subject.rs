@@ -168,11 +168,14 @@ pub async fn select_in(
 ) -> Result<Vec<model::UserPurchasedSubject>> {
     let mut q = sqlx::QueryBuilder::new("SELECT purchased_id, order_id, user_id, service_id, service_type, server_num, purchased_status, purchased_dateline, email, nickname, id, slug, name, summary, cover, status, price, is_del FROM v_user_purchased_subject WHERE 1=1");
 
-    let subject_str_ids: Vec<String> = subject_ids.into_iter().map(|id| id.to_string()).collect();
-    let subject_str_ids: String = subject_str_ids.join(",");
-    q.push(" AND id IN(")
-        .push_bind(&subject_str_ids)
-        .push(")")
+    //let subject_str_ids: Vec<String> = subject_ids.into_iter().map(|id| id.to_string()).collect();
+    //let subject_str_ids: String = subject_str_ids.join(",");
+    q.push(" AND (id) IN ")
+        .push_tuples(subject_ids.iter(), |mut b, id| {
+            b.push_bind(id);
+        })
+        //.push_bind(&subject_str_ids)
+        //.push(")")
         .push(" AND user_id=")
         .push_bind(user_id);
 

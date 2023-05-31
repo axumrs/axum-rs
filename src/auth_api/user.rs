@@ -42,6 +42,7 @@ pub async fn register(
             password: frm.password,
             status: (&state.cfg.users).register_default_status,
             dateline: chrono::Local::now(),
+            allow_device_num: 1,
             ..Default::default()
         },
     )
@@ -79,11 +80,7 @@ pub async fn login(
     let user_jwt_exp = rdb::user::get_jwt_exp(&state.rds, &state.cfg, &frm.email)
         .await
         .map_err(log_error(handler_name))?;
-    let user_jwt_exp = if user_jwt_exp == 0 {
-        (&state.cfg.user_jwt).expired
-    } else {
-        user_jwt_exp as u32
-    };
+
     // rds: 在线设备数
     let user_online_count = rdb::user::count_online(&state.rds, &state.cfg, &frm.email)
         .await
@@ -113,6 +110,17 @@ pub async fn login(
     let email = u.email.clone();
     let allow_driver = u.allow_device_num;
     let online_id = uuid::new();
+    let user_jwt_exp = if user_jwt_exp == 0 {
+        //rds
+        if u.jwt_exp == 0 {
+            // db
+            (&state.cfg.user_jwt).expired
+        } else {
+            u.jwt_exp as u32
+        }
+    } else {
+        user_jwt_exp as u32
+    };
 
     let cd = jwt::UserClaimsData {
         id: u.id,
@@ -143,7 +151,7 @@ pub async fn login(
         &state.cfg,
         &email,
         &cd,
-        user_jwt_exp,
+        user_jwt_exp as u32,
         &online_id,
     )
     .await
@@ -152,7 +160,7 @@ pub async fn login(
     // token
     let auth_body = jwt::token::encode(
         &crate::config::Jwt {
-            expired: user_jwt_exp,
+            expired: user_jwt_exp as u32,
             ..(&state.cfg.user_jwt).clone()
         },
         cd,

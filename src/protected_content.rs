@@ -90,6 +90,7 @@ pub async fn protected_content(
     let mut out_html = Vec::with_capacity(html.lines().count());
     let mut out_ids: Vec<String> = Vec::with_capacity(protect_idxs.len());
 
+    pcl.reverse();
     for line in html.lines() {
         if line == *PROTECTED_CONTENT_PLACEHOLDER {
             if let Some(pc) = pcl.pop() {
@@ -113,17 +114,20 @@ pub async fn protected_content(
                 } else {
                     out_html.push(pc.content.clone());
                 }
+            } else {
+                tracing::debug!("没有受保护的内容");
             }
             procted_line_idx += 1;
         } else {
             out_html.push(line.to_string());
+            // tracing::debug!("原始内容")
         }
     }
 
     let out_html: String = out_html.join("\n");
 
     // tracing::debug!("{}", out_html);
-    tracing::debug!("{:?}", out_ids);
+    // tracing::debug!("{:?}", out_ids);
     Ok(Some((out_html, out_ids)))
 }
 

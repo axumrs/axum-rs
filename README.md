@@ -20,6 +20,6 @@
 
 ## 捐助
 
-- USDT/TRX: `TMV6br9JGs6onRExf46JpTYJbxHV9k8888`
+- USDT/TRX: `TPGEtKJmPJU3naosCcRrVReE2ckFhE9sYM`
 
 更多详细内容，请访问[关于我们](https://axum.rs/about)

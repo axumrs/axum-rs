@@ -20,6 +20,7 @@ pub struct Subject {
     pub cover: String,
     pub status: SubjectStatus,
     pub price: u32,
+    pub pin: u8,
 }
 
 impl From<&Subject> for Subject {
@@ -33,6 +34,7 @@ impl From<&Subject> for Subject {
             cover: s.cover.clone(),
             status: s.status.clone(),
             price: s.price,
+            pin: s.pin,
         }
     }
 }
@@ -48,6 +50,7 @@ impl From<super::UserPurchasedSubject> for Subject {
             cover: ups.cover,
             status: ups.status,
             price: ups.price,
+            pin: 0,
         }
     }
 }
@@ -62,6 +65,7 @@ impl From<&super::UserPurchasedSubject> for Subject {
             cover: ups.cover.clone(),
             status: ups.status.clone(),
             price: ups.price,
+            pin: 0,
         }
     }
 }

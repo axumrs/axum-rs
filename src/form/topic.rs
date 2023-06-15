@@ -29,6 +29,8 @@ pub struct Create {
     pub md: String,
 
     pub tags: Vec<String>,
+
+    pub pin: u8,
 }
 
 #[derive(Deserialize)]
@@ -74,6 +76,7 @@ pub struct Update {
     pub md: String,
 
     pub tags: Vec<String>,
+    pub pin: u8,
 }
 
 #[derive(Deserialize)]
@@ -84,6 +87,7 @@ pub struct List2Web {
     pub tag_name: Option<String>,
     pub order_by_hit: Option<bool>,
     pub asc_order: Option<bool>,
+    pub order_by_pin: Option<bool>,
     pub page: u32,
     pub page_size: u32,
 }

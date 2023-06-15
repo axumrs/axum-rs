@@ -43,7 +43,7 @@ pub async fn add(
     }
 
     // 主表
-    let id = match sqlx::query("INSERT INTO topic (title, subject_id, slug, summary, author, src, hit, dateline, try_readable, is_del,cover) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)")
+    let id = match sqlx::query("INSERT INTO topic (title, subject_id, slug, summary, author, src, hit, dateline, try_readable, is_del,cover,pin) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)")
     .bind(&m.title)
     .bind(&m.subject_id)
     .bind(&m.slug)
@@ -55,6 +55,7 @@ pub async fn add(
     .bind(&m.try_readable)
     .bind(&m.is_del)
     .bind(&m.cover)
+    .bind(&m.pin)
     .execute(&mut tx).await {
         Ok(q) => q.last_insert_id(),
         Err(err) => {
@@ -107,7 +108,7 @@ pub async fn edit(
     }
 
     // 主表
-    let aff = match sqlx::query("UPDATE topic SET title=?, subject_id=?, slug=?, summary=?, author=?, src=?, try_readable=?,cover=? WHERE id=?")
+    let aff = match sqlx::query("UPDATE topic SET title=?, subject_id=?, slug=?, summary=?, author=?, src=?, try_readable=?,cover=?,pin=? WHERE id=?")
     .bind(&m.title)
     .bind(&m.subject_id)
     .bind(&m.slug)
@@ -116,6 +117,7 @@ pub async fn edit(
     .bind(&m.src)
     .bind(&m.try_readable)
     .bind(&m.cover)
+    .bind(&m.pin)
     .bind(&m.id)
     .execute(&mut tx).await {
         Ok(q) => q.rows_affected(),
@@ -171,7 +173,7 @@ pub async fn list2admin(
     with: &model::Topic2AdminListWith,
 ) -> Result<Paginate<model::Topic2AdminList>> {
     let mut q = sqlx::QueryBuilder::new(
-        r"SELECT id, title, slug, hit, dateline, try_readable, is_del, cover, subject_name, subject_slug FROM v_topic_admin_list WHERE 1=1",
+        r"SELECT id, title, slug, hit, dateline, try_readable, is_del, cover, subject_name, subject_slug,pin FROM v_topic_admin_list WHERE 1=1",
     );
     let mut qc = sqlx::QueryBuilder::new("SELECT COUNT(*) FROM v_topic_admin_list WHERE 1=1");
 
@@ -245,7 +247,7 @@ pub async fn del_or_restore(conn: &sqlx::MySqlPool, id: u64, is_del: bool) -> Re
 }
 
 pub async fn find2edit(conn: &sqlx::MySqlPool, id: u64) -> Result<Option<model::Topic2Edit>> {
-    let r = sqlx::query_as("SELECT id, title, subject_id, slug, summary, author, src, try_readable, cover,md FROM topic AS t INNER JOIN topic_content AS tc ON t.id=tc.topic_id WHERE id=?").bind(id).fetch_optional(conn).await.map_err(Error::from)?;
+    let r = sqlx::query_as("SELECT id, title, subject_id, slug, summary, author, src, try_readable, cover,md,pin FROM topic AS t INNER JOIN topic_content AS tc ON t.id=tc.topic_id WHERE id=?").bind(id).fetch_optional(conn).await.map_err(Error::from)?;
     Ok(r)
 }
 
@@ -259,7 +261,7 @@ pub async fn list2web(
     conn: &sqlx::MySqlPool,
     with: &model::Topic2WebListWith,
 ) -> Result<Paginate<model::Topic2WebList>> {
-    let mut q = sqlx::QueryBuilder::new("SELECT id, title, slug, try_readable, cover, summary, subject_name, subject_slug, tag_names FROM v_topic_web_list WHERE 1=1");
+    let mut q = sqlx::QueryBuilder::new("SELECT id, title, slug, try_readable, cover, summary, subject_name, subject_slug, tag_names,pin,subject_pin FROM v_topic_web_list WHERE 1=1");
     let mut qc = sqlx::QueryBuilder::new("SELECT COUNT(*) FROM v_topic_web_list WHERE 1=1");
 
     if let Some(title) = &with.title {
@@ -294,12 +296,24 @@ pub async fn list2web(
     }
 
     let order_by = if with.order_by_hit {
-        " ORDER BY hit DESC"
+        if with.order_by_pin {
+            " ORDER BY pin DESC,hit DESC"
+        } else {
+            " ORDER BY hit DESC"
+        }
     } else {
         if with.asc_order {
-            " ORDER BY id ASC"
+            if with.order_by_pin {
+                " ORDER BY pin DESC,id ASC"
+            } else {
+                " ORDER BY id ASC"
+            }
         } else {
-            " ORDER BY id DESC"
+            if with.order_by_pin {
+                " ORDER BY pin DESC,id DESC"
+            } else {
+                " ORDER BY id DESC"
+            }
         }
     };
 

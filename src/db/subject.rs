@@ -23,7 +23,7 @@ pub async fn add(conn: &sqlx::MySqlPool, m: &model::Subject) -> Result<u32> {
         return Err(Error::already_exists("相同的slug已存在"));
     }
 
-    let id = sqlx::query("INSERT INTO subject (name, slug, summary, is_del, cover, status, price) VALUES(?,?,?,?,?,?,?)")
+    let id = sqlx::query("INSERT INTO subject (name, slug, summary, is_del, cover, status, price,pin) VALUES(?,?,?,?,?,?,?,?)")
     .bind(&m.name)
     .bind(&m.slug)
     .bind(&m.summary)
@@ -31,6 +31,7 @@ pub async fn add(conn: &sqlx::MySqlPool, m: &model::Subject) -> Result<u32> {
     .bind(&m.cover)
     .bind(&m.status)
     .bind(&m.price)
+    .bind(&m.pin)
     .execute(conn).await.map_err(Error::from)?
     .last_insert_id();
     Ok(id as u32)
@@ -53,7 +54,7 @@ pub async fn update(conn: &sqlx::MySqlPool, m: &model::Subject) -> Result<u64> {
         return Err(Error::already_exists("同名的slug已存在"));
     }
     let r = sqlx::query(
-        "UPDATE subject SET name=?, slug=?, summary=?, status=?, price=?, cover=? WHERE id=?",
+        "UPDATE subject SET name=?, slug=?, summary=?, status=?, price=?, cover=?,pin=? WHERE id=?",
     )
     .bind(&m.name)
     .bind(&m.slug)
@@ -61,6 +62,7 @@ pub async fn update(conn: &sqlx::MySqlPool, m: &model::Subject) -> Result<u64> {
     .bind(&m.status)
     .bind(&m.price)
     .bind(&m.cover)
+    .bind(&m.pin)
     .bind(&m.id)
     .execute(conn)
     .await
@@ -76,7 +78,7 @@ pub async fn find<'a>(
     is_del: Option<bool>,
 ) -> Result<Option<model::Subject>> {
     let mut q = sqlx::QueryBuilder::new(
-        "SELECT id,name, slug, summary, is_del, cover, status, price FROM subject WHERE 1=1",
+        "SELECT id,name, slug, summary, is_del, cover, status, price,pin FROM subject WHERE 1=1",
     );
 
     match by {
@@ -107,7 +109,7 @@ pub async fn list(
     with: model::SubjectListWith,
 ) -> Result<super::Paginate<model::Subject>> {
     let mut q = sqlx::QueryBuilder::new(
-        "SELECT id,name, slug, summary, is_del, cover, status, price FROM subject WHERE 1=1",
+        "SELECT id,name, slug, summary, is_del, cover, status, price,pin FROM subject WHERE 1=1",
     );
     let mut qc = sqlx::QueryBuilder::new("SELECT COUNT(*) FROM subject WHERE 1=1");
 
@@ -141,7 +143,7 @@ pub async fn list(
         qc.push(sql).push_bind(is_del);
     }
 
-    q.push(" ORDER BY id DESC ");
+    q.push(" ORDER BY pin DESC,id DESC ");
 
     q.push(" LIMIT ")
         .push_bind(with.page_size)

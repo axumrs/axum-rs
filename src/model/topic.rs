@@ -14,6 +14,7 @@ pub struct Topic {
     pub try_readable: bool,
     pub is_del: bool,
     pub cover: String,
+    pub pin: u8,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow)]
@@ -35,6 +36,7 @@ pub struct Topic2AdminList {
     pub cover: String,
     pub subject_name: String,
     pub subject_slug: String,
+    pub pin: u8,
 }
 
 #[derive(Default)]
@@ -60,6 +62,7 @@ pub struct Topic2Edit {
     pub cover: String,
     pub md: String,
     pub try_readable: bool,
+    pub pin: u8,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow)]
@@ -73,6 +76,8 @@ pub struct Topic2WebList {
     pub subject_name: String,
     pub subject_slug: String,
     pub tag_names: String,
+    pub pin: u8,
+    pub subject_pin: u8,
 }
 
 #[derive(Default)]
@@ -83,6 +88,7 @@ pub struct Topic2WebListWith {
     pub tag_name: Option<String>,
     pub order_by_hit: bool,
     pub asc_order: bool,
+    pub order_by_pin: bool,
     pub page: u32,
     pub page_size: u32,
 }

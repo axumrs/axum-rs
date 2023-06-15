@@ -29,6 +29,7 @@ pub async fn add(
             cover: frm.cover,
             price: frm.price * 100,
             status: frm.status.unwrap_or_default(),
+            pin: frm.pin,
             ..Default::default()
         },
     )
@@ -118,6 +119,7 @@ pub async fn update(
         cover: frm.cover,
         price: frm.price * 100,
         status: frm.status,
+        pin: frm.pin,
         ..Default::default()
     };
 

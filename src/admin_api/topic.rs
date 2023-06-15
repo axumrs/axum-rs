@@ -31,6 +31,7 @@ pub async fn add(
         try_readable: frm.try_readable,
         cover: frm.cover,
         dateline: chrono::Local::now(),
+        pin: frm.pin,
         ..Default::default()
     };
     let c = model::TopicContent {
@@ -116,6 +117,7 @@ pub struct Topic2Edit {
     pub md: String,
     pub try_readable: bool,
     pub tags: Vec<String>,
+    pub pin: u8,
 }
 
 pub async fn find(
@@ -151,6 +153,7 @@ pub async fn find(
                 md: t.md,
                 try_readable: t.try_readable,
                 tags,
+                pin: t.pin,
             };
             Ok(Response::ok(tt).to_json())
         }
@@ -177,6 +180,7 @@ pub async fn edit(
         try_readable: frm.try_readable,
         cover: frm.cover,
         dateline: chrono::Local::now(),
+        pin: frm.pin,
         ..Default::default()
     };
     let c = model::TopicContent {

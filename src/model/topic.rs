@@ -14,6 +14,7 @@ pub struct Topic {
     pub try_readable: bool,
     pub is_del: bool,
     pub cover: String,
+    pub pin: u8,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow)]

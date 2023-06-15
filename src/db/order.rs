@@ -242,7 +242,8 @@ pub async fn update_with_pay(
                     } else {
                         &user_subscribe_info.sub_exp
                     };
-                    let sub_exp = *sub_exp_base + chrono::Duration::days(30);
+                    let sub_exp =
+                        *sub_exp_base + chrono::Duration::days(30 * service.server_num as i64);
                     if let Err(err) = sqlx::query("UPDATE `user` SET types=?, sub_exp=? WHERE id=?")
                         .bind(model::UserTypes::Subscriber)
                         .bind(sub_exp)

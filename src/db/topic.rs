@@ -43,7 +43,7 @@ pub async fn add(
     }
 
     // 主表
-    let id = match sqlx::query("INSERT INTO topic (title, subject_id, slug, summary, author, src, hit, dateline, try_readable, is_del,cover) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)")
+    let id = match sqlx::query("INSERT INTO topic (title, subject_id, slug, summary, author, src, hit, dateline, try_readable, is_del,cover,pin) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)")
     .bind(&m.title)
     .bind(&m.subject_id)
     .bind(&m.slug)
@@ -55,6 +55,7 @@ pub async fn add(
     .bind(&m.try_readable)
     .bind(&m.is_del)
     .bind(&m.cover)
+    .bind(&m.pin)
     .execute(&mut tx).await {
         Ok(q) => q.last_insert_id(),
         Err(err) => {
@@ -107,7 +108,7 @@ pub async fn edit(
     }
 
     // 主表
-    let aff = match sqlx::query("UPDATE topic SET title=?, subject_id=?, slug=?, summary=?, author=?, src=?, try_readable=?,cover=? WHERE id=?")
+    let aff = match sqlx::query("UPDATE topic SET title=?, subject_id=?, slug=?, summary=?, author=?, src=?, try_readable=?,cover=?,pin=? WHERE id=?")
     .bind(&m.title)
     .bind(&m.subject_id)
     .bind(&m.slug)
@@ -116,6 +117,7 @@ pub async fn edit(
     .bind(&m.src)
     .bind(&m.try_readable)
     .bind(&m.cover)
+    .bind(&m.pin)
     .bind(&m.id)
     .execute(&mut tx).await {
         Ok(q) => q.rows_affected(),

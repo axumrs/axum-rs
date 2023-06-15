@@ -29,6 +29,8 @@ pub struct Create {
     pub md: String,
 
     pub tags: Vec<String>,
+
+    pub pin: u8,
 }
 
 #[derive(Deserialize)]
@@ -74,6 +76,7 @@ pub struct Update {
     pub md: String,
 
     pub tags: Vec<String>,
+    pub pin: u8,
 }
 
 #[derive(Deserialize)]

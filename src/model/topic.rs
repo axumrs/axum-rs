@@ -36,6 +36,7 @@ pub struct Topic2AdminList {
     pub cover: String,
     pub subject_name: String,
     pub subject_slug: String,
+    pub pin: u8,
 }
 
 #[derive(Default)]
@@ -61,6 +62,7 @@ pub struct Topic2Edit {
     pub cover: String,
     pub md: String,
     pub try_readable: bool,
+    pub pin: u8,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow)]
@@ -74,6 +76,8 @@ pub struct Topic2WebList {
     pub subject_name: String,
     pub subject_slug: String,
     pub tag_names: String,
+    pub pin: u8,
+    pub subject_pin: u8,
 }
 
 #[derive(Default)]

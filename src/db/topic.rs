@@ -173,7 +173,7 @@ pub async fn list2admin(
     with: &model::Topic2AdminListWith,
 ) -> Result<Paginate<model::Topic2AdminList>> {
     let mut q = sqlx::QueryBuilder::new(
-        r"SELECT id, title, slug, hit, dateline, try_readable, is_del, cover, subject_name, subject_slug FROM v_topic_admin_list WHERE 1=1",
+        r"SELECT id, title, slug, hit, dateline, try_readable, is_del, cover, subject_name, subject_slug,pin FROM v_topic_admin_list WHERE 1=1",
     );
     let mut qc = sqlx::QueryBuilder::new("SELECT COUNT(*) FROM v_topic_admin_list WHERE 1=1");
 
@@ -247,7 +247,7 @@ pub async fn del_or_restore(conn: &sqlx::MySqlPool, id: u64, is_del: bool) -> Re
 }
 
 pub async fn find2edit(conn: &sqlx::MySqlPool, id: u64) -> Result<Option<model::Topic2Edit>> {
-    let r = sqlx::query_as("SELECT id, title, subject_id, slug, summary, author, src, try_readable, cover,md FROM topic AS t INNER JOIN topic_content AS tc ON t.id=tc.topic_id WHERE id=?").bind(id).fetch_optional(conn).await.map_err(Error::from)?;
+    let r = sqlx::query_as("SELECT id, title, subject_id, slug, summary, author, src, try_readable, cover,md,pin FROM topic AS t INNER JOIN topic_content AS tc ON t.id=tc.topic_id WHERE id=?").bind(id).fetch_optional(conn).await.map_err(Error::from)?;
     Ok(r)
 }
 
@@ -261,7 +261,7 @@ pub async fn list2web(
     conn: &sqlx::MySqlPool,
     with: &model::Topic2WebListWith,
 ) -> Result<Paginate<model::Topic2WebList>> {
-    let mut q = sqlx::QueryBuilder::new("SELECT id, title, slug, try_readable, cover, summary, subject_name, subject_slug, tag_names FROM v_topic_web_list WHERE 1=1");
+    let mut q = sqlx::QueryBuilder::new("SELECT id, title, slug, try_readable, cover, summary, subject_name, subject_slug, tag_names,pin,subject_pin FROM v_topic_web_list WHERE 1=1");
     let mut qc = sqlx::QueryBuilder::new("SELECT COUNT(*) FROM v_topic_web_list WHERE 1=1");
 
     if let Some(title) = &with.title {
@@ -296,12 +296,12 @@ pub async fn list2web(
     }
 
     let order_by = if with.order_by_hit {
-        " ORDER BY hit DESC"
+        " ORDER BY pin DESC,hit DESC"
     } else {
         if with.asc_order {
-            " ORDER BY id ASC"
+            " ORDER BY pin DESC,id ASC"
         } else {
-            " ORDER BY id DESC"
+            " ORDER BY pin DESC,id DESC"
         }
     };
 

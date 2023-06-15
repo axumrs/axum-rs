@@ -107,7 +107,7 @@ pub async fn list(
     with: model::SubjectListWith,
 ) -> Result<super::Paginate<model::Subject>> {
     let mut q = sqlx::QueryBuilder::new(
-        "SELECT id,name, slug, summary, is_del, cover, status, price FROM subject WHERE 1=1",
+        "SELECT id,name, slug, summary, is_del, cover, status, price,pin FROM subject WHERE 1=1",
     );
     let mut qc = sqlx::QueryBuilder::new("SELECT COUNT(*) FROM subject WHERE 1=1");
 

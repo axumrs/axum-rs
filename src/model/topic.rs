@@ -88,6 +88,7 @@ pub struct Topic2WebListWith {
     pub tag_name: Option<String>,
     pub order_by_hit: bool,
     pub asc_order: bool,
+    pub order_by_pin: bool,
     pub page: u32,
     pub page_size: u32,
 }

@@ -296,12 +296,24 @@ pub async fn list2web(
     }
 
     let order_by = if with.order_by_hit {
-        " ORDER BY pin DESC,hit DESC"
+        if with.order_by_pin {
+            " ORDER BY pin DESC,hit DESC"
+        } else {
+            " ORDER BY hit DESC"
+        }
     } else {
         if with.asc_order {
-            " ORDER BY pin DESC,id ASC"
+            if with.order_by_pin {
+                " ORDER BY pin DESC,id ASC"
+            } else {
+                " ORDER BY id ASC"
+            }
         } else {
-            " ORDER BY pin DESC,id DESC"
+            if with.order_by_pin {
+                " ORDER BY pin DESC,id DESC"
+            } else {
+                " ORDER BY id DESC"
+            }
         }
     };
 

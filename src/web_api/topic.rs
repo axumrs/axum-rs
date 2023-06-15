@@ -26,6 +26,7 @@ pub async fn top10(
         &conn,
         &model::Topic2WebListWith {
             order_by_hit: true,
+            order_by_pin: true,
             page: 0,
             page_size: 10,
             ..Default::default()
@@ -54,6 +55,7 @@ pub async fn list(
             title: frm.title,
             tag_name: frm.tag_name,
             asc_order: frm.asc_order.unwrap_or(false),
+            order_by_pin: frm.order_by_pin.unwrap_or(false),
         },
     )
     .await

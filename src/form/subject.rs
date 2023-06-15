@@ -16,6 +16,7 @@ pub struct Create {
     #[validate(range(min = 0))]
     pub price: u32,
     pub status: Option<model::SubjectStatus>,
+    pub pin: u8,
 }
 
 #[derive(Deserialize)]
@@ -43,4 +44,5 @@ pub struct Update {
     pub status: model::SubjectStatus,
     #[validate(range(min = 1))]
     pub id: u32,
+    pub pin: u8,
 }

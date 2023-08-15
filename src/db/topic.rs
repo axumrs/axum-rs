@@ -365,3 +365,17 @@ pub async fn detail2web(
 
     Ok(t)
 }
+
+pub async fn detail2bot(conn: &sqlx::MySqlPool, id: u64) -> Result<Option<model::Topic2Bot>> {
+    sqlx::query_as(
+        r#"SELECT t.slug,s.slug as subject_slug, title , name
+FROM topic t 
+INNER JOIN subject s 
+ON t.subject_id = s.id 
+WHERE t.id=? LIMIT 1"#,
+    )
+    .bind(id)
+    .fetch_optional(conn)
+    .await
+    .map_err(Error::from)
+}

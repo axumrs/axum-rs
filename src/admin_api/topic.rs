@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use axum::{
     extract::{Path, Query},
@@ -10,7 +10,7 @@ use crate::{
     db::{tag, topic, Paginate},
     form::topic as form,
     handler_helper::{get_conn, log_error},
-    md, model, Error, ID64Response, JsonRespone, Response, Result,
+    md, model, BotConfig, Error, ID64Response, JsonRespone, Response, Result,
 };
 
 pub async fn add(
@@ -48,7 +48,35 @@ pub async fn add(
         .await
         .map_err(log_error(handler_name))?;
 
+    push_to_bot(&conn, id, &state.cfg.bot).await?;
+
     Ok(Response::ok(ID64Response { id }).to_json())
+}
+
+async fn push_to_bot(conn: &sqlx::MySqlPool, id: u64, bot_cfg: &BotConfig) -> Result<()> {
+    let tp = topic::detail2bot(conn, id).await?;
+    if tp.is_none() {
+        return Err(Error::not_found("不存在的文章"));
+    }
+    let tp = tp.unwrap();
+    let mut data = HashMap::new();
+    data.insert("title", tp.title);
+    data.insert("subject_name", tp.name);
+    data.insert(
+        "url",
+        format!("https://axum.rs/topic/{}/{}", tp.subject_slug, tp.slug),
+    );
+
+    let cli = reqwest::ClientBuilder::new()
+        .connect_timeout(std::time::Duration::from_secs(3))
+        .build()
+        .map_err(Error::from)?;
+    cli.post(&bot_cfg.full_webhook_url())
+        .json(&data)
+        .send()
+        .await
+        .map_err(Error::from)?;
+    Ok(())
 }
 
 pub async fn list(

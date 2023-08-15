@@ -56,6 +56,19 @@ pub struct ProtectedTopic {
 }
 
 #[derive(Deserialize)]
+pub struct BotConfig {
+    pub secret_token: String,
+    pub webhook_url: String,
+    pub webhook_domail: String,
+}
+
+impl BotConfig {
+    pub fn full_webhook_url(&self) -> String {
+        format!("{}{}", self.webhook_domail, self.webhook_url)
+    }
+}
+
+#[derive(Deserialize)]
 pub struct Config {
     pub web: Web,
     pub mysql: Mysql,
@@ -66,6 +79,7 @@ pub struct Config {
     pub recaptcha: ReCaptcha,
     pub users: User,
     pub protected_topic: ProtectedTopic,
+    pub bot: BotConfig,
 }
 
 impl Config {

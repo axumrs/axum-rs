@@ -134,3 +134,11 @@ impl ProtectedTopic2WebDetail {
         }
     }
 }
+
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow)]
+pub struct Topic2Bot {
+    pub slug: String,
+    pub subject_slug: String,
+    pub title: String,
+    pub name: String,
+}

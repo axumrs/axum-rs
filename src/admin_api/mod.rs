@@ -1,9 +1,0 @@
-pub mod admin;
-pub mod order;
-pub mod pay_apply;
-pub mod router;
-pub mod subject;
-pub mod tag;
-pub mod topic;
-pub mod user;
-pub mod user_purchased_service;

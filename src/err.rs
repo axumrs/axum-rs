@@ -1,6 +1,13 @@
 use axum::response::IntoResponse;
 
+#[derive(Debug)]
 pub struct Error(anyhow::Error);
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
 
 impl<E> From<E> for Error
 where

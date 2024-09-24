@@ -1,4 +1,7 @@
 mod err;
+pub mod model;
+pub mod service;
+pub mod utils;
 
 pub use err::Error;
 

@@ -1,3 +1,4 @@
+use axum_rs::model;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]

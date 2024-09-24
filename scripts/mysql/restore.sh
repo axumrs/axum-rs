@@ -1,1 +1,0 @@
-mysql -uroot -p axum_rs < axum_rs_data.sql

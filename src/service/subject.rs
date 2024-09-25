@@ -106,7 +106,7 @@ mod test {
     async fn test_edit_subject() {
         let p = get_pool().await.unwrap();
         let m = model::subject::Subject {
-            id: "crp5ds4drfaos9ne1230".into(),
+            id: "crpnr6kdrfart0b9j8u0".into(),
             name: format!("专题-{}", 0),
             slug: format!("subject-{}", 0),
             summary: format!("专题摘要-{}", 0),

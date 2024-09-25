@@ -27,8 +27,6 @@ pub struct Topic {
     pub cover: String,
     pub md: String,
 
-    #[db(find_opt)]
-    pub ver: i32,
     pub pin: i32,
 }
 
@@ -44,9 +42,6 @@ pub struct TopicSection {
 
     pub sort: i32,
 
-    #[db(find_opt)]
-    pub ver: i32,
-
-    pub pre_id: String,
+    pub hash: String,
     pub content: String,
 }

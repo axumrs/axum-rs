@@ -38,7 +38,6 @@ CREATE TABLE IF NOT EXISTS "topics" (
     "cover" VARCHAR(100) NOT NULL DEFAULT '',
     "md" VARCHAR NOT NULL,
     "pin" INTEGER NOT NULL DEFAULT 0,
-    "ver" INTEGER NOT NULL DEFAULT 0,
     UNIQUE("subject_id", "slug")
 );
 
@@ -47,17 +46,16 @@ CREATE TABLE IF NOT EXISTS "topic_sections"(
     "id" CHAR(20)  PRIMARY KEY ,
     "topic_id" CHAR(20) NOT NULL,
     "sort" INTEGER NOT NULL,
-    "ver" INTEGER NOT NULL DEFAULT 0,
-    "pre_id"  CHAR(20) NOT NULL,
+    "hash"  CHAR(64) NOT NULL,
     "content" VARCHAR
 );
 
 -- 文章-标签
 CREATE TABLE IF NOT EXISTS "topic_tags" (
+    "id" CHAR(20)  PRIMARY KEY ,
     "topic_id" CHAR(20) NOT NULL,
     "tag_id" CHAR(20) NOT NULL,
-    "is_del" BOOLEAN NOT NULL DEFAULT FALSE,
-    PRIMARY KEY("topic_id","tag_id")
+    UNIQUE("topic_id","tag_id")
 );
 
 -- 管理员
@@ -83,7 +81,7 @@ CREATE TABLE IF NOT EXISTS "users" (
     "status" user_status DEFAULT 'Pending',
     "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "kind" user_kind  NOT NULL DEFAULT 'Normal',
-    "sub_exp" TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01 00:00:00+08',
+    "sub_exp" TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01 08:00:00+08',
     "points" DECIMAL(8,0)  NOT NULL DEFAULT 0,
     "allow_device_num" SMALLINT  NOT NULL DEFAULT 1,
     "jwt_exp" SMALLINT  NOT NULL DEFAULT 0,
@@ -205,7 +203,7 @@ CREATE TABLE  IF NOT EXISTS "pay_applies" (
 	"dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	"is_del" BOOLEAN NOT NULL DEFAULT FALSE,
 	"img" VARCHAR(255) NOT NULL DEFAULT '',
-	"process_dateline" TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01 00:00:00+08',
+	"process_dateline" TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01 08:00:00+08',
 	"reason" VARCHAR(255) NOT NULL DEFAULT ''
 );
 
@@ -226,12 +224,12 @@ CREATE UNLOGGED TABLE  IF NOT EXISTS "sessions"(
     "user_id" CHAR(20) NOT NULL,
     "is_admin" BOOLEAN NOT NULL DEFAULT FALSE,
     "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "expire_time" TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01 00:00:00+08'
+    "expire_time" TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01 08:00:00+08'
 );
 
 CREATE UNLOGGED TABLE IF NOT EXISTS "protected_contents"(
     "id" CHAR(20)  PRIMARY KEY ,
     "section_id" CHAR(20) NOT NULL,
     "content" VARCHAR,
-    "expire_time" TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01 00:00:00'
+    "expire_time" TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01 08:00:00+08'
 );

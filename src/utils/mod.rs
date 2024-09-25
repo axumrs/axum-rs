@@ -1,4 +1,5 @@
 pub mod hash;
+pub mod http;
 pub mod id;
 pub mod md;
 pub mod password;

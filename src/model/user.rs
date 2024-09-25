@@ -3,6 +3,8 @@ use chrono::{DateTime, Local};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
+use crate::interfaces;
+
 #[derive(Debug, Default, Deserialize, Serialize, sqlx::Type)]
 #[sqlx(type_name = "user_status")]
 pub enum Status {
@@ -52,3 +54,5 @@ pub struct User {
     pub allow_device_num: i16,
     pub session_exp: i16,
 }
+
+impl interfaces::AsAuth for User {}

@@ -88,6 +88,18 @@ CREATE TABLE IF NOT EXISTS "users" (
     UNIQUE("nickname")
 );
 
+-- 激活码类型
+CREATE TYPE "activation_kind" AS ENUM('Register', 'ResetPassword');
+
+-- 激活码
+CREATE UNLOGGED TABLE  IF NOT EXISTS "activation"(
+    "id" CHAR(20) PRIMARY KEY,
+    "user_id" CHAR(20) NOT NULL,
+    "code"  CHAR(64) NOT NULL UNIQUE,
+    "kind" activation_kind NOT NULL DEFAULT 'Register',
+    "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- 用户登录日志
 CREATE TABLE IF NOT EXISTS "login_logs"(
      "id" CHAR(20) PRIMARY KEY,

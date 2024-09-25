@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{utils, Error};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct IpAndUserAgent {
     pub ip: String,
     pub ip_location: String,

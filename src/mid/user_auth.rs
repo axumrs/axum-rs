@@ -1,12 +1,11 @@
-use anyhow::anyhow;
 use axum::{async_trait, extract::FromRequestParts, http::request::Parts};
 
 use crate::{model, ArcAppState, Error};
 
-pub struct UserAuth(model::user::User);
+pub struct UserAuth(Option<model::user::User>);
 
 impl UserAuth {
-    pub fn user(&self) -> &model::user::User {
+    pub fn user(&self) -> &Option<model::user::User> {
         &self.0
     }
 }
@@ -19,10 +18,7 @@ impl FromRequestParts<ArcAppState> for UserAuth {
         parts: &mut Parts,
         _state: &ArcAppState,
     ) -> Result<Self, Self::Rejection> {
-        let u = match super::auth_fn::get_auth_user(&parts.headers).await? {
-            Some(v) => v,
-            None => return Err(anyhow!("查无此人").into()),
-        };
+        let u = super::auth_fn::get_auth_user(&parts.headers).await?;
 
         Ok(UserAuth(u))
     }

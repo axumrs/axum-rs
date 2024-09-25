@@ -3,7 +3,7 @@ use chrono::{DateTime, Local};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
-use crate::interfaces;
+use crate::{interfaces, utils, Result};
 
 #[derive(Debug, Default, Deserialize, Serialize, sqlx::Type)]
 #[sqlx(type_name = "user_status")]
@@ -36,9 +36,10 @@ pub struct User {
     pub id: String,
 
     #[db(find)]
-    #[db(skip_update)]
+    #[db(exists)]
     pub email: String,
 
+    #[db(exists)]
     pub nickname: String,
 
     #[serde(skip_serializing)]
@@ -56,3 +57,59 @@ pub struct User {
 }
 
 impl interfaces::AsAuth for User {}
+
+pub struct UserBuilder(User);
+impl UserBuilder {
+    pub fn new(email: String, nickname: String, password: String) -> Self {
+        Self(User {
+            email,
+            nickname,
+            password,
+            ..Default::default()
+        })
+    }
+
+    pub fn id(self, id: String) -> Self {
+        Self(User { id, ..self.0 })
+    }
+
+    pub fn status(self, status: Status) -> Self {
+        Self(User { status, ..self.0 })
+    }
+
+    pub fn kind(self, kind: Kind) -> Self {
+        Self(User { kind, ..self.0 })
+    }
+
+    pub fn sub_exp(self, sub_exp: DateTime<Local>) -> Self {
+        Self(User { sub_exp, ..self.0 })
+    }
+
+    pub fn dateline(self, dateline: DateTime<Local>) -> Self {
+        Self(User { dateline, ..self.0 })
+    }
+    pub fn dateline_now(self) -> Self {
+        self.dateline(Local::now())
+    }
+
+    pub fn points(self, points: Decimal) -> Self {
+        Self(User { points, ..self.0 })
+    }
+    pub fn allow_device_num(self, allow_device_num: i16) -> Self {
+        Self(User {
+            allow_device_num,
+            ..self.0
+        })
+    }
+    pub fn session_exp(self, session_exp: i16) -> Self {
+        Self(User {
+            session_exp,
+            ..self.0
+        })
+    }
+
+    pub fn build(self) -> Result<User> {
+        let password = utils::password::hash(&self.0.password)?;
+        Ok(User { password, ..self.0 })
+    }
+}

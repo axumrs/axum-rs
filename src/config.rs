@@ -3,6 +3,7 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize)]
 pub struct WebConfig {
     pub addr: String,
+    pub prefix: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -54,6 +55,11 @@ pub struct CaptchaConfig {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct UploadConfig {
+    pub max_size: usize,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Config {
     pub log: String,
     pub web: WebConfig,
@@ -62,6 +68,7 @@ pub struct Config {
     pub mails: Vec<MailConfig>,
     pub protected_content: ProtectedContentConfig,
     pub captcha: CaptchaConfig,
+    pub upload: UploadConfig,
 }
 
 impl Config {

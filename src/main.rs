@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
-use axum::Router;
-use axum_rs::{config, AppState};
+use axum_rs::{api, config, AppState};
 use sqlx::postgres::PgPoolOptions;
 use tokio::net::TcpListener;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -32,14 +31,14 @@ async fn main() {
     let web_addr = cfg.web.addr.as_str();
 
     let tcp_listener = TcpListener::bind(web_addr).await.unwrap();
-    tracing::info!("Web服务监听于：{}", web_addr);
+    tracing::info!("Web服务监听于：{}，路由前缀：{}", web_addr, &cfg.web.prefix);
 
     let state = Arc::new(AppState {
         pool: Arc::new(pool),
         cfg: Arc::new(cfg),
     });
 
-    let app = Router::new().with_state(state);
+    let app = api::router::init(state);
 
     axum::serve(tcp_listener, app).await.unwrap();
 }

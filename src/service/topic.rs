@@ -100,6 +100,94 @@ pub async fn add(p: &PgPool, m: Topic, tag_names: &[&str], hash_secret_key: &str
     Ok(m)
 }
 
+pub async fn edit(p: &PgPool, m: &Topic, tag_names: &[&str], hash_secret_key: &str) -> Result<u64> {
+    if m.id.is_empty() {
+        return Err(anyhow!("未指定ID").into());
+    }
+
+    let mut tx = p.begin().await.map_err(Error::from)?;
+
+    let exists = match exists(&mut *tx, &m.slug, &m.subject_id, Some(&m.id)).await {
+        Ok(v) => v,
+        Err(e) => {
+            tx.rollback().await.map_err(Error::from)?;
+            return Err(e.into());
+        }
+    };
+
+    if exists {
+        return Err(anyhow!("同一专题下，相同的Slug已存在").into());
+    }
+
+    // 文章
+    if let Err(e) = m.update(&mut *tx).await {
+        tx.rollback().await.map_err(Error::from)?;
+        return Err(e.into());
+    }
+
+    // -- 段落 --
+    // 清空段落
+    if let Err(e) = super::topic_section::clean(&mut *tx, &m.id).await {
+        tx.rollback().await.map_err(Error::from)?;
+        return Err(e.into());
+    }
+
+    let sects = match utils::topic::sections(&m, hash_secret_key) {
+        Ok(v) => v,
+        Err(e) => {
+            tx.rollback().await.map_err(Error::from)?;
+            return Err(e.into());
+        }
+    };
+
+    // 段落入库
+    for sect in sects.into_iter() {
+        if let Err(e) = sect.insert(&mut *tx).await {
+            tx.rollback().await.map_err(Error::from)?;
+            return Err(e.into());
+        }
+    }
+
+    // 标签
+    let mut tag_ids = Vec::with_capacity(tag_names.len());
+    for &tag_name in tag_names {
+        let tag_id = match super::tag::insert_if_not_exists(&mut *tx, tag_name).await {
+            Ok(v) => v,
+            Err(e) => {
+                tx.rollback().await.map_err(Error::from)?;
+                return Err(e.into());
+            }
+        };
+        tag_ids.push(tag_id);
+    }
+
+    // 文章-标签
+    // 清空文章标签
+    if let Err(e) = super::topic_tag::clean(&mut *tx, &m.id).await {
+        tx.rollback().await.map_err(Error::from)?;
+        return Err(e.into());
+    }
+    // 文章标签入库
+    let topic_tags = tag_ids
+        .iter()
+        .map(|tag_id| TopicTag {
+            id: utils::id::new(),
+            topic_id: m.id.clone(),
+            tag_id: tag_id.to_owned(),
+        })
+        .collect::<Vec<_>>();
+    for topic_tag in topic_tags.into_iter() {
+        if let Err(e) = topic_tag.insert(&mut *tx).await {
+            tx.rollback().await.map_err(Error::from)?;
+            return Err(e.into());
+        }
+    }
+
+    tx.commit().await.map_err(Error::from)?;
+
+    Ok(0)
+}
+
 #[cfg(test)]
 mod test {
     use sqlx::{postgres::PgPoolOptions, PgPool, Result};

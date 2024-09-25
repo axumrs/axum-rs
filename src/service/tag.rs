@@ -103,6 +103,30 @@ pub async fn insert_if_not_exists<'a>(c: impl PgExecutor<'a>, name: &str) -> sql
     Ok(id.0)
 }
 
+pub async fn del(p: &PgPool, id: String) -> Result<(u64, u64)> {
+    let mut tx = p.begin().await.map_err(Error::from)?;
+
+    let tag_aff = match model::tag::Tag::real_del(&mut *tx, &id).await {
+        Ok(v) => v,
+        Err(e) => {
+            tx.rollback().await.map_err(Error::from)?;
+            return Err(e.into());
+        }
+    };
+
+    let clean_topic_tag_aff = match super::topic_tag::clean_by_tag(&mut *tx, &id).await {
+        Ok(v) => v,
+        Err(e) => {
+            tx.rollback().await.map_err(Error::from)?;
+            return Err(e.into());
+        }
+    };
+
+    tx.commit().await.map_err(Error::from)?;
+
+    Ok((tag_aff, clean_topic_tag_aff))
+}
+
 #[cfg(test)]
 mod test {
     use sqlx::{postgres::PgPoolOptions, PgPool, Result};

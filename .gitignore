@@ -8,3 +8,4 @@
 /templates
 /config.toml
 /.env.*
+/test-sections-data

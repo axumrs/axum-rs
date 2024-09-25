@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS "topics" (
     "cover" VARCHAR(100) NOT NULL DEFAULT '',
     "md" VARCHAR NOT NULL,
     "pin" INTEGER NOT NULL DEFAULT 0,
+    "ver" INTEGER NOT NULL DEFAULT 0,
     UNIQUE("subject_id", "slug")
 );
 
@@ -46,6 +47,8 @@ CREATE TABLE IF NOT EXISTS "topic_sections"(
     "id" CHAR(20)  PRIMARY KEY ,
     "topic_id" CHAR(20) NOT NULL,
     "sort" INTEGER NOT NULL,
+    "ver" INTEGER NOT NULL DEFAULT 0,
+    "pre_id"  CHAR(20) NOT NULL,
     "content" VARCHAR
 );
 

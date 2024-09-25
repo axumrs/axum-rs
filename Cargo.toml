@@ -36,6 +36,7 @@ rand.workspace = true
 anyhow.workspace = true
 rust_decimal.workspace = true
 rust_decimal_macros.workspace = true
+scraper.workspace = true
 axum-rs-derive = { path = "./axum-rs-derive" }
 
 
@@ -68,3 +69,4 @@ rand = "0.8"
 anyhow = "1"
 rust_decimal = "1.36"
 rust_decimal_macros = "1.36"
+scraper = "0.20"

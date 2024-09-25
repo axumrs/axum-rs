@@ -53,7 +53,7 @@ sqlx = { version = "0.8", features = [
 ] }
 pulldown-cmark = "0.12"
 bcrypt = "0.15"
-config = "0.14"
+config = { version = "0.14", features = ["toml"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 reqwest = { version = "0.12", features = ["json"] }

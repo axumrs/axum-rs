@@ -62,8 +62,7 @@ CREATE TABLE IF NOT EXISTS "topic_tags" (
 CREATE TABLE IF NOT EXISTS "admins" (
     "id" CHAR(20) PRIMARY KEY ,
     "username" VARCHAR(50) NOT NULL,
-    "password" VARCHAR(255) NOT NULL,
-    "is_del" BOOLEAN NOT NULL DEFAULT FALSE,
+    "password" VARCHAR(72) NOT NULL,
     UNIQUE("username")
 );
 
@@ -77,15 +76,14 @@ CREATE TABLE IF NOT EXISTS "users" (
     "id" CHAR(20) PRIMARY KEY,
     "email" VARCHAR(255) NOT NULL,
     "nickname" VARCHAR(30) NOT NULL,
-    "password" VARCHAR(255) NOT NULL,
+    "password" VARCHAR(72) NOT NULL,
     "status" user_status DEFAULT 'Pending',
     "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "kind" user_kind  NOT NULL DEFAULT 'Normal',
     "sub_exp" TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01 08:00:00+08',
     "points" DECIMAL(8,0)  NOT NULL DEFAULT 0,
     "allow_device_num" SMALLINT  NOT NULL DEFAULT 1,
-    "jwt_exp" SMALLINT  NOT NULL DEFAULT 0,
-    "is_del" BOOLEAN NOT NULL DEFAULT FALSE,
+    "session_exp" SMALLINT  NOT NULL DEFAULT 0,
     UNIQUE("email"),
     UNIQUE("nickname")
 );

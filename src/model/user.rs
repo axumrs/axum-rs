@@ -44,6 +44,8 @@ pub struct User {
 
     #[serde(skip_serializing)]
     pub password: String,
+
+    #[db(find_opt)]
     pub status: Status,
 
     #[db(skip_update)]

@@ -1,5 +1,6 @@
 pub mod activation_code;
 pub mod admin;
+pub mod session;
 pub mod subject;
 pub mod tag;
 pub mod topic;

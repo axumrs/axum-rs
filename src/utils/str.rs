@@ -51,6 +51,13 @@ pub fn activation_code() -> String {
     rand_opt(20, Some(RandomType::All))
 }
 
+pub fn fixlen(s: &str, len: usize) -> &str {
+    if utf8_slice::len(s) <= len {
+        return s;
+    }
+    utf8_slice::slice(s, 0, len)
+}
+
 #[cfg(test)]
 mod tests {
     use super::RandomType;

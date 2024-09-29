@@ -183,6 +183,7 @@ dependencies = [
  "axum-rs-derive",
  "base16ct",
  "bcrypt",
+ "bitflags 2.6.0",
  "chrono",
  "config",
  "lazy_static",

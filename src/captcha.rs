@@ -52,3 +52,12 @@ pub async fn verify<'a>(c: Captcha<'a>, token: &'a str) -> Result<Response> {
     let res = res.json().await?;
     Ok(res)
 }
+
+pub async fn verify_hcaptcha<'a>(cfg: &'a config::Config, token: &'a str) -> Result<bool> {
+    let res = verify(Captcha::hcaptch(cfg), token).await?;
+    Ok(res.success)
+}
+pub async fn verify_turnstile<'a>(cfg: &'a config::Config, token: &'a str) -> Result<bool> {
+    let res = verify(Captcha::turnstile(cfg), token).await?;
+    Ok(res.success)
+}

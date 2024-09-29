@@ -40,5 +40,6 @@ fn auth_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/login", post(auth::login))
         .route("/register", post(auth::register))
+        .route("/register-send-code", post(auth::register_send_code))
         .with_state(state)
 }

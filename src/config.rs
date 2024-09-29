@@ -1,3 +1,4 @@
+use rand::Rng;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -77,5 +78,14 @@ impl Config {
             .add_source(config::File::with_name("config"))
             .build()?
             .try_deserialize()
+    }
+
+    pub fn get_mail(&self) -> crate::Result<&MailConfig> {
+        let idx = rand::thread_rng().gen_range(0..self.mails.len());
+        let m = match self.mails.get(idx) {
+            Some(m) => m,
+            None => return Err(crate::Error::new("msg")),
+        };
+        Ok(m)
     }
 }

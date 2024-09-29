@@ -84,18 +84,19 @@ CREATE TABLE IF NOT EXISTS "users" (
     "points" DECIMAL(8,0)  NOT NULL DEFAULT 0,
     "allow_device_num" SMALLINT  NOT NULL DEFAULT 1,
     "session_exp" SMALLINT  NOT NULL DEFAULT 0,
+    "is_import" BOOLEAN NOT NULL DEFAULT FALSE,
     UNIQUE("email"),
     UNIQUE("nickname")
 );
 
 -- 激活码类型
-CREATE TYPE "activation_kind" AS ENUM('Register', 'ResetPassword');
+CREATE TYPE "activation_kind" AS ENUM('Register', 'ResetPassword', 'ChangeEmail');
 
 -- 激活码
-CREATE UNLOGGED TABLE  IF NOT EXISTS "activation"(
+CREATE UNLOGGED TABLE  IF NOT EXISTS "activation_codes"(
     "id" CHAR(20) PRIMARY KEY,
-    "user_id" CHAR(20) NOT NULL,
-    "code"  CHAR(64) NOT NULL UNIQUE,
+    "email" VARCHAR(255) NOT NULL,
+    "code"  CHAR(20) NOT NULL UNIQUE,
     "kind" activation_kind NOT NULL DEFAULT 'Register',
     "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

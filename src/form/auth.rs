@@ -13,9 +13,17 @@ pub struct LoginForm {
 
     #[validate(length(min = 6))]
     pub captcha: String,
+}
+#[derive(Deserialize, Validate)]
+pub struct AdminLoginForm {
+    #[validate(length(min = 3))]
+    pub username: String,
 
-    /// 邀请码
-    pub invite: Option<String>,
+    #[validate(length(min = 6))]
+    pub password: String,
+
+    #[validate(length(min = 6))]
+    pub captcha: String,
 }
 
 #[derive(Deserialize, Validate)]
@@ -25,6 +33,9 @@ pub struct RegisterForm {
 
     #[validate(length(min = 6))]
     pub captcha: String,
+
+    /// 邀请码
+    pub invite: Option<String>,
 }
 
 #[derive(Deserialize, Validate)]

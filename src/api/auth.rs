@@ -57,7 +57,7 @@ pub async fn login(
 
     let user = match user {
         Some(v) => v,
-        None => return Err(Error::new("不存在的用户").into()),
+        None => return Err(Error::new("用户名/密码错误").into()),
     };
 
     // 验证状态
@@ -71,7 +71,7 @@ pub async fn login(
 
     // 验证密码
     if !utils::password::verify(&frm.password, &user.password).map_err(log_error(handler_name))? {
-        return Err(Error::new("密码错误").into());
+        return Err(Error::new("用户名/密码错误").into());
     }
 
     // 已登录数量
@@ -130,6 +130,96 @@ pub async fn login(
 
     Ok(resp::ok(session.token))
 }
+
+pub async fn admin_login(
+    State(state): State<ArcAppState>,
+    mid::IpAndUserAgent {
+        ip_location,
+        ip,
+        user_agent,
+    }: mid::IpAndUserAgent,
+    Json(frm): Json<form::auth::AdminLoginForm>,
+) -> Result<resp::JsonResp<String>> {
+    let handler_name = "auth/admin-login";
+    frm.validate()
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    // 人机验证
+    if !captcha::verify_hcaptcha(&state.cfg, &frm.captcha)
+        .await
+        .map_err(log_error(handler_name))?
+    {
+        return Err(Error::new("人机验证失败")).map_err(log_error(handler_name));
+    }
+
+    let p = get_pool(&state);
+    let mut tx = p
+        .begin()
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    let admin = match model::admin::Admin::find(
+        &mut *tx,
+        &model::admin::AdminFindFilter {
+            by: model::admin::AdminFindBy::Username(frm.username.clone()),
+        },
+    )
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tx.rollback()
+                .await
+                .map_err(Error::from)
+                .map_err(log_error(handler_name))?;
+            return Err(e.into());
+        }
+    };
+
+    let admin = match admin {
+        Some(v) => v,
+        None => return Err(Error::new("用户名/密码错误").into()),
+    };
+
+    if !utils::password::verify(&frm.password, &admin.password).map_err(log_error(handler_name))? {
+        return Err(Error::new("用户名/密码错误").into());
+    }
+
+    // 登录
+    let id = utils::id::new();
+    let (token, dateline) = utils::session::token(&admin.id, &state.cfg.session.secret_key, true)
+        .map_err(log_error(handler_name))?;
+    let expire_time = dateline + chrono::Duration::minutes(state.cfg.session.admin_timeout as i64);
+    let loc = utils::str::fixlen(&ip_location, 100).to_string();
+    let session = model::session::Session {
+        id,
+        user_id: admin.id,
+        token,
+        is_admin: true,
+        dateline,
+        ip,
+        ua: user_agent,
+        loc,
+        expire_time,
+    };
+
+    if let Err(e) = session.insert(&mut *tx).await {
+        tx.rollback()
+            .await
+            .map_err(Error::from)
+            .map_err(log_error(handler_name))?;
+        return Err(e.into());
+    }
+
+    tx.commit()
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+    Ok(resp::ok(session.token))
+}
+
 pub async fn register(
     State(state): State<ArcAppState>,
     Json(frm): Json<form::auth::RegisterForm>,

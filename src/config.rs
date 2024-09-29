@@ -18,6 +18,7 @@ pub struct SessionConfig {
     pub secret_key: String,
     pub default_timeout: u32,
     pub max_timeout: u32,
+    pub admin_timeout: u32,
 }
 
 #[derive(Debug, Deserialize)]

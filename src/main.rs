@@ -29,9 +29,9 @@ async fn main() {
         .unwrap();
     let pool = Arc::new(pool);
 
-    tokio::spawn(session_cleaner(pool.clone()));
-    tokio::spawn(activation_cleaner(pool.clone()));
-    tokio::spawn(protected_content_cleaner(pool.clone()));
+    let mut ses_handler = tokio::spawn(session_cleaner(pool.clone()));
+    let mut act_handler = tokio::spawn(activation_cleaner(pool.clone()));
+    let mut pc_handler = tokio::spawn(protected_content_cleaner(pool.clone()));
 
     let web_addr = cfg.web.addr.as_str();
 
@@ -45,7 +45,48 @@ async fn main() {
 
     let app = api::router::init(state);
 
-    axum::serve(tcp_listener, app).await.unwrap();
+    let mut svr_handler = tokio::spawn(async move { axum::serve(tcp_listener, app).await });
+
+    loop {
+        tokio::select! {
+            _ = &mut svr_handler => {
+                tracing::info!("Web服务退出");
+                ses_handler.abort();
+                act_handler.abort();
+                pc_handler.abort();
+                break;
+            }
+            _ = &mut ses_handler => {
+                tracing::info!("会话清理退出");
+                act_handler.abort();
+                pc_handler.abort();
+                svr_handler.abort();
+                break;
+            }
+            _ = &mut act_handler => {
+                tracing::info!("激活码清理退出");
+                ses_handler.abort();
+                pc_handler.abort();
+                svr_handler.abort();
+                break;
+            }
+            _ = &mut pc_handler => {
+                tracing::info!("内容保护清理退出");
+                ses_handler.abort();
+                act_handler.abort();
+                svr_handler.abort();
+                break;
+            }
+            _ = tokio::signal::ctrl_c() => {
+                tracing::info!("Ctrl+C退出");
+                ses_handler.abort();
+                act_handler.abort();
+                pc_handler.abort();
+                svr_handler.abort();
+                break;
+            }
+        }
+    }
 }
 
 async fn session_cleaner(pool: Arc<PgPool>) {

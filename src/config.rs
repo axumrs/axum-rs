@@ -64,6 +64,7 @@ pub struct UploadConfig {
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub log: String,
+    pub cleaner_max_try: u32,
     pub web: WebConfig,
     pub db: DbConfig,
     pub session: SessionConfig,

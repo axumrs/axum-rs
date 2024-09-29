@@ -29,9 +29,9 @@ async fn main() {
         .unwrap();
     let pool = Arc::new(pool);
 
-    let mut ses_handler = tokio::spawn(session_cleaner(pool.clone()));
-    let mut act_handler = tokio::spawn(activation_cleaner(pool.clone()));
-    let mut pc_handler = tokio::spawn(protected_content_cleaner(pool.clone()));
+    let mut ses_handler = tokio::spawn(session_cleaner(pool.clone(), cfg.cleaner_max_try));
+    let mut act_handler = tokio::spawn(activation_cleaner(pool.clone(), cfg.cleaner_max_try));
+    let mut pc_handler = tokio::spawn(protected_content_cleaner(pool.clone(), cfg.cleaner_max_try));
 
     let web_addr = cfg.web.addr.as_str();
 
@@ -89,15 +89,24 @@ async fn main() {
     }
 }
 
-async fn session_cleaner(pool: Arc<PgPool>) {
+async fn session_cleaner(pool: Arc<PgPool>, max_try: u32) {
+    let mut tried = 0u32;
     loop {
+        if max_try > 0 && tried >= max_try {
+            tracing::info!("[session_cleaner] 已尝试 {} 次", tried);
+            break;
+        }
         let aff = match sqlx::query("DELETE FROM sessions WHERE expire_time <=$1")
             .bind(&chrono::Local::now())
             .execute(&*pool)
             .await
         {
-            Ok(v) => v.rows_affected(),
+            Ok(v) => {
+                tried = 0;
+                v.rows_affected()
+            }
             Err(e) => {
+                tried += 1;
                 tracing::error!("[session_cleaner] {}", e);
                 tokio::time::sleep(std::time::Duration::from_secs(1)).await;
                 continue;
@@ -108,15 +117,24 @@ async fn session_cleaner(pool: Arc<PgPool>) {
     }
 }
 
-async fn activation_cleaner(pool: Arc<PgPool>) {
+async fn activation_cleaner(pool: Arc<PgPool>, max_try: u32) {
+    let mut tried = 0u32;
     loop {
+        if max_try > 0 && tried >= max_try {
+            tracing::info!("[activation_cleaner] 已尝试 {} 次", tried);
+            break;
+        }
         let aff = match sqlx::query("DELETE FROM activation_codes WHERE dateline <=$1")
             .bind(&(chrono::Local::now() + chrono::Duration::minutes(5)))
             .execute(&*pool)
             .await
         {
-            Ok(v) => v.rows_affected(),
+            Ok(v) => {
+                tried = 0;
+                v.rows_affected()
+            }
             Err(e) => {
+                tried += 1;
                 tracing::error!("[activation_cleaner] {}", e);
                 tokio::time::sleep(std::time::Duration::from_secs(1)).await;
                 continue;
@@ -127,15 +145,25 @@ async fn activation_cleaner(pool: Arc<PgPool>) {
     }
 }
 
-async fn protected_content_cleaner(pool: Arc<PgPool>) {
+async fn protected_content_cleaner(pool: Arc<PgPool>, max_try: u32) {
+    let mut tried = 0u32;
     loop {
+        if max_try > 0 && tried >= max_try {
+            tracing::info!("[protected_content_cleaner] 已尝试 {} 次", tried);
+            break;
+        }
+
         let aff = match sqlx::query("DELETE FROM protected_contents WHERE expire_time <=$1")
             .bind(&chrono::Local::now())
             .execute(&*pool)
             .await
         {
-            Ok(v) => v.rows_affected(),
+            Ok(v) => {
+                tried = 0;
+                v.rows_affected()
+            }
             Err(e) => {
+                tried += 1;
                 tracing::error!("[protected_content_cleaner] {}", e);
                 tokio::time::sleep(std::time::Duration::from_secs(1)).await;
                 continue;

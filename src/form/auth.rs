@@ -13,6 +13,9 @@ pub struct LoginForm {
 
     #[validate(length(min = 6))]
     pub captcha: String,
+
+    /// 邀请码
+    pub invite: Option<String>,
 }
 
 #[derive(Deserialize, Validate)]

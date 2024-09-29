@@ -1,8 +1,10 @@
 pub mod api;
+pub mod captcha;
 pub mod config;
 mod err;
 pub mod form;
 pub mod interfaces;
+pub mod mail;
 pub mod mid;
 pub mod model;
 mod resp;

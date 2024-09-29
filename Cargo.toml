@@ -37,6 +37,7 @@ anyhow.workspace = true
 rust_decimal.workspace = true
 rust_decimal_macros.workspace = true
 scraper.workspace = true
+lettre.workspace = true
 axum-rs-derive = { path = "./axum-rs-derive" }
 
 
@@ -70,3 +71,4 @@ anyhow = "1"
 rust_decimal = "1.36"
 rust_decimal_macros = "1.36"
 scraper = "0.20"
+lettre = { version = "0.11", features = ["tokio1-native-tls"] }

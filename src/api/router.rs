@@ -18,7 +18,10 @@ pub fn init(state: ArcAppState) -> Router {
         .nest("/", web_init(state.clone()))
         .nest("/auth", auth_init(state.clone()))
         .nest("/user", user::router::init(state.clone()))
-        .nest("/admin", admin::router::init(state.clone()))
+        .nest("/admin", admin::router::init(state.clone()));
+
+    Router::new()
+        .nest(&state.cfg.web.prefix, r)
         .layer(
             CorsLayer::new()
                 .allow_headers(Any)
@@ -27,13 +30,13 @@ pub fn init(state: ArcAppState) -> Router {
         )
         .layer(DefaultBodyLimit::disable())
         .layer(RequestBodyLimitLayer::new(state.cfg.upload.max_size))
-        .layer(from_extractor::<mid::IpAndUserAgent>());
-
-    Router::new().nest(&state.cfg.web.prefix, r)
+        .layer(from_extractor::<mid::IpAndUserAgent>())
 }
 
 fn web_init(state: ArcAppState) -> Router {
-    Router::new().route("/", get(web::ping)).with_state(state)
+    Router::new()
+        .route("/ping", get(web::ping))
+        .with_state(state)
 }
 
 fn auth_init(state: ArcAppState) -> Router {

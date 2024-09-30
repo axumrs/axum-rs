@@ -14,7 +14,7 @@ pub async fn login(
         user_agent,
     }: mid::IpAndUserAgent,
     Json(frm): Json<form::auth::LoginForm>,
-) -> Result<resp::JsonResp<String>> {
+) -> Result<resp::JsonResp<resp::AuthResp<model::user::User>>> {
     let handler_name = "auth/login";
     frm.validate()
         .map_err(Error::from)
@@ -105,7 +105,7 @@ pub async fn login(
     let loc = utils::str::fixlen(&ip_location, 100).to_string();
     let session = model::session::Session {
         id,
-        user_id: user.id,
+        user_id: user.id.clone(),
         token,
         is_admin: false,
         dateline,
@@ -128,7 +128,10 @@ pub async fn login(
         .map_err(Error::from)
         .map_err(log_error(handler_name))?;
 
-    Ok(resp::ok(session.token))
+    Ok(resp::ok(resp::AuthResp {
+        user,
+        token: session.token,
+    }))
 }
 
 pub async fn admin_login(
@@ -139,7 +142,7 @@ pub async fn admin_login(
         user_agent,
     }: mid::IpAndUserAgent,
     Json(frm): Json<form::auth::AdminLoginForm>,
-) -> Result<resp::JsonResp<String>> {
+) -> Result<resp::JsonResp<resp::AuthResp<model::admin::Admin>>> {
     let handler_name = "auth/admin-login";
     frm.validate()
         .map_err(Error::from)
@@ -195,7 +198,7 @@ pub async fn admin_login(
     let loc = utils::str::fixlen(&ip_location, 100).to_string();
     let session = model::session::Session {
         id,
-        user_id: admin.id,
+        user_id: admin.id.clone(),
         token,
         is_admin: true,
         dateline,
@@ -217,7 +220,10 @@ pub async fn admin_login(
         .await
         .map_err(Error::from)
         .map_err(log_error(handler_name))?;
-    Ok(resp::ok(session.token))
+    Ok(resp::ok(resp::AuthResp {
+        user: admin,
+        token: session.token,
+    }))
 }
 
 pub async fn register(
@@ -240,7 +246,7 @@ pub async fn register(
         &*p,
         &frm.user.email,
         model::activation_code::Kind::Register,
-        Some(frm.captcha.clone()),
+        Some(frm.activation_code.clone()),
     )
     .await
     {

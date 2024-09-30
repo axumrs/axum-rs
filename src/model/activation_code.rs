@@ -38,4 +38,7 @@ pub struct ActivationCode {
 
     #[db(skip_update)]
     pub dateline: DateTime<Local>,
+
+    #[db(skip_update)]
+    pub expire_time: DateTime<Local>,
 }

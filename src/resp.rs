@@ -1,7 +1,7 @@
 use axum::Json;
 use serde::Serialize;
 
-use crate::Error;
+use crate::{interfaces::AsAuth, Error};
 
 #[derive(Serialize)]
 pub struct Resp<T> {
@@ -45,6 +45,12 @@ pub struct IDResp {
 #[derive(Serialize)]
 pub struct AffResp {
     pub aff: u64,
+}
+
+#[derive(Serialize)]
+pub struct AuthResp<T: AsAuth + Serialize> {
+    pub user: T,
+    pub token: String,
 }
 
 pub type JsonResp<T> = Json<Resp<T>>;

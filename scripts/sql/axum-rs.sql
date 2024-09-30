@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS "users" (
     "points" DECIMAL(8,0)  NOT NULL DEFAULT 0,
     "allow_device_num" SMALLINT  NOT NULL DEFAULT 1,
     "session_exp" SMALLINT  NOT NULL DEFAULT 0,
-    "is_import" BOOLEAN NOT NULL DEFAULT FALSE,
+    "need_reverify_email" BOOLEAN NOT NULL DEFAULT FALSE,
     UNIQUE("email"),
     UNIQUE("nickname")
 );
@@ -98,7 +98,8 @@ CREATE UNLOGGED TABLE  IF NOT EXISTS "activation_codes"(
     "email" VARCHAR(255) NOT NULL,
     "code"  CHAR(20) NOT NULL UNIQUE,
     "kind" activation_kind NOT NULL DEFAULT 'Register',
-    "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expire_time" TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01 08:00:00+08'
 );
 
 -- 用户登录日志

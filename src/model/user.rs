@@ -56,7 +56,7 @@ pub struct User {
     pub points: Decimal,
     pub allow_device_num: i16,
     pub session_exp: i16,
-    pub is_import: bool,
+    pub need_reverify_email: bool,
 }
 
 impl interfaces::AsAuth for User {}

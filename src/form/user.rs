@@ -4,6 +4,7 @@ use validator::Validate;
 #[derive(Deserialize, Validate)]
 pub struct AddForm {
     #[validate(email)]
+    #[validate(length(max = 255))]
     pub email: String,
 
     #[validate(length(min = 3, max = 30))]

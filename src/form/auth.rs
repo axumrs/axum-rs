@@ -6,6 +6,7 @@ use super::user;
 #[derive(Deserialize, Validate)]
 pub struct LoginForm {
     #[validate(email)]
+    #[validate(length(max = 255))]
     pub email: String,
 
     #[validate(length(min = 6))]
@@ -16,7 +17,7 @@ pub struct LoginForm {
 }
 #[derive(Deserialize, Validate)]
 pub struct AdminLoginForm {
-    #[validate(length(min = 3))]
+    #[validate(length(min = 3, max = 50))]
     pub username: String,
 
     #[validate(length(min = 6))]
@@ -32,7 +33,7 @@ pub struct RegisterForm {
     pub user: user::AddForm,
 
     #[validate(length(min = 6))]
-    pub captcha: String,
+    pub activation_code: String,
 
     /// 邀请码
     pub invite: Option<String>,
@@ -41,6 +42,7 @@ pub struct RegisterForm {
 #[derive(Deserialize, Validate)]
 pub struct RegisterSendCodeForm {
     #[validate(email)]
+    #[validate(length(max = 255))]
     pub email: String,
 
     #[validate(length(min = 6))]

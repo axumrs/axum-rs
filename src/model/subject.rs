@@ -28,6 +28,9 @@ pub struct Subject {
     #[db(exists)]
     pub slug: String,
     pub summary: String,
+
+    #[db(find_opt)]
+    #[db(list_opt)]
     pub is_del: bool,
     pub cover: String,
 

@@ -2,7 +2,7 @@ use anyhow::anyhow;
 use sqlx::{PgExecutor, PgPool, QueryBuilder};
 
 use crate::{
-    model::{topic::Topic, topic_tag::TopicTag},
+    model::{self, topic::Topic, topic_tag::TopicTag},
     utils, Error, Result,
 };
 
@@ -188,6 +188,78 @@ pub async fn edit(p: &PgPool, m: &Topic, tag_names: &[&str], hash_secret_key: &s
     Ok(0)
 }
 
+async fn tags(
+    p: &PgPool,
+    tf: &model::topic_tag::VTopicTagWithTagListAllFilter,
+) -> Result<Vec<model::topic_tag::VTopicTagWithTag>> {
+    model::topic_tag::VTopicTagWithTag::list_all(p, tf)
+        .await
+        .map_err(Error::from)
+}
+pub async fn find_opt(
+    p: &PgPool,
+    f: Option<&model::topic_views::VTopicSubjectFindFilter>,
+    tf: &model::topic_tag::VTopicTagWithTagListAllFilter,
+    ts: Option<Option<model::topic_views::VTopicSubject>>,
+) -> Result<Option<model::topic_views::TopicSubjectWithTags>> {
+    let topic_subjects = if let Some(ts) = ts {
+        ts
+    } else {
+        model::topic_views::VTopicSubject::find(p, f.unwrap()).await?
+    };
+    let topic_subjects = match topic_subjects {
+        Some(v) => v,
+        None => return Ok(None),
+    };
+
+    let tags = tags(p, tf).await?;
+    Ok(Some(model::topic_views::TopicSubjectWithTags {
+        topic_subjects,
+        tags,
+    }))
+}
+
+pub async fn list_all_opt(
+    p: &PgPool,
+    f: &model::topic_views::VTopicSubjectListAllFilter,
+) -> Result<Vec<model::topic_views::TopicSubjectWithTags>> {
+    let tss = model::topic_views::VTopicSubject::list_all(p, f).await?;
+    let mut r = Vec::with_capacity(tss.len());
+    for ts in tss.into_iter() {
+        let tf = model::topic_tag::VTopicTagWithTagListAllFilter {
+            limit: None,
+            order: None,
+            topic_id: ts.id.clone(),
+            name: None,
+            is_del: Some(false),
+        };
+        let tst = find_opt(p, None, &tf, Some(Some(ts))).await?;
+        if let Some(tst) = tst {
+            r.push(tst);
+        }
+    }
+    Ok(r)
+}
+
+pub async fn list_all_for_subject(
+    p: &PgPool,
+    subject_slug: String,
+) -> Result<Vec<model::topic_views::TopicSubjectWithTags>> {
+    let f = model::topic_views::VTopicSubjectListAllFilter {
+        limit: None,
+        order: Some("id ASC".into()),
+        title: None,
+        subject_id: None,
+        slug: None,
+        is_del: Some(false),
+        subject_slug: Some(subject_slug),
+        subject_is_del: Some(false),
+        status: None,
+        v_topic_subject_list_all_between_datelines: None,
+    };
+
+    list_all_opt(p, &f).await
+}
 #[cfg(test)]
 mod test {
     use sqlx::{postgres::PgPoolOptions, PgPool, Result};
@@ -221,5 +293,48 @@ mod test {
             .await
             .unwrap();
         println!("{:#?}", m);
+    }
+
+    #[tokio::test]
+    async fn test_find_opt_topic() {
+        let id = "crv55gkdrfanbmmathl0".to_string();
+        let p = get_pool().await.unwrap();
+
+        let f = model::topic_views::VTopicSubjectFindFilter {
+            id: Some(id.clone()),
+            subject_id: None,
+            slug: None,
+            is_del: Some(false),
+            subject_slug: None,
+            subject_is_del: Some(false),
+        };
+        let tf = model::topic_tag::VTopicTagWithTagListAllFilter {
+            limit: None,
+            order: None,
+            topic_id: id.clone(),
+            name: None,
+            is_del: Some(false),
+        };
+        let ls = super::find_opt(&p, Some(&f), &tf, None).await.unwrap();
+        println!("{:#?}", ls);
+    }
+
+    #[tokio::test]
+    async fn test_list_all_opt_topic() {
+        let p = get_pool().await.unwrap();
+        let f = model::topic_views::VTopicSubjectListAllFilter {
+            limit: None,
+            order: Some("id ASC".into()),
+            title: None,
+            subject_id: Some("crv55gkdrfanbmmatc6g".into()),
+            slug: None,
+            is_del: Some(false),
+            subject_slug: None,
+            subject_is_del: Some(false),
+            status: None,
+            v_topic_subject_list_all_between_datelines: None,
+        };
+        let ls = super::list_all_opt(&p, &f).await.unwrap();
+        println!("{:#?}", ls);
     }
 }

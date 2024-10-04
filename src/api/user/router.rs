@@ -24,5 +24,6 @@ fn subject_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/top", get(subject::top))
         .route("/", get(subject::list))
+        .route("/detail/:slug", get(subject::detail))
         .with_state(state)
 }

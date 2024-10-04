@@ -1,6 +1,8 @@
 use axum::Json;
 use serde::Serialize;
 
+pub mod subject;
+
 use crate::{interfaces::AsAuth, Error};
 
 #[derive(Serialize)]

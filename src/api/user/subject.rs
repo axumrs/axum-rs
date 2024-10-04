@@ -2,7 +2,7 @@ use axum::extract::{Path, Query, State};
 
 use crate::{
     api::{get_pool, log_error},
-    form, model, resp, ArcAppState, Error, Result,
+    form, model, resp, service, ArcAppState, Error, Result,
 };
 
 pub async fn top(
@@ -50,9 +50,35 @@ pub async fn list(
     Ok(resp::ok(data))
 }
 
-// pub async fn topic_list(
-//     State(state): State<ArcAppState>,
-//     Path(slug): Path<String>,
-// ) -> Result<resp::JsonResp<Vec<model::topic::Topic>>> {
-//     unimplemented!()
-// }
+pub async fn detail(
+    State(state): State<ArcAppState>,
+    Path(slug): Path<String>,
+) -> Result<resp::JsonResp<resp::subject::Detail>> {
+    let handler_name = "api/user/subject/topic_list";
+    let p = get_pool(&state);
+
+    let subject = model::subject::Subject::find(
+        &*p,
+        &model::subject::SubjectFindFilter {
+            by: model::subject::SubjectFindBy::Slug(slug.clone()),
+            is_del: Some(false),
+        },
+    )
+    .await
+    .map_err(Error::from)
+    .map_err(log_error(handler_name))?;
+
+    let subject = match subject {
+        Some(v) => v,
+        None => return Err(Error::new("不存在的专题")),
+    };
+
+    let topic_list = service::topic::list_all_for_subject(&*p, slug)
+        .await
+        .map_err(log_error(handler_name))?;
+
+    Ok(resp::ok(resp::subject::Detail {
+        subject,
+        topic_list,
+    }))
+}

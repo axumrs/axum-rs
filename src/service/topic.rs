@@ -260,6 +260,35 @@ pub async fn list_all_for_subject(
 
     list_all_opt(p, &f).await
 }
+
+/// 分页显示
+pub async fn list_opt(
+    p: &PgPool,
+    f: &model::topic_views::VTopicSubjectListFilter,
+) -> Result<model::pagination::Paginate<model::topic_views::TopicSubjectWithTags>> {
+    let tsp = model::topic_views::VTopicSubject::list(p, f).await?;
+    let mut r = Vec::with_capacity(tsp.data.len());
+    for ts in tsp.data.into_iter() {
+        let tf = model::topic_tag::VTopicTagWithTagListAllFilter {
+            limit: None,
+            order: None,
+            topic_id: ts.id.clone(),
+            name: None,
+            is_del: Some(false),
+        };
+        let tst = find_opt(p, None, &tf, Some(Some(ts))).await?;
+        if let Some(tst) = tst {
+            r.push(tst);
+        }
+    }
+    Ok(model::pagination::Paginate {
+        total: tsp.total,
+        total_page: tsp.total_page,
+        page: tsp.page,
+        page_size: tsp.page_size,
+        data: r,
+    })
+}
 #[cfg(test)]
 mod test {
     use sqlx::{postgres::PgPoolOptions, PgPool, Result};

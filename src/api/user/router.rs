@@ -2,12 +2,13 @@ use axum::{middleware, routing::get, Router};
 
 use crate::{mid, ArcAppState};
 
-use super::{ping, subject};
+use super::{ping, subject, topic};
 
 pub fn init(state: ArcAppState) -> Router {
     Router::new()
         .nest("/", ping(state.clone()))
         .nest("/subject", subject_init(state.clone()))
+        .nest("/topic", topic_init(state.clone()))
         .layer(middleware::from_extractor_with_state::<
             mid::UserAuth,
             ArcAppState,
@@ -25,5 +26,12 @@ fn subject_init(state: ArcAppState) -> Router {
         .route("/top", get(subject::top))
         .route("/", get(subject::list))
         .route("/detail/:slug", get(subject::detail))
+        .with_state(state)
+}
+
+fn topic_init(state: ArcAppState) -> Router {
+    Router::new()
+        .route("/top", get(topic::top))
+        .route("/", get(topic::list))
         .with_state(state)
 }

@@ -66,6 +66,6 @@ pub struct TopicSubjectWithTags {
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct TopicSubjectWithTagsAndSections {
     #[serde(flatten)]
-    pub topic_subject_with_tags: VTopicSubject,
+    pub topic_subject_with_tags: TopicSubjectWithTags,
     pub sections: Vec<super::topic::TopicSection>,
 }

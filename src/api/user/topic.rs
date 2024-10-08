@@ -1,4 +1,4 @@
-use axum::extract::{Query, State};
+use axum::extract::{Path, Query, State};
 
 use crate::{
     api::{get_pool, log_error},
@@ -62,5 +62,18 @@ pub async fn list(
     .map_err(Error::from)
     .map_err(log_error(handler_name))?;
 
+    Ok(resp::ok(data))
+}
+
+pub async fn detail(
+    State(state): State<ArcAppState>,
+    Path((subject_slug, slug)): Path<(String, String)>,
+) -> Result<resp::JsonResp<model::topic_views::TopicSubjectWithTagsAndSections>> {
+    let handler_name = "api/user/topic/detail";
+    let p = get_pool(&state);
+
+    let data = service::topic::find_detail(&*p, &slug, &subject_slug)
+        .await
+        .map_err(log_error(handler_name))?;
     Ok(resp::ok(data))
 }

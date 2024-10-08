@@ -289,6 +289,90 @@ pub async fn list_opt(
         data: r,
     })
 }
+
+pub async fn find_detail(
+    p: &PgPool,
+    slug: &str,
+    subject_slug: &str,
+) -> Result<model::topic_views::TopicSubjectWithTagsAndSections> {
+    let mut tx = p.begin().await?;
+    let topic = match model::topic_views::VTopicSubject::find(
+        &mut *tx,
+        &model::topic_views::VTopicSubjectFindFilter {
+            id: None,
+            subject_id: None,
+            slug: Some(slug.into()),
+            is_del: Some(false),
+            subject_slug: Some(subject_slug.into()),
+            subject_is_del: Some(false),
+        },
+    )
+    .await?
+    {
+        Some(v) => v,
+        None => return Err(Error::new("文章不存在")),
+    };
+
+    // 更新阅读数
+    let sql = format!(
+        "UPDATE {} SET hit=hit+1 WHERE id = $1",
+        &model::topic::Topic::table()
+    );
+    if let Err(e) = sqlx::query(&sql).bind(&topic.id).execute(&mut *tx).await {
+        tx.rollback().await?;
+        return Err(e.into());
+    }
+
+    // 标签
+
+    let tags = match model::topic_tag::VTopicTagWithTag::list_all(
+        &mut *tx,
+        &model::topic_tag::VTopicTagWithTagListAllFilter {
+            limit: None,
+            order: None,
+            topic_id: topic.id.clone(),
+            name: None,
+            is_del: Some(false),
+        },
+    )
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tx.rollback().await?;
+            return Err(e.into());
+        }
+    };
+
+    // 段落
+
+    let sections = match model::topic::TopicSection::list_all(
+        &mut *tx,
+        &model::topic::TopicSectionListAllFilter {
+            limit: None,
+            order: Some("hash ASC, id ASC".into()),
+            topic_id: Some(topic.id.clone()),
+        },
+    )
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tx.rollback().await?;
+            return Err(e.into());
+        }
+    };
+
+    tx.commit().await?;
+
+    Ok(model::topic_views::TopicSubjectWithTagsAndSections {
+        topic_subject_with_tags: model::topic_views::TopicSubjectWithTags {
+            topic_subjects: topic,
+            tags,
+        },
+        sections,
+    })
+}
 #[cfg(test)]
 mod test {
     use sqlx::{postgres::PgPoolOptions, PgPool, Result};

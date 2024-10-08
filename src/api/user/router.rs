@@ -33,5 +33,6 @@ fn topic_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/top", get(topic::top))
         .route("/", get(topic::list))
+        .route("/detail/:subject_slug/:slug", get(topic::detail))
         .with_state(state)
 }

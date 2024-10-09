@@ -74,6 +74,7 @@ pub async fn find_by_id(p: &PgPool, id: &str) -> Result<Option<model::tag::Tag>>
         &model::tag::TagFindFilter {
             id: Some(id.to_string()),
             name: None,
+            is_del: None,
         },
     )
     .await
@@ -85,6 +86,7 @@ pub async fn find_by_name(p: &PgPool, name: &str) -> Result<Option<model::tag::T
         &model::tag::TagFindFilter {
             id: None,
             name: Some(name.to_string()),
+            is_del: None,
         },
     )
     .await
@@ -125,6 +127,66 @@ pub async fn del(p: &PgPool, id: String) -> Result<(u64, u64)> {
     tx.commit().await.map_err(Error::from)?;
 
     Ok((tag_aff, clean_topic_tag_aff))
+}
+
+pub async fn find_with_topic_count(
+    p: &PgPool,
+    f: Option<&model::tag::TagFindFilter>,
+    m: Option<model::tag::Tag>,
+) -> Result<Option<model::tag::TagWithTopicCount>> {
+    let t = if let Some(v) = m {
+        v
+    } else {
+        let f = match f {
+            Some(v) => v,
+            None => return Err(Error::new("参数错误")),
+        };
+
+        match model::tag::Tag::find(p, f).await? {
+            Some(v) => v,
+            None => return Ok(None),
+        }
+    };
+
+    let c: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM topic_tags WHERE tag_id = $1")
+        .bind(&t.id)
+        .fetch_one(&*p)
+        .await?;
+
+    Ok(Some(model::tag::TagWithTopicCount {
+        tag: t,
+        topic_count: c.0,
+    }))
+}
+pub async fn list_with_topic_count(
+    p: &PgPool,
+    page: u32,
+    page_size: u32,
+) -> Result<model::pagination::Paginate<model::tag::TagWithTopicCount>> {
+    let tp = model::tag::Tag::list(
+        &*p,
+        &model::tag::TagListFilter {
+            pq: model::tag::TagPaginateReq { page, page_size },
+            order: None,
+            name: None,
+            is_del: Some(false),
+        },
+    )
+    .await?;
+
+    let mut r = Vec::with_capacity(tp.data.len());
+    for t in tp.data {
+        let m = find_with_topic_count(p, None, Some(t)).await?.unwrap();
+        r.push(m);
+    }
+
+    Ok(model::pagination::Paginate {
+        total: tp.total,
+        total_page: tp.total_page,
+        page: tp.page,
+        page_size: tp.page_size,
+        data: r,
+    })
 }
 
 #[cfg(test)]

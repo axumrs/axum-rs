@@ -23,6 +23,8 @@ pub struct Topic {
     pub hit: i64,
     pub dateline: DateTime<Local>,
     pub try_readable: bool,
+
+    #[db(list_opt)]
     pub is_del: bool,
     pub cover: String,
     pub md: String,

@@ -68,12 +68,39 @@ pub async fn list(
 pub async fn detail(
     State(state): State<ArcAppState>,
     Path((subject_slug, slug)): Path<(String, String)>,
-) -> Result<resp::JsonResp<model::topic_views::TopicSubjectWithTagsAndSections>> {
+) -> Result<resp::JsonResp<model::topic_views::TopicSubjectWithTagsAndProctedSections>> {
     let handler_name = "api/user/topic/detail";
     let p = get_pool(&state);
 
     let data = service::topic::find_detail(&*p, &slug, &subject_slug)
         .await
         .map_err(log_error(handler_name))?;
-    Ok(resp::ok(data))
+
+    // 是否需要内容保护
+    let need_procted = true;
+    if need_procted {
+        let (secs, protected_ids) =
+            service::topic::gen_protected_content(&*p, data.sections, &state.cfg.protected_content)
+                .await
+                .map_err(log_error(handler_name))?;
+        let data = model::topic_views::TopicSubjectWithTagsAndSections {
+            sections: secs,
+            ..data
+        };
+        return Ok(resp::ok(
+            model::topic_views::TopicSubjectWithTagsAndProctedSections {
+                topic_subject_with_tags_and_sections: data,
+                protected: model::topic_views::TopicProctedMeta {
+                    ids: protected_ids,
+                    catpcha: state.cfg.protected_content.guest_captcha.clone(),
+                },
+            },
+        ));
+    }
+    Ok(resp::ok(
+        model::topic_views::TopicSubjectWithTagsAndProctedSections {
+            topic_subject_with_tags_and_sections: data,
+            protected: model::topic_views::TopicProctedMeta::default(),
+        },
+    ))
 }

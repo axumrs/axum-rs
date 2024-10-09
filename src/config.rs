@@ -1,5 +1,5 @@
 use rand::Rng;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
 pub struct WebConfig {
@@ -35,10 +35,13 @@ pub struct ProtectedContentConfig {
     pub min_sections: u8,
     pub guest_captcha: CaptchaKind,
     pub user_captcha: CaptchaKind,
+    pub timeout: u8,
+    pub placeholder: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Default, Clone)]
 pub enum CaptchaKind {
+    #[default]
     HCaptcha,
     Turnstile,
 }
@@ -65,6 +68,7 @@ pub struct UploadConfig {
 pub struct Config {
     pub log: String,
     pub cleaner_max_try: u32,
+    pub topic_section_secret_key: String,
     pub web: WebConfig,
     pub db: DbConfig,
     pub session: SessionConfig,

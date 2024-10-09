@@ -3,6 +3,8 @@ use chrono::{DateTime, Local};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
+use crate::config;
+
 #[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow, Db)]
 #[db(table = v_topic_subjects, pk = id)]
 pub struct VTopicSubject {
@@ -68,4 +70,17 @@ pub struct TopicSubjectWithTagsAndSections {
     #[serde(flatten)]
     pub topic_subject_with_tags: TopicSubjectWithTags,
     pub sections: Vec<super::topic::TopicSection>,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct TopicProctedMeta {
+    pub ids: Vec<String>,
+    pub catpcha: config::CaptchaKind,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct TopicSubjectWithTagsAndProctedSections {
+    #[serde(flatten)]
+    pub topic_subject_with_tags_and_sections: TopicSubjectWithTagsAndSections,
+    pub protected: TopicProctedMeta,
 }

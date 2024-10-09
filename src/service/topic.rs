@@ -1,7 +1,10 @@
 use anyhow::anyhow;
+use chrono::Local;
+use rand::Rng;
 use sqlx::{PgExecutor, PgPool, QueryBuilder};
 
 use crate::{
+    config,
     model::{self, topic::Topic, topic_tag::TopicTag},
     utils, Error, Result,
 };
@@ -345,12 +348,11 @@ pub async fn find_detail(
     };
 
     // 段落
-
     let sections = match model::topic::TopicSection::list_all(
         &mut *tx,
         &model::topic::TopicSectionListAllFilter {
             limit: None,
-            order: Some("hash ASC, id ASC".into()),
+            order: Some("sort ASC, id ASC".into()),
             topic_id: Some(topic.id.clone()),
         },
     )
@@ -372,6 +374,97 @@ pub async fn find_detail(
         },
         sections,
     })
+}
+
+pub async fn gen_protected_content(
+    c: impl PgExecutor<'_>,
+    secs: Vec<model::topic::TopicSection>,
+    cfg: &config::ProtectedContentConfig,
+) -> Result<(Vec<model::topic::TopicSection>, Vec<String>)> {
+    if secs.len() <= cfg.min_sections as usize {
+        return Ok((secs, vec![]));
+    }
+
+    // 保护的数量
+    let procted_num = match secs.len() {
+        0..=2 => 0,
+        3..=5 => 1,
+        6..=8 => 2,
+        _ => cfg.max_sections as usize,
+    };
+
+    // 随机选择
+    let mut procted_idx = Vec::with_capacity(procted_num);
+    for _ in 0..procted_num {
+        loop {
+            let idx = rand::thread_rng().gen_range(0..secs.len());
+            if !utils::vec::is_in(&procted_idx, &idx) {
+                procted_idx.push(idx);
+                break;
+            }
+        }
+    }
+    procted_idx.sort();
+
+    let procted_contents = secs
+        .iter()
+        .enumerate()
+        .filter(|(idx, _)| utils::vec::is_in(&procted_idx, idx))
+        .map(|(_, sect)| {
+            let id = utils::id::new();
+            let expire_time = Local::now() + chrono::Duration::minutes(cfg.timeout as i64);
+            model::protected_content::ProtectedContent {
+                id,
+                section_id: sect.id.clone(),
+                content: sect.content.clone(),
+                expire_time,
+            }
+        })
+        .collect::<Vec<_>>();
+
+    let mut q = QueryBuilder::new(
+        r#"INSERT INTO protected_contents (id, section_id, "content", expire_time) "#,
+    );
+    q.push_values(&procted_contents, |mut b, pc| {
+        b.push_bind(&pc.id)
+            .push_bind(&pc.section_id)
+            .push_bind(&pc.content)
+            .push_bind(&pc.expire_time);
+    });
+
+    q.build().execute(c).await?;
+
+    let procted_content_ids = procted_contents
+        .iter()
+        .map(|pc| pc.section_id.clone())
+        .collect::<Vec<_>>();
+
+    let secs_r = secs
+        .into_iter()
+        .map(|s| {
+            if utils::vec::is_in(&procted_content_ids, &s.id) {
+                let pid = &procted_contents
+                    .iter()
+                    .find(|pc| pc.section_id == s.id)
+                    .unwrap()
+                    .id;
+                let content = format!(
+                    r#"<div data-procted-id="{}">{}</div>"#,
+                    pid, &cfg.placeholder
+                );
+                model::topic::TopicSection { content, ..s }
+            } else {
+                s
+            }
+        })
+        .collect::<Vec<_>>();
+    Ok((
+        secs_r,
+        procted_contents
+            .into_iter()
+            .map(|pc| pc.id)
+            .collect::<Vec<_>>(),
+    ))
 }
 #[cfg(test)]
 mod test {

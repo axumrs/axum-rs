@@ -466,6 +466,24 @@ pub async fn gen_protected_content(
             .collect::<Vec<_>>(),
     ))
 }
+
+pub async fn get_protected_content(
+    p: &PgPool,
+    ids: &[String],
+) -> Result<Vec<model::protected_content::ProtectedContent>> {
+    if ids.is_empty() {
+        return Ok(vec![]);
+    }
+    let mut q = QueryBuilder::new(
+        r#"SELECT id, section_id, "content", expire_time FROM protected_contents WHERE id IN "#,
+    );
+    q.push_tuples(ids, |mut b, id| {
+        b.push_bind(id);
+    });
+
+    q.build_query_as().fetch_all(p).await.map_err(Error::from)
+}
+
 #[cfg(test)]
 mod test {
     use sqlx::{postgres::PgPoolOptions, PgPool, Result};

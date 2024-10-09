@@ -1,4 +1,8 @@
-use axum::extract::{Path, Query, State};
+use axum::{
+    extract::{Path, Query, State},
+    Json,
+};
+use validator::Validate;
 
 use crate::{
     api::{get_pool, log_error},
@@ -103,4 +107,20 @@ pub async fn detail(
             protected: model::topic_views::TopicProctedMeta::default(),
         },
     ))
+}
+
+pub async fn get_protected_content(
+    State(state): State<ArcAppState>,
+    Json(frm): Json<form::topic::GetProtectedContent>,
+) -> Result<resp::JsonResp<Vec<model::protected_content::ProtectedContent>>> {
+    let handler_name = "api/user/topic/get_protected_content";
+    frm.validate()
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    let p = get_pool(&state);
+    let secs = service::topic::get_protected_content(&*p, &frm.ids)
+        .await
+        .map_err(log_error(handler_name))?;
+    Ok(resp::ok(secs))
 }

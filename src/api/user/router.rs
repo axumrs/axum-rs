@@ -1,4 +1,8 @@
-use axum::{middleware, routing::get, Router};
+use axum::{
+    middleware,
+    routing::{get, post},
+    Router,
+};
 
 use crate::{mid, ArcAppState};
 
@@ -34,5 +38,6 @@ fn topic_init(state: ArcAppState) -> Router {
         .route("/top", get(topic::top))
         .route("/", get(topic::list))
         .route("/detail/:subject_slug/:slug", get(topic::detail))
+        .route("/protected-content", post(topic::get_protected_content))
         .with_state(state)
 }

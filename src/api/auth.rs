@@ -149,7 +149,7 @@ pub async fn admin_login(
         .map_err(log_error(handler_name))?;
 
     // 人机验证
-    if !captcha::verify_hcaptcha(&state.cfg, &frm.captcha)
+    if !captcha::verify_turnstile(&state.cfg, &frm.captcha)
         .await
         .map_err(log_error(handler_name))?
     {

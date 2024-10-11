@@ -1,4 +1,3 @@
-use anyhow::anyhow;
 use axum::{async_trait, extract::FromRequestParts, http::request::Parts};
 use chrono::Local;
 
@@ -22,7 +21,7 @@ impl FromRequestParts<ArcAppState> for AdminAuth {
     ) -> Result<Self, Self::Rejection> {
         let token = match utils::http::get_auth_token(&parts.headers) {
             Some(v) => v,
-            None => return Err(anyhow!("未授权").into()),
+            None => return Err(Error::new("未授权")),
         };
 
         let sesc = match model::session::Session::find(
@@ -37,11 +36,11 @@ impl FromRequestParts<ArcAppState> for AdminAuth {
         .await?
         {
             Some(v) => v,
-            None => return Err(anyhow!("非法令牌").into()),
+            None => return Err(Error::new("非法令牌")),
         };
 
         if sesc.expire_time < Local::now() {
-            return Err(anyhow!("登录已过期").into());
+            return Err(Error::new("登录已过期"));
         }
 
         let u = match model::admin::Admin::find(
@@ -53,7 +52,7 @@ impl FromRequestParts<ArcAppState> for AdminAuth {
         .await?
         {
             Some(v) => v,
-            None => return Err(anyhow!("不存在的管理员").into()),
+            None => return Err(Error::new("不存在的用户")),
         };
         Ok(AdminAuth(u))
     }

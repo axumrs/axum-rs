@@ -16,10 +16,12 @@ pub struct Session {
 
     #[db(skip_update)]
     #[db(list_opt)]
+    #[db(find_opt)]
     pub token: String,
 
     #[db(skip_update)]
     #[db(list_opt)]
+    #[db(find_opt)]
     pub is_admin: bool,
 
     #[db(skip_update)]
@@ -35,9 +37,5 @@ pub struct Session {
     pub loc: String,
 
     #[db(skip_update)]
-    #[db(list_opt)]
-    #[db(list_opt_between)]
-    #[db(find_opt)]
-    #[db(find_opt_between)]
     pub expire_time: DateTime<Local>,
 }

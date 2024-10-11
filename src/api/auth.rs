@@ -131,6 +131,7 @@ pub async fn login(
     Ok(resp::ok(resp::AuthResp {
         user,
         token: session.token,
+        expire_time: session.expire_time,
     }))
 }
 
@@ -223,6 +224,7 @@ pub async fn admin_login(
     Ok(resp::ok(resp::AuthResp {
         user: admin,
         token: session.token,
+        expire_time: session.expire_time,
     }))
 }
 

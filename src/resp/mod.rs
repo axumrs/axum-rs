@@ -53,6 +53,7 @@ pub struct AffResp {
 pub struct AuthResp<T: AsAuth + Serialize> {
     pub user: T,
     pub token: String,
+    pub expire_time: chrono::DateTime<chrono::Local>,
 }
 
 pub type JsonResp<T> = Json<Resp<T>>;

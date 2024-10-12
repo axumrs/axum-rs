@@ -17,16 +17,22 @@ impl std::fmt::Display for Status {
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow, Db)]
-#[db(table = subjects, pk = id)]
+#[db(table = subjects, pk = id, del_field = is_del)]
 pub struct Subject {
     #[db(find)]
     #[db(skip_update)]
     pub id: String,
+
+    #[db(list_opt)]
+    #[db(list_opt_like)]
     pub name: String,
 
     #[db(find)]
     #[db(exists)]
+    #[db(list_opt)]
+    #[db(list_opt_like)]
     pub slug: String,
+
     pub summary: String,
 
     #[db(find_opt)]

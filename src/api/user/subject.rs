@@ -41,6 +41,8 @@ pub async fn list(
             order: None,
             status: None,
             is_del: Some(false),
+            name: None,
+            slug: None,
         },
     )
     .await

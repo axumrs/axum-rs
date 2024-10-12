@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 pub mod auth;
+pub mod subject;
 pub mod topic;
 pub mod user;
 
@@ -17,5 +18,29 @@ impl PageQuery {
 
     pub fn page_size(&self) -> u32 {
         self.page_size.unwrap_or(30)
+    }
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct PageQueryStr {
+    pub page: Option<String>,
+    pub page_size: Option<String>,
+}
+
+impl PageQueryStr {
+    pub fn page(&self) -> u32 {
+        self.page
+            .clone()
+            .unwrap_or("0".into())
+            .parse()
+            .unwrap_or_default()
+    }
+
+    pub fn page_size(&self) -> u32 {
+        self.page_size
+            .clone()
+            .unwrap_or("30".into())
+            .parse()
+            .unwrap_or(30)
     }
 }

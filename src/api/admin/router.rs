@@ -1,4 +1,8 @@
-use axum::{middleware, routing::get, Router};
+use axum::{
+    middleware,
+    routing::{delete, get},
+    Router,
+};
 
 use crate::{mid, ArcAppState};
 
@@ -15,6 +19,10 @@ pub fn init(state: ArcAppState) -> Router {
 
 fn subject_init(state: ArcAppState) -> Router {
     Router::new()
-        .route("/", get(subject::list))
+        .route(
+            "/",
+            get(subject::list).post(subject::add).put(subject::edit),
+        )
+        .route("/:id", delete(subject::del).patch(subject::res))
         .with_state(state)
 }

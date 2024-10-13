@@ -44,3 +44,8 @@ impl PageQueryStr {
             .unwrap_or(30)
     }
 }
+
+#[derive(Deserialize)]
+pub struct ListAll {
+    pub limit: Option<i64>,
+}

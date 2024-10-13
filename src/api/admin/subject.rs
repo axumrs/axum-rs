@@ -128,3 +128,26 @@ pub async fn res(
         .map_err(log_error(handler_name))?;
     Ok(resp::ok(resp::AffResp { aff }))
 }
+
+pub async fn all(
+    State(state): State<ArcAppState>,
+    Query(frm): Query<form::ListAll>,
+) -> Result<resp::JsonResp<Vec<model::subject::Subject>>> {
+    let handler_name = "admin/subject/all";
+    let p = get_pool(&state);
+    let data = model::subject::Subject::list_all(
+        &*p,
+        &model::subject::SubjectListAllFilter {
+            limit: frm.limit,
+            order: Some("id ASC".into()),
+            name: None,
+            slug: None,
+            is_del: Some(false),
+            status: None,
+        },
+    )
+    .await
+    .map_err(Error::from)
+    .map_err(log_error(handler_name))?;
+    Ok(resp::ok(data))
+}

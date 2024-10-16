@@ -37,5 +37,6 @@ fn tag_init(state: ArcAppState) -> Router {
 fn topic_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/", post(topic::add).put(topic::edit).get(topic::list))
+        .route("/:id", delete(topic::del).patch(topic::res))
         .with_state(state)
 }

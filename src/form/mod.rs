@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 pub mod auth;
+pub mod profile;
 pub mod subject;
 pub mod tag;
 pub mod topic;

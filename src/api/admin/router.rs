@@ -1,18 +1,20 @@
 use axum::{
     middleware,
-    routing::{delete, get, post},
+    routing::{delete, get, post, put},
     Router,
 };
 
 use crate::{mid, ArcAppState};
 
-use super::{subject, tag, topic};
+use super::{profile, session, subject, tag, topic};
 
 pub fn init(state: ArcAppState) -> Router {
     Router::new()
         .nest("/subject", subject_init(state.clone()))
         .nest("/tag", tag_init(state.clone()))
         .nest("/topic", topic_init(state.clone()))
+        .nest("/profile", profile_init(state.clone()))
+        .nest("/session", session_init(state.clone()))
         .layer(middleware::from_extractor_with_state::<
             mid::AdminAuth,
             ArcAppState,
@@ -42,5 +44,17 @@ fn topic_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/", post(topic::add).put(topic::edit).get(topic::list))
         .route("/:id", delete(topic::del).patch(topic::res))
+        .with_state(state)
+}
+
+fn profile_init(state: ArcAppState) -> Router {
+    Router::new()
+        .route("/change-pwd", put(profile::change_pwd))
+        .with_state(state)
+}
+
+fn session_init(state: ArcAppState) -> Router {
+    Router::new()
+        .route("/logout", delete(session::logout))
         .with_state(state)
 }

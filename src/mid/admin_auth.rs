@@ -3,11 +3,14 @@ use chrono::Local;
 
 use crate::{model, utils, ArcAppState, Error};
 
-pub struct AdminAuth(model::admin::Admin);
+pub struct AdminAuth {
+    pub admin: model::admin::Admin,
+    pub token: String,
+}
 
 impl AdminAuth {
     pub fn admin(&self) -> &model::admin::Admin {
-        &self.0
+        &self.admin
     }
 }
 
@@ -54,6 +57,9 @@ impl FromRequestParts<ArcAppState> for AdminAuth {
             Some(v) => v,
             None => return Err(Error::new("不存在的用户")),
         };
-        Ok(AdminAuth(u))
+        Ok(AdminAuth {
+            admin: u,
+            token: token.into(),
+        })
     }
 }

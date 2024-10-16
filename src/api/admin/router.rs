@@ -31,7 +31,11 @@ fn subject_init(state: ArcAppState) -> Router {
 }
 
 fn tag_init(state: ArcAppState) -> Router {
-    Router::new().route("/all", get(tag::all)).with_state(state)
+    Router::new()
+        .route("/", get(tag::list).post(tag::add).put(tag::edit))
+        .route("/all", get(tag::all))
+        .route("/:id", delete(tag::real_del))
+        .with_state(state)
 }
 
 fn topic_init(state: ArcAppState) -> Router {

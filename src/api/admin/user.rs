@@ -1,0 +1,125 @@
+use axum::{
+    extract::{Query, State},
+    Json,
+};
+use chrono::Local;
+use validator::Validate;
+
+use crate::{
+    api::{get_pool, log_error},
+    form, model, resp, service, utils, ArcAppState, Error, Result,
+};
+
+pub async fn list(
+    State(state): State<ArcAppState>,
+    Query(frm): Query<form::user::ListForAdmin>,
+) -> Result<resp::JsonResp<model::user::UserPaginate>> {
+    let handler_name = "admin/user/list";
+    let p = get_pool(&state);
+
+    let data = model::user::User::list(
+        &*p,
+        &model::user::UserListFilter {
+            pq: model::user::UserPaginateReq {
+                page: frm.pq.page(),
+                page_size: frm.pq.page_size(),
+            },
+            order: None,
+            email: frm.email,
+            nickname: frm.nickname,
+            status: frm.status,
+            kind: frm.kind,
+        },
+    )
+    .await
+    .map_err(Error::from)
+    .map_err(log_error(handler_name))?;
+
+    Ok(resp::ok(data))
+}
+
+pub async fn add(
+    State(state): State<ArcAppState>,
+    Json(frm): Json<form::user::AddForAdmin>,
+) -> Result<resp::JsonIDResp> {
+    let handler_name = "admin/user/add";
+
+    frm.validate()
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    if frm.base.password != frm.base.re_password {
+        return Err(Error::new("两次输入的密码不一致"));
+    }
+
+    let password = utils::password::hash(&frm.base.password)
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    let p = get_pool(&state);
+
+    let m = service::user::add(
+        &*p,
+        model::user::User {
+            sub_exp: frm.sub_exp(),
+            email: frm.base.email,
+            nickname: frm.base.nickname,
+            password,
+            status: frm.status,
+            dateline: Local::now(),
+            kind: frm.kind,
+            points: frm.points,
+            allow_device_num: frm.allow_device_num,
+            session_exp: frm.session_exp,
+            need_reverify_email: false,
+            ..Default::default()
+        },
+    )
+    .await
+    .map_err(log_error(handler_name))?;
+
+    Ok(resp::ok(resp::IDResp { id: m.id }))
+}
+
+pub async fn edit(
+    State(state): State<ArcAppState>,
+    Json(frm): Json<form::user::EditForAdmin>,
+) -> Result<resp::JsonAffResp> {
+    let handler_name = "admin/user/edit";
+    frm.validate()
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    let p = get_pool(&state);
+
+    let user = match model::user::User::find(
+        &*p,
+        &model::user::UserFindFilter {
+            by: model::user::UserFindBy::Email(frm.email.clone()),
+            status: None,
+        },
+    )
+    .await
+    .map_err(Error::from)
+    .map_err(log_error(handler_name))?
+    {
+        Some(v) => model::user::User {
+            sub_exp: frm.sub_exp(),
+            email: frm.email,
+            nickname: frm.nickname,
+            status: frm.status,
+            kind: frm.kind,
+            points: frm.points,
+            allow_device_num: frm.allow_device_num,
+            session_exp: frm.session_exp,
+            ..v
+        },
+        None => return Err(Error::new("不存在的用户")),
+    };
+
+    let aff = service::user::edit(&*p, &user)
+        .await
+        .map_err(log_error(handler_name))?;
+
+    Ok(resp::ok(resp::AffResp { aff }))
+}

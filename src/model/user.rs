@@ -27,6 +27,11 @@ impl std::fmt::Display for Status {
         write!(f, "{:?}", self)
     }
 }
+impl std::fmt::Display for Kind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
 
 #[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow, Db)]
 #[db(table = users, pk = id)]
@@ -37,20 +42,26 @@ pub struct User {
 
     #[db(find)]
     #[db(exists)]
+    #[db(list_opt)]
+    #[db(list_opt_like)]
     pub email: String,
 
     #[db(exists)]
+    #[db(list_opt)]
+    #[db(list_opt_like)]
     pub nickname: String,
 
     #[serde(skip_serializing)]
     pub password: String,
 
     #[db(find_opt)]
+    #[db(list_opt)]
     pub status: Status,
 
     #[db(skip_update)]
     pub dateline: DateTime<Local>,
 
+    #[db(list_opt)]
     pub kind: Kind,
     pub sub_exp: DateTime<Local>,
     pub points: Decimal,

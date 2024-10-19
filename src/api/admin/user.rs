@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Query, State},
+    extract::{Path, Query, State},
     Json,
 };
 use chrono::Local;
@@ -136,5 +136,18 @@ pub async fn edit(
         .await
         .map_err(log_error(handler_name))?;
 
+    Ok(resp::ok(resp::AffResp { aff }))
+}
+
+pub async fn del(
+    State(state): State<ArcAppState>,
+    Path(id): Path<String>,
+) -> Result<resp::JsonAffResp> {
+    let handler_name = "admin/user/del";
+    let p = get_pool(&state);
+    let aff = model::user::User::real_del(&*p, &id)
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
     Ok(resp::ok(resp::AffResp { aff }))
 }

@@ -59,6 +59,12 @@ pub struct EditForAdmin {
     pub allow_device_num: i16,
     pub session_exp: i16,
 
+    #[validate(length(min = 6))]
+    pub password: Option<String>,
+
+    #[validate(length(min = 6))]
+    pub re_password: Option<String>,
+
     #[validate(length(min = 20, max = 20))]
     pub id: String,
 }

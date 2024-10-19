@@ -86,16 +86,21 @@ pub async fn edit(
     Json(frm): Json<form::user::EditForAdmin>,
 ) -> Result<resp::JsonAffResp> {
     let handler_name = "admin/user/edit";
+
     frm.validate()
         .map_err(Error::from)
         .map_err(log_error(handler_name))?;
+
+    if frm.password != frm.re_password {
+        return Err(Error::new("两次输入的密码不一致"));
+    }
 
     let p = get_pool(&state);
 
     let user = match model::user::User::find(
         &*p,
         &model::user::UserFindFilter {
-            by: model::user::UserFindBy::Email(frm.email.clone()),
+            by: model::user::UserFindBy::Id(frm.id.clone()),
             status: None,
         },
     )
@@ -103,17 +108,27 @@ pub async fn edit(
     .map_err(Error::from)
     .map_err(log_error(handler_name))?
     {
-        Some(v) => model::user::User {
-            sub_exp: frm.sub_exp(),
-            email: frm.email,
-            nickname: frm.nickname,
-            status: frm.status,
-            kind: frm.kind,
-            points: frm.points,
-            allow_device_num: frm.allow_device_num,
-            session_exp: frm.session_exp,
-            ..v
-        },
+        Some(v) => {
+            let password = if let Some(ref v) = frm.password {
+                utils::password::hash(v)
+                    .map_err(Error::from)
+                    .map_err(log_error(handler_name))?
+            } else {
+                v.password.clone()
+            };
+            model::user::User {
+                sub_exp: frm.sub_exp(),
+                email: frm.email,
+                nickname: frm.nickname,
+                status: frm.status,
+                kind: frm.kind,
+                points: frm.points,
+                allow_device_num: frm.allow_device_num,
+                session_exp: frm.session_exp,
+                password,
+                ..v
+            }
+        }
         None => return Err(Error::new("不存在的用户")),
     };
 

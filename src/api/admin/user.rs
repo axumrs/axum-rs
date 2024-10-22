@@ -71,7 +71,7 @@ pub async fn add(
             points: frm.points,
             allow_device_num: frm.allow_device_num,
             session_exp: frm.session_exp,
-            need_reverify_email: false,
+
             ..Default::default()
         },
     )

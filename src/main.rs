@@ -124,8 +124,8 @@ async fn activation_cleaner(pool: Arc<PgPool>, max_try: u32) {
             tracing::info!("[activation_cleaner] 已尝试 {} 次", tried);
             break;
         }
-        let aff = match sqlx::query("DELETE FROM activation_codes WHERE expire_time >=$1")
-            .bind(&(chrono::Local::now() + chrono::Duration::minutes(5)))
+        let aff = match sqlx::query("DELETE FROM activation_codes WHERE expire_time <=$1")
+            .bind(&(chrono::Local::now()))
             .execute(&*pool)
             .await
         {
@@ -141,7 +141,7 @@ async fn activation_cleaner(pool: Arc<PgPool>, max_try: u32) {
             }
         };
         tracing::info!("[activation_cleaner] 已清理 {} 个过期激活码", aff);
-        tokio::time::sleep(std::time::Duration::from_secs(5000)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(60)).await;
     }
 }
 
@@ -170,6 +170,6 @@ async fn protected_content_cleaner(pool: Arc<PgPool>, max_try: u32) {
             }
         };
         tracing::info!("[protected_content_cleaner] 已清理 {} 个过期保护内容", aff);
-        tokio::time::sleep(std::time::Duration::from_secs(5000)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(60)).await;
     }
 }

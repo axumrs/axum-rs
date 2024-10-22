@@ -62,7 +62,7 @@ pub async fn login(
 
     // 验证状态
     match &user.status {
-        &model::user::Status::Pending => return Err(Error::new("用户尚未激活").into()),
+        &model::user::Status::Pending => return Err(Error::new("Pending").into()),
         &model::user::Status::Freezed => return Err(Error::new("用户被冻结").into()),
         &model::user::Status::Actived => {
             // pass
@@ -241,36 +241,18 @@ pub async fn register(
         return Err(Error::new("两次输入的密码不一致")).map_err(log_error(handler_name));
     }
 
-    let p = get_pool(&state);
-
-    // 验证码
-    let ac = match service::activation_code::get(
-        &*p,
-        &frm.user.email,
-        model::activation_code::Kind::Register,
-        Some(frm.activation_code.clone()),
-    )
-    .await
+    // 人机验证
+    if !captcha::verify_hcaptcha(&state.cfg, &frm.captcha)
+        .await
+        .map_err(log_error(handler_name))?
     {
-        Ok(v) => v,
-        Err(e) => {
-            return Err(e.into());
-        }
-    };
-
-    let ac = match ac {
-        Some(v) => v,
-        None => {
-            return Err(Error::new("不存在的验证码")).map_err(log_error(handler_name))?;
-        }
-    };
-
-    if ac.email != frm.user.email {
-        return Err(Error::new("验证码错误")).map_err(log_error(handler_name));
+        return Err(Error::new("人机验证失败")).map_err(log_error(handler_name));
     }
 
+    let p = get_pool(&state);
+
     let user = model::user::UserBuilder::new(frm.user.email, frm.user.nickname, frm.user.password)
-        .status(model::user::Status::Actived)
+        .status(model::user::Status::Pending)
         .kind(model::user::Kind::Normal)
         .dateline_now()
         .allow_device_num(1)
@@ -281,19 +263,14 @@ pub async fn register(
         .await
         .map_err(log_error(handler_name))?;
 
-    model::activation_code::ActivationCode::real_del(&*p, &ac.id)
-        .await
-        .map_err(Error::from)
-        .map_err(log_error(handler_name))?;
-
     Ok(resp::ok(resp::IDResp { id }))
 }
 
-pub async fn register_send_code(
+pub async fn send_code(
     State(state): State<ArcAppState>,
-    Json(frm): Json<form::auth::RegisterSendCodeForm>,
+    Json(frm): Json<form::auth::SendCodeForm>,
 ) -> Result<resp::JsonResp<()>> {
-    let handler_name = "auth/register-send-code";
+    let handler_name = "auth/send-code";
     frm.validate()
         .map_err(Error::from)
         .map_err(log_error(handler_name))?;
@@ -316,7 +293,7 @@ pub async fn register_send_code(
         model::activation_code::ActivationCode {
             email: frm.email.clone(),
             code: code.clone(),
-            kind: model::activation_code::Kind::Register,
+            kind: frm.kind,
             dateline: Local::now(),
             ..Default::default()
         },
@@ -328,14 +305,156 @@ pub async fn register_send_code(
     // 发送邮件
     let mc = state.cfg.clone();
     let d = mail::Data {
-        subject: "欢迎注册AXUM中文网".to_string(),
-        body: format!(
-            "你在AXUM中文网的注册验证码是: {}，请在5分钟内完成验证",
-            &code
-        ),
+        subject: "AXUM中文网".to_string(),
+        body: format!("你在AXUM中文网的验证码是: {}，请在5分钟内完成验证", &code),
         to: frm.email.clone(),
     };
     tokio::spawn(mail::send(mc, d));
 
     Ok(resp::ok(()))
+}
+
+pub async fn active(
+    State(state): State<ArcAppState>,
+    Json(frm): Json<form::auth::ActiveForm>,
+) -> Result<resp::JsonAffResp> {
+    let handler_name = "auth/active";
+    frm.validate()
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+    let p = get_pool(&state);
+
+    // 人机验证
+    if !captcha::verify_turnstile(&state.cfg, &frm.captcha)
+        .await
+        .map_err(log_error(handler_name))?
+    {
+        return Err(Error::new("人机验证失败")).map_err(log_error(handler_name));
+    }
+
+    // 查找验证码
+    let ac = match model::activation_code::ActivationCode::find(
+        &*p,
+        &model::activation_code::ActivationCodeFindFilter {
+            id: None,
+            email: Some(frm.email.clone()),
+            code: Some(frm.activation_code),
+            kind: Some(frm.kind),
+        },
+    )
+    .await
+    .map_err(Error::from)
+    .map_err(log_error(handler_name))?
+    {
+        Some(v) => v,
+        None => return Err(Error::new("验证码错误")),
+    };
+
+    // 激活
+    let user = match model::user::User::find(
+        &*p,
+        &model::user::UserFindFilter {
+            by: model::user::UserFindBy::Email(frm.email),
+            status: None,
+        },
+    )
+    .await
+    .map_err(Error::from)
+    .map_err(log_error(handler_name))?
+    {
+        Some(v) => v,
+        None => return Err(Error::new("用户不存在")),
+    };
+
+    match &user.status {
+        &model::user::Status::Actived => return Err(Error::new("用户已激活，无需再次激活")),
+        &model::user::Status::Freezed => return Err(Error::new("用户已被冻结")),
+        _ => {}
+    }
+
+    let aff = model::user::User::update_status(&*p, &model::user::Status::Actived, &user.id)
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    // 删除验证码
+    model::activation_code::ActivationCode::real_del(&*p, &ac.id)
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    Ok(resp::ok(resp::AffResp { aff }))
+}
+
+pub async fn reset_password(
+    State(state): State<ArcAppState>,
+    Json(frm): Json<form::auth::ResetPasswordForm>,
+) -> Result<resp::JsonAffResp> {
+    let handler_name = "auth/reset-password";
+    frm.validate()
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    if frm.password != frm.re_password {
+        return Err(Error::new("两次输入的密码不一致")).map_err(log_error(handler_name));
+    }
+
+    // 人机验证
+    if !captcha::verify_turnstile(&state.cfg, &frm.captcha)
+        .await
+        .map_err(log_error(handler_name))?
+    {
+        return Err(Error::new("人机验证失败")).map_err(log_error(handler_name));
+    }
+
+    let p = get_pool(&state);
+
+    // 查找验证码
+    let ac = match model::activation_code::ActivationCode::find(
+        &*p,
+        &model::activation_code::ActivationCodeFindFilter {
+            id: None,
+            email: Some(frm.email.clone()),
+            code: Some(frm.activation_code),
+            kind: Some(model::activation_code::Kind::ResetPassword),
+        },
+    )
+    .await
+    .map_err(Error::from)
+    .map_err(log_error(handler_name))?
+    {
+        Some(v) => v,
+        None => return Err(Error::new("验证码错误")),
+    };
+
+    // 修改密码
+    let user = match model::user::User::find(
+        &*p,
+        &model::user::UserFindFilter {
+            by: model::user::UserFindBy::Email(frm.email),
+            status: None,
+        },
+    )
+    .await
+    .map_err(Error::from)
+    .map_err(log_error(handler_name))?
+    {
+        Some(v) => v,
+        None => return Err(Error::new("用户不存在")),
+    };
+
+    let password = utils::password::hash(&frm.password).map_err(log_error(handler_name))?;
+
+    let aff = model::user::User::update_password(&*p, &password, &user.id)
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    // 删除验证码
+    model::activation_code::ActivationCode::real_del(&*p, &ac.id)
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    Ok(resp::ok(resp::AffResp { aff }))
 }

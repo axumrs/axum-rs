@@ -35,11 +35,11 @@ pub async fn exists<'a>(
     kind: &model::activation_code::Kind,
 ) -> sqlx::Result<bool> {
     let count: (i64,) = sqlx::query_as(
-        "SELECT count(*) FROM activation_codes WHERE email=$1 AND kind=$2 AND expire_time<=$3",
+        "SELECT count(*) FROM activation_codes WHERE email=$1 AND kind=$2 AND expire_time>=$3",
     )
     .bind(email)
     .bind(kind)
-    .bind(Local::now() + Duration::minutes(5))
+    .bind(Local::now())
     .fetch_one(c)
     .await?;
     Ok(count.0 > 0)

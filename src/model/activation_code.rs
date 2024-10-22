@@ -7,9 +7,8 @@ use serde::{Deserialize, Serialize};
 #[sqlx(type_name = "activation_kind")]
 pub enum Kind {
     #[default]
-    Register,
+    Active,
     ResetPassword,
-    ChangeEmail,
 }
 
 impl std::fmt::Display for Kind {

@@ -54,5 +54,8 @@ fn tag_init(state: ArcAppState) -> Router {
 fn user_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/logout", delete(user::logout))
+        .route("/check-in", get(user::check_in))
+        .route("/sessions", get(user::session_list))
+        .route("/login-logs", get(user::login_log_list))
         .with_state(state)
 }

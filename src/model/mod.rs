@@ -1,7 +1,9 @@
 pub mod activation_code;
 pub mod admin;
+pub mod login_log;
 pub mod pagination;
 pub mod protected_content;
+pub mod read_history;
 pub mod session;
 pub mod subject;
 pub mod tag;

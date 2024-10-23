@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS "admins" (
 -- 用户状态
 CREATE TYPE "user_status" AS ENUM ('Pending', 'Actived', 'Freezed');
 -- 用户类型
-CREATE TYPE "user_kind" AS ENUM ('Normal', 'Subscriber');
+CREATE TYPE "user_kind" AS ENUM ('Normal', 'Subscriber', 'YearlySubscriber');
 
 -- 用户
 CREATE TABLE IF NOT EXISTS "users" (
@@ -102,7 +102,7 @@ CREATE UNLOGGED TABLE  IF NOT EXISTS "activation_codes"(
 );
 
 -- 用户登录日志
-CREATE TABLE IF NOT EXISTS "login_logs"(
+CREATE UNLOGGED TABLE IF NOT EXISTS "login_logs"(
      "id" CHAR(20) PRIMARY KEY,
      "user_id" CHAR(20) NOT NULL,
      "ip" VARCHAR(39) NOT NULL DEFAULT '',
@@ -225,8 +225,7 @@ CREATE TABLE  IF NOT EXISTS "read_histories" (
     "slug" VARCHAR(100) NOT NULL,
     "subject_name" VARCHAR(100) NOT NULL,
     "topic_title" VARCHAR(255) NOT NULL,
-    "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	"is_del" BOOLEAN NOT NULL DEFAULT FALSE
+    "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE UNLOGGED TABLE  IF NOT EXISTS "sessions"(

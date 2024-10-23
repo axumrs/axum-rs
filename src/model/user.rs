@@ -20,6 +20,7 @@ pub enum Kind {
     #[default]
     Normal,
     Subscriber,
+    YearlySubscriber,
 }
 
 impl std::fmt::Display for Status {

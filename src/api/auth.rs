@@ -109,13 +109,29 @@ pub async fn login(
         token,
         is_admin: false,
         dateline,
-        ip,
-        ua: user_agent,
+        ip: ip.clone(),
+        ua: user_agent.clone(),
         loc,
         expire_time,
     };
 
     if let Err(e) = session.insert(&mut *tx).await {
+        tx.rollback()
+            .await
+            .map_err(Error::from)
+            .map_err(log_error(handler_name))?;
+        return Err(e.into());
+    }
+
+    // 登录日志
+    let lglog = model::login_log::LoginLog {
+        id: utils::id::new(),
+        user_id: user.id.clone(),
+        dateline,
+        ip,
+        user_agent,
+    };
+    if let Err(e) = lglog.insert(&mut *tx).await {
         tx.rollback()
             .await
             .map_err(Error::from)

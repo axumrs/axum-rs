@@ -1,31 +1,23 @@
-use axum_rs_derive::Db;
 use rust_decimal::Decimal;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use validator::Validate;
 
-#[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow, Db)]
-#[db(table = services, pk = id)]
-pub struct Service {
-    #[db(find_opt)]
-    #[db(skip_update)]
-    pub id: String, // CHAR(20) PRIMARY KEY,
-
-    #[db(list_opt)]
-    #[db(list_opt_like)]
-    #[db(skip_update)]
-    #[db(exists)]
+#[derive(Deserialize, Validate)]
+pub struct Add {
+    #[validate(length(min = 1, max = 100))]
     pub name: String, // VARCHAR(100) NOT NULL,
 
     /// 是否专题
     pub is_subject: bool, // BOOLEAN NOT NULL DEFAULT FALSE,
 
     /// 目标ID
-    #[db(exists)]
     pub target_id: String, // CHAR(20) NOT NULL,
     /// 时效(天)
     pub duration: i16, // SMALLINT NOT NULL DEFAULT 0,
     /// 价格
     pub price: Decimal, // DECIMAL(10,2) NOT NULL,
     /// 封面
+    #[validate(length(max = 100))]
     pub cover: String, // VARCHAR(100) NOT NULL DEFAULT '',
     /// 是否允许积分兑换
     pub allow_pointer: bool, // BOOLEAN NOT NULL DEFAULT FALSE,
@@ -42,12 +34,11 @@ pub struct Service {
     pub pin: i32,
 }
 
-#[cfg(test)]
-mod test {
+#[derive(Deserialize, Validate)]
+pub struct Edit {
+    #[serde(flatten)]
+    pub base: Add,
 
-    #[test]
-    fn test() {
-        let s = super::Service::default();
-        println!("{}", serde_json::json!(&s));
-    }
+    #[validate(length(min = 20, max = 20))]
+    pub id: String,
 }

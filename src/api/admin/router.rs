@@ -6,7 +6,7 @@ use axum::{
 
 use crate::{mid, ArcAppState};
 
-use super::{profile, session, subject, tag, topic, user};
+use super::{profile, service, session, subject, tag, topic, user};
 
 pub fn init(state: ArcAppState) -> Router {
     Router::new()
@@ -16,6 +16,7 @@ pub fn init(state: ArcAppState) -> Router {
         .nest("/profile", profile_init(state.clone()))
         .nest("/session", session_init(state.clone()))
         .nest("/user", user_init(state.clone()))
+        .nest("/service", service_init(state.clone()))
         .layer(middleware::from_extractor_with_state::<
             mid::AdminAuth,
             ArcAppState,
@@ -64,5 +65,14 @@ fn user_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/", get(user::list).post(user::add).put(user::edit))
         .route("/:id", delete(user::del))
+        .with_state(state)
+}
+
+fn service_init(state: ArcAppState) -> Router {
+    Router::new()
+        .route(
+            "/",
+            get(service::list).post(service::add).put(service::edit),
+        )
         .with_state(state)
 }

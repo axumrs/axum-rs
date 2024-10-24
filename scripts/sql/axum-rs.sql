@@ -133,7 +133,11 @@ CREATE TABLE IF NOT EXISTS "services" (
     -- 年费用户折扣
     "yearly_sub_discount" SMALLINT NOT NULL DEFAULT 0,
     -- 是否下架
-    "is_off" BOOLEAN NOT NULL DEFAULT FALSE
+    "is_off" BOOLEAN NOT NULL DEFAULT FALSE,
+    -- 说明
+    "desc" VARCHAR NOT NULL DEFAULT '',
+    -- 排序
+    "pin" INTEGER NOT NULL DEFAULT 0
 );
 
 

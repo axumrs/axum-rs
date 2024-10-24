@@ -50,4 +50,5 @@ impl PageQueryStr {
 #[derive(Deserialize)]
 pub struct ListAll {
     pub limit: Option<i64>,
+    pub has_price: Option<bool>,
 }

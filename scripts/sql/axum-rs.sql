@@ -110,85 +110,32 @@ CREATE UNLOGGED TABLE IF NOT EXISTS "login_logs"(
      "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-
--- 订单状态
-CREATE TYPE "order_status" AS ENUM ('Pending', 'Finished');
-
--- 订单
-CREATE TABLE IF NOT EXISTS "orders" (
-	"id" CHAR(20)  PRIMARY KEY,
-	"user_id" CHAR(20)  NOT NULL,
-	"price" DECIMAL(10,2)  NOT NULL,
-	"status" order_status  NOT NULL DEFAULT 'Pending',
-	"code" CHAR(7) NOT NULL DEFAULT '',
-	"full_code" CHAR(64) NOT NULL DEFAULT '',
-	"order_num" CHAR(20) NOT NULL DEFAULT '',
-	"dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	"pay_id" CHAR(20)  NOT NULL DEFAULT '',
-	"is_del" BOOLEAN NOT NULL DEFAULT FALSE,
-    "snap" VARCHAR NOT NULL DEFAULT '',
-	UNIQUE ("order_num")
+-- 服务
+CREATE TABLE IF NOT EXISTS "services" (
+    "id" CHAR(20) PRIMARY KEY,
+    "name" VARCHAR(100) NOT NULL,
+    -- 是否专题
+    "is_subject" BOOLEAN NOT NULL DEFAULT FALSE,
+    -- 目标ID
+    "target_id" CHAR(20) NOT NULL,
+    --时效(天)
+    "duration" SMALLINT NOT NULL DEFAULT 0,
+    -- 价格
+    "price" DECIMAL(10,2) NOT NULL,
+    -- 封面
+    "cover" VARCHAR(100) NOT NULL DEFAULT '',
+    -- 是否允许积分兑换
+    "allow_pointer" BOOLEAN NOT NULL DEFAULT FALSE,
+    -- 普通用户折扣
+    "normal_discount" SMALLINT NOT NULL DEFAULT 0,
+    -- 订阅用户折扣
+    "sub_discount" SMALLINT NOT NULL DEFAULT 0,
+    -- 年费用户折扣
+    "yearly_sub_discount" SMALLINT NOT NULL DEFAULT 0,
+    -- 是否下架
+    "is_off" BOOLEAN NOT NULL DEFAULT FALSE
 );
 
--- 货币
-CREATE TYPE "currency_kind" AS ENUM ('USDT', 'CNY', 'TRX');
-
--- 支付类型
-CREATE TYPE "pay_kind" AS ENUM (
-    -- TronLink 钱包在线转账
-    'TronLink',
-    -- USDT 手动转账
-    'USDT',
-    -- 支付宝手动转账
-    'Alipay',
-    -- TRX 手动转账
-    'TRX'
-);
-
--- 支付状态
-CREATE TYPE "pay_status" AS ENUM (
-    -- 待支付
-    'Pending',
-    -- 待确认
-    'UnConfirmed',
-    -- 支付完成
-    'Finished'
-);
-
-
--- 支付
-CREATE TABLE IF NOT EXISTS "pays"(
-    "id" CHAR(20) PRIMARY KEY ,
-	"order_id" CHAR(20) NOT NULL,
-	"user_id" CHAR(20) NOT NULL,
-	"amount" DECIMAL(10,2) NOT NULL,
-	"currency" currency_kind NOT NULL DEFAULT 'USDT',
-	"kind" pay_kind NOT NULL DEFAULT 'TronLink',
-	"tx_id" VARCHAR(255) NOT NULL DEFAULT '',
-	"status" pay_status NOT NULL DEFAULT 'Pending',
-	"dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	"is_del" BOOLEAN NOT NULL DEFAULT FALSE
-);
-
--- 已购状态
-CREATE TYPE "purchased_service_status" AS ENUM ('Pending', 'Finished');
--- 服务类型
-CREATE TYPE "purchased_service_kind" AS ENUM ('Subscriber', 'Subject');
-
--- 已购服务
-CREATE TABLE IF NOT EXISTS "purchased_services"(
-	"id" CHAR(20) PRIMARY KEY ,
-	"order_id" CHAR(20) NOT NULL,
-	"user_id" CHAR(20) NOT NULL,
-	"service_id" CHAR(20) NOT NULL,
-	"service_kind" purchased_service_kind NOT NULL DEFAULT 'Subscriber',
-	"server_num" INTEGER NOT NULL,
-    "server_name" VARCHAR(255) NOT NULL,
-    "amount" DECIMAL(10,2) NOT NULL,
-	"currency" currency_kind NOT NULL DEFAULT 'USDT',
-	"status" purchased_service_status NOT NULL DEFAULT 'Pending',
-	"dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
 
 -- 签到日志
 CREATE TABLE IF NOT EXISTS "check_in_logs"(

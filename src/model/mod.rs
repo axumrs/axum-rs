@@ -5,6 +5,7 @@ pub mod login_log;
 pub mod pagination;
 pub mod protected_content;
 pub mod read_history;
+pub mod service;
 pub mod session;
 pub mod subject;
 pub mod tag;

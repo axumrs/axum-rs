@@ -15,7 +15,7 @@ impl UserAuth {
     pub fn user(&self) -> crate::Result<&model::user::User> {
         match self.user_opt() {
             Some(v) => Ok(v),
-            None => Err(Error::new("请登录")),
+            None => Err(Error::new("UNAUTHORIZED-请登录")),
         }
     }
 
@@ -26,7 +26,7 @@ impl UserAuth {
     pub fn token(&self) -> crate::Result<&str> {
         match self.token_opt() {
             Some(v) => Ok(v),
-            None => Err(Error::new("请登录")),
+            None => Err(Error::new("UNAUTHORIZED-请登录")),
         }
     }
 }
@@ -61,11 +61,11 @@ impl FromRequestParts<ArcAppState> for UserAuth {
         .await?
         {
             Some(v) => v,
-            None => return Err(Error::new("非法令牌")),
+            None => return Err(Error::new("UNAUTHORIZED-非法令牌")),
         };
 
         if sesc.expire_time < Local::now() {
-            return Err(Error::new("登录已过期"));
+            return Err(Error::new("UNAUTHORIZED-登录已过期"));
         }
 
         let u = match model::user::User::find(
@@ -78,7 +78,7 @@ impl FromRequestParts<ArcAppState> for UserAuth {
         .await?
         {
             Some(v) => v,
-            None => return Err(Error::new("不存在的用户")),
+            None => return Err(Error::new("UNAUTHORIZED-不存在的用户")),
         };
 
         Ok(UserAuth {

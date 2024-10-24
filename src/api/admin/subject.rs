@@ -2,6 +2,7 @@ use axum::{
     extract::{Path, Query, State},
     Json,
 };
+use rust_decimal::Decimal;
 use validator::Validate;
 
 use crate::{
@@ -149,5 +150,15 @@ pub async fn all(
     .await
     .map_err(Error::from)
     .map_err(log_error(handler_name))?;
+
+    if let Some(has_price) = frm.has_price {
+        if has_price {
+            return Ok(resp::ok(
+                data.into_iter()
+                    .filter(|v| v.price.gt(&Decimal::ZERO))
+                    .collect(),
+            ));
+        }
+    }
     Ok(resp::ok(data))
 }

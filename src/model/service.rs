@@ -11,11 +11,11 @@ pub struct Service {
 
     #[db(list_opt)]
     #[db(list_opt_like)]
-    #[db(skip_update)]
     #[db(exists)]
     pub name: String, // VARCHAR(100) NOT NULL,
 
     /// 是否专题
+    #[db(list_opt)]
     pub is_subject: bool, // BOOLEAN NOT NULL DEFAULT FALSE,
 
     /// 目标ID
@@ -37,6 +37,7 @@ pub struct Service {
     pub yearly_sub_discount: i16, // SMALLINT NOT NULL DEFAULT 0,
 
     /// 是否下架
+    #[db(list_opt)]
     pub is_off: bool, // BOOLEAN NOT NULL DEFAULT FALSE
     pub desc: String,
     pub pin: i32,

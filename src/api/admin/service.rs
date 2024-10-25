@@ -1,7 +1,8 @@
 use axum::{
-    extract::{Query, State},
+    extract::{Path, Query, State},
     Json,
 };
+use rust_decimal::Decimal;
 use validator::Validate;
 
 use crate::{
@@ -204,7 +205,7 @@ pub async fn edit(
 
 pub async fn list(
     State(state): State<ArcAppState>,
-    Query(frm): Query<form::PageQuery>,
+    Query(frm): Query<form::service::ListForAdmin>,
 ) -> Result<resp::JsonResp<model::service::ServicePaginate>> {
     let handler_name = "admin/service/list";
     let p = get_pool(&state);
@@ -213,11 +214,13 @@ pub async fn list(
         &*p,
         &model::service::ServiceListFilter {
             pq: model::service::ServicePaginateReq {
-                page: frm.page(),
-                page_size: frm.page_size(),
+                page: frm.pq.page(),
+                page_size: frm.pq.page_size(),
             },
-            order: None,
-            name: None,
+            is_off: frm.is_off(),
+            is_subject: frm.is_subject(),
+            order: Some("pin DESC, id DESC".into()),
+            name: frm.name,
         },
     )
     .await
@@ -225,4 +228,215 @@ pub async fn list(
     .map_err(log_error(handler_name))?;
 
     Ok(resp::ok(data))
+}
+
+pub async fn on_off(
+    State(state): State<ArcAppState>,
+    Path(id): Path<String>,
+) -> Result<resp::JsonAffResp> {
+    let handler_name = "admin/service/on_off";
+    let p = get_pool(&state);
+
+    let aff = sqlx::query("UPDATE services SET is_off = (NOT is_off) WHERE id = $1")
+        .bind(&id)
+        .execute(&*p)
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?
+        .rows_affected();
+
+    Ok(resp::ok(resp::AffResp { aff }))
+}
+
+pub async fn del(
+    State(state): State<ArcAppState>,
+    Path(id): Path<String>,
+) -> Result<resp::JsonAffResp> {
+    let handler_name = "admin/service/del";
+    let p = get_pool(&state);
+    let aff = model::service::Service::real_del(&*p, &id)
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    Ok(resp::ok(resp::AffResp { aff }))
+}
+
+pub async fn import(State(state): State<ArcAppState>) -> Result<resp::JsonAffResp> {
+    let handler_name = "admin/service/import";
+    let p = get_pool(&state);
+
+    let mut tx = p
+        .begin()
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    let subject_list = match model::subject::Subject::list_all(
+        &mut *tx,
+        &model::subject::SubjectListAllFilter {
+            is_del: Some(false),
+            limit: None,
+            name: None,
+            slug: None,
+            status: None,
+            order: None,
+        },
+    )
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tx.rollback()
+                .await
+                .map_err(Error::from)
+                .map_err(log_error(handler_name))?;
+            return Err(e.into());
+        }
+    };
+
+    let subject_list = subject_list
+        .into_iter()
+        .filter(|s| s.price > Decimal::ZERO)
+        .collect::<Vec<_>>();
+
+    let mut service_list = vec![];
+
+    for s in subject_list {
+        let s_is_exists =
+            match model::service::Service::target_id_is_exists(&mut *tx, &s.id, None).await {
+                Ok(v) => v,
+                Err(e) => {
+                    tx.rollback()
+                        .await
+                        .map_err(Error::from)
+                        .map_err(log_error(handler_name))?;
+                    return Err(e.into());
+                }
+            };
+        if s_is_exists {
+            continue;
+        }
+        let name_is_exists =
+            match model::service::Service::name_is_exists(&mut *tx, &s.name, None).await {
+                Ok(v) => v,
+                Err(e) => {
+                    tx.rollback()
+                        .await
+                        .map_err(Error::from)
+                        .map_err(log_error(handler_name))?;
+                    return Err(e.into());
+                }
+            };
+        let name = if name_is_exists {
+            format!("{}#{}", s.id, s.name)
+        } else {
+            s.name
+        };
+
+        let name = utils::str::fixlen(&name, 100).to_string();
+
+        service_list.push(model::service::Service {
+            id: utils::id::new(),
+            name,
+            is_subject: true,
+            target_id: s.id,
+            price: s.price,
+            cover: s.cover,
+            is_off: false,
+            desc: s.summary,
+            ..Default::default()
+        });
+    }
+
+    let mut aff = 0;
+    if !service_list.is_empty() {
+        let mut q = sqlx::QueryBuilder::new(
+            r#"INSERT INTO services (id, "name", is_subject, target_id, duration, price, cover, allow_pointer, normal_discount, sub_discount, yearly_sub_discount, is_off, "desc", pin) "#,
+        );
+        q.push_values(&service_list, |mut b, s| {
+            b.push_bind(&s.id)
+                .push_bind(&s.name)
+                .push_bind(&s.is_subject)
+                .push_bind(&s.target_id)
+                .push_bind(&s.duration)
+                .push_bind(&s.price)
+                .push_bind(&s.cover)
+                .push_bind(&s.allow_pointer)
+                .push_bind(&s.normal_discount)
+                .push_bind(&s.sub_discount)
+                .push_bind(&s.yearly_sub_discount)
+                .push_bind(&s.is_off)
+                .push_bind(&s.desc)
+                .push_bind(&s.pin);
+        });
+        aff = match q.build().execute(&mut *tx).await {
+            Ok(v) => v.rows_affected(),
+            Err(e) => {
+                tx.rollback()
+                    .await
+                    .map_err(Error::from)
+                    .map_err(log_error(handler_name))?;
+                return Err(e.into());
+            }
+        };
+    }
+
+    tx.commit()
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    Ok(resp::ok(resp::AffResp { aff }))
+}
+
+pub async fn sync(
+    State(state): State<ArcAppState>,
+    Path(id): Path<String>,
+) -> Result<resp::JsonAffResp> {
+    let handler_name = "admin/service/sync";
+    let p = get_pool(&state);
+
+    let s = match model::service::Service::find(
+        &*p,
+        &model::service::ServiceFindFilter { id: Some(id) },
+    )
+    .await
+    .map_err(Error::from)
+    .map_err(log_error(handler_name))?
+    {
+        Some(v) => v,
+        None => return Err(Error::new("不存在的服务")),
+    };
+
+    let sub = match model::subject::Subject::find(
+        &*p,
+        &model::subject::SubjectFindFilter {
+            by: model::subject::SubjectFindBy::Id(s.target_id.clone()),
+            is_del: Some(false),
+        },
+    )
+    .await
+    .map_err(Error::from)
+    .map_err(log_error(handler_name))?
+    {
+        Some(v) => v,
+        None => return Err(Error::new("不存在的专题")),
+    };
+
+    let s = model::service::Service {
+        name: sub.name,
+        price: sub.price,
+        cover: sub.cover,
+        desc: sub.summary,
+        ..s
+    };
+
+    let aff = s
+        .update(&*p)
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    Ok(resp::ok(resp::AffResp { aff }))
 }

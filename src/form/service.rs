@@ -42,3 +42,30 @@ pub struct Edit {
     #[validate(length(min = 20, max = 20))]
     pub id: String,
 }
+
+#[derive(Deserialize)]
+pub struct ListForAdmin {
+    #[serde(flatten)]
+    pub pq: super::PageQueryStr,
+    pub name: Option<String>,
+    pub is_subject: Option<String>,
+    pub is_off: Option<String>,
+}
+
+impl ListForAdmin {
+    pub fn is_subject(&self) -> Option<bool> {
+        if let Some(ref v) = self.is_subject {
+            Some(v == "1")
+        } else {
+            None
+        }
+    }
+
+    pub fn is_off(&self) -> Option<bool> {
+        if let Some(ref v) = self.is_off {
+            Some(v == "1")
+        } else {
+            None
+        }
+    }
+}

@@ -72,7 +72,16 @@ fn service_init(state: ArcAppState) -> Router {
     Router::new()
         .route(
             "/",
-            get(service::list).post(service::add).put(service::edit),
+            get(service::list)
+                .post(service::add)
+                .put(service::edit)
+                .patch(service::import),
+        )
+        .route(
+            "/:id",
+            put(service::on_off)
+                .delete(service::del)
+                .patch(service::sync),
         )
         .with_state(state)
 }

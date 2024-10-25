@@ -69,3 +69,5 @@ impl ListForAdmin {
         }
     }
 }
+
+pub type ListForUser = super::PageQuery;

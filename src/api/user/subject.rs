@@ -84,3 +84,26 @@ pub async fn detail(
         topic_list,
     }))
 }
+
+pub async fn get_slug(
+    State(state): State<ArcAppState>,
+    Path(id): Path<String>,
+) -> Result<resp::JsonResp<String>> {
+    let handler_name = "api/user/subject/get_slug";
+    let p = get_pool(&state);
+    let subject = match model::subject::Subject::find(
+        &*p,
+        &model::subject::SubjectFindFilter {
+            by: model::subject::SubjectFindBy::Id(id),
+            is_del: Some(false),
+        },
+    )
+    .await
+    .map_err(Error::from)
+    .map_err(log_error(handler_name))?
+    {
+        Some(v) => v,
+        None => return Err(Error::new("不存在的专题")),
+    };
+    Ok(resp::ok(subject.slug))
+}

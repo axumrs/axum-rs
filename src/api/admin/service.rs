@@ -147,7 +147,11 @@ pub async fn edit(
 
     let m = match model::service::Service::find(
         &mut *tx,
-        &model::service::ServiceFindFilter { id: Some(frm.id) },
+        &model::service::ServiceFindFilter {
+            id: Some(frm.id),
+            is_subject: None,
+            target_id: None,
+        },
     )
     .await
     {
@@ -399,7 +403,11 @@ pub async fn sync(
 
     let s = match model::service::Service::find(
         &*p,
-        &model::service::ServiceFindFilter { id: Some(id) },
+        &model::service::ServiceFindFilter {
+            id: Some(id),
+            is_subject: None,
+            target_id: None,
+        },
     )
     .await
     .map_err(Error::from)

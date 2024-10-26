@@ -16,10 +16,12 @@ pub struct Service {
 
     /// 是否专题
     #[db(list_opt)]
+    #[db(find_opt)]
     pub is_subject: bool, // BOOLEAN NOT NULL DEFAULT FALSE,
 
     /// 目标ID
     #[db(exists)]
+    #[db(find_opt)]
     pub target_id: String, // CHAR(20) NOT NULL,
     /// 时效(天)
     pub duration: i16, // SMALLINT NOT NULL DEFAULT 0,

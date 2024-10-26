@@ -33,6 +33,7 @@ fn subject_init(state: ArcAppState) -> Router {
         .route("/top", get(subject::top))
         .route("/", get(subject::list))
         .route("/detail/:slug", get(subject::detail))
+        .route("/slug/:id", get(subject::get_slug))
         .with_state(state)
 }
 
@@ -64,5 +65,6 @@ fn user_init(state: ArcAppState) -> Router {
 fn service_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/", get(service::list))
+        .route("/subject/:subject_id", get(service::find_by_subject))
         .with_state(state)
 }

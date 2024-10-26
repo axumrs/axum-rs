@@ -1,4 +1,4 @@
-use axum::extract::{Query, State};
+use axum::extract::{Path, Query, State};
 
 use crate::{
     api::{get_pool, log_error},
@@ -28,6 +28,36 @@ pub async fn list(
     .await
     .map_err(Error::from)
     .map_err(log_error(handler_name))?;
+
+    Ok(resp::ok(data))
+}
+
+pub async fn find_by_subject(
+    State(state): State<ArcAppState>,
+    Path(subject_id): Path<String>,
+) -> Result<resp::JsonResp<model::service::Service>> {
+    let handler_name = "user/service/find_by_subject";
+    let p = get_pool(&state);
+
+    let data = match model::service::Service::find(
+        &*p,
+        &model::service::ServiceFindFilter {
+            id: None,
+            is_subject: Some(true),
+            target_id: Some(subject_id),
+        },
+    )
+    .await
+    .map_err(Error::from)
+    .map_err(log_error(handler_name))?
+    {
+        Some(v) => v,
+        None => return Err(Error::new("该专题尚未上架")),
+    };
+
+    if data.is_off {
+        return Err(Error::new("该服务已下架"));
+    }
 
     Ok(resp::ok(data))
 }

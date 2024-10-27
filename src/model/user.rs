@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{interfaces, utils, Result};
 
-#[derive(Debug, Default, Deserialize, Serialize, sqlx::Type)]
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::Type, Clone)]
 #[sqlx(type_name = "user_status")]
 pub enum Status {
     #[default]
@@ -14,7 +14,7 @@ pub enum Status {
     Freezed,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize, sqlx::Type)]
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::Type, Clone)]
 #[sqlx(type_name = "user_kind")]
 pub enum Kind {
     #[default]
@@ -34,7 +34,7 @@ impl std::fmt::Display for Kind {
     }
 }
 
-#[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow, Db)]
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow, Db, Clone)]
 #[db(table = users, pk = id)]
 pub struct User {
     #[db(find)]

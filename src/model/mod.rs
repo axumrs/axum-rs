@@ -2,6 +2,7 @@ pub mod activation_code;
 pub mod admin;
 pub mod check_in_log;
 pub mod login_log;
+pub mod order;
 pub mod pagination;
 pub mod protected_content;
 pub mod read_history;

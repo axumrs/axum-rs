@@ -1,3 +1,4 @@
+pub mod order;
 pub mod ping;
 pub mod router;
 pub mod service;

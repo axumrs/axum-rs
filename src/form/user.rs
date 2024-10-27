@@ -18,6 +18,7 @@ pub struct AddForm {
     pub password: String,
 
     #[validate(length(min = 6))]
+    #[validate(must_match(other = "password"))]
     pub re_password: String,
 }
 

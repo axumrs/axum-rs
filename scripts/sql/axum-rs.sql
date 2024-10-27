@@ -140,6 +140,29 @@ CREATE TABLE IF NOT EXISTS "services" (
     "pin" INTEGER NOT NULL DEFAULT 0
 );
 
+-- 订单状态
+CREATE TYPE "order_status" AS ENUM ('Pending', 'Finished', 'Cancelled', 'Closed');
+
+-- 订单
+CREATE TABLE IF NOT EXISTS "orders"(
+    "id" CHAR(20) PRIMARY KEY ,
+    -- 用户
+    "user_id" CHAR(20) NOT NULL,
+    -- 金额
+    "amount" DECIMAL(10,2) NOT NULL,
+    -- 实付金额
+    "actual_amount" DECIMAL(10,2) NOT NULL,
+    -- 状态
+    "status" order_status NOT NULL DEFAULT 'Pending',
+     -- 快照（服务详情&数量&金额（折扣前后）&用户ID&用户类型）
+    "snapshot" VARCHAR NOT NULL,
+    -- 是否允许积分兑换
+    "allow_pointer" BOOLEAN NOT NULL DEFAULT FALSE,
+    -- 创建时间
+    "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
 
 -- 签到日志
 CREATE TABLE IF NOT EXISTS "check_in_logs"(

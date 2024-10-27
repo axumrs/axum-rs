@@ -19,7 +19,7 @@ pub async fn list(
                 page: frm.page(),
                 page_size: frm.page_size(),
             },
-            order: Some("pin DESC, id DESC".into()),
+            order: Some("is_subject ASC, pin DESC, id DESC".into()),
             name: None,
             is_subject: None,
             is_off: Some(false),

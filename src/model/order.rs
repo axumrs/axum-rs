@@ -22,11 +22,11 @@ impl std::fmt::Display for Status {
 #[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow, Db)]
 #[db(table = orders, pk = id)]
 pub struct Order {
-    #[db(find)]
+    #[db(find_opt)]
     #[db(skip_update)]
     pub id: String,
 
-    #[db(find)]
+    #[db(find_opt)]
     #[db(list_opt)]
     #[db(skip_update)]
     pub user_id: String,

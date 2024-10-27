@@ -1,4 +1,7 @@
-use axum::{extract::State, Json};
+use axum::{
+    extract::{Path, Query, State},
+    Json,
+};
 use chrono::Local;
 use rust_decimal::Decimal;
 use validator::Validate;
@@ -124,4 +127,64 @@ pub async fn create(
         .map_err(Error::from)
         .map_err(log_error(handler_name))?;
     Ok(resp::ok(resp::IDResp { id: m.id }))
+}
+
+pub async fn list(
+    State(state): State<ArcAppState>,
+    user_auth: mid::UserAuth,
+    Query(frm): Query<form::PageQueryStr>,
+) -> Result<resp::JsonResp<model::order::OrderPaginate>> {
+    let handler_name = "user/order/list";
+
+    let user = user_auth.user().map_err(log_error(handler_name))?;
+
+    let p = get_pool(&state);
+
+    let data = model::order::Order::list(
+        &*p,
+        &model::order::OrderListFilter {
+            pq: model::order::OrderPaginateReq {
+                page: frm.page(),
+                page_size: frm.page_size(),
+            },
+            order: None,
+            user_id: Some(user.id.clone()),
+            status: None,
+        },
+    )
+    .await
+    .map_err(Error::from)
+    .map_err(log_error(handler_name))?;
+
+    Ok(resp::ok(data))
+}
+
+pub async fn detail(
+    State(state): State<ArcAppState>,
+    user_auth: mid::UserAuth,
+    Path(id): Path<String>,
+) -> Result<resp::JsonResp<model::order::Order>> {
+    let handler_name = "user/order/detail";
+
+    let user = user_auth.user().map_err(log_error(handler_name))?;
+
+    let p = get_pool(&state);
+
+    let data = match model::order::Order::find(
+        &*p,
+        &model::order::OrderFindFilter {
+            id: Some(id),
+            user_id: Some(user.id.clone()),
+            status: None,
+        },
+    )
+    .await
+    .map_err(Error::from)
+    .map_err(log_error(handler_name))?
+    {
+        Some(v) => v,
+        None => return Err(Error::new("不存在的订单")),
+    };
+
+    Ok(resp::ok(data))
 }

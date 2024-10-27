@@ -72,6 +72,7 @@ fn service_init(state: ArcAppState) -> Router {
 
 fn order_init(state: ArcAppState) -> Router {
     Router::new()
-        .route("/", post(order::create))
+        .route("/", get(order::list).post(order::create))
+        .route("/:id", get(order::detail))
         .with_state(state)
 }

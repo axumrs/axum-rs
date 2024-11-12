@@ -65,6 +65,15 @@ pub struct UploadConfig {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct TronConfig {
+    pub wallet: String,
+    pub usdt_contract_addr: String,
+    pub api_url: String,
+    pub fetch_timeout: u8,
+    pub proxy: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Config {
     pub log: String,
     pub cleaner_max_try: u32,
@@ -76,6 +85,7 @@ pub struct Config {
     pub protected_content: ProtectedContentConfig,
     pub captcha: CaptchaConfig,
     pub upload: UploadConfig,
+    pub tron: TronConfig,
 }
 
 impl Config {

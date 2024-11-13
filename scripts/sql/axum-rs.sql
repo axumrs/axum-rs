@@ -162,6 +162,49 @@ CREATE TABLE IF NOT EXISTS "orders"(
     "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 货币
+CREATE TYPE "currency" AS ENUM (
+    'USDT', 
+    'TRX', 
+    'CNY', 
+    -- 积分
+    'PNT'
+);
+
+-- 支付状态
+CREATE TYPE "pay_status" AS ENUM ('Pending', 'Failed', 'Success');
+
+-- 支付方式
+CREATE TYPE "pay_method" AS ENUM ('Online', 'QrCode', 'WechatAlipay', 'Pointer');
+
+-- 支付
+CREATE TABLE  IF NOT EXISTS "pays" (
+	"id" CHAR(20) PRIMARY KEY ,
+    -- 订单ID
+	"order_id" CHAR(20) NOT NULL,
+    -- 用户ID
+	"user_id" CHAR(20) NOT NULL,
+    -- 支付金额
+	"amount" DECIMAL(10,2) NOT NULL,
+    -- 货币
+    "currency" currency NOT NULL DEFAULT 'USDT',
+    -- 支付工具的交易ID
+	"tx_id" VARCHAR(255) NOT NULL DEFAULT '',
+    -- 支付方式
+    "method" pay_method NOT NULL DEFAULT 'Online',
+    -- 支付状态
+	"status" pay_status NOT NULL DEFAULT 'Pending',
+    -- 是否管理员生成
+    "is_via_admin" BOOLEAN NOT NULL DEFAULT FALSE,
+    -- 审核时间
+    "approved_time" TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01 08:00:00+08',
+    -- 审核意见
+    "approved_opinion" VARCHAR(255) NOT NULL DEFAULT '',
+    -- 支付证明截图
+    "proof" VARCHAR(255) NOT NULL DEFAULT '',
+    -- 时间
+	"dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
 
 -- 签到日志
@@ -174,22 +217,7 @@ CREATE TABLE IF NOT EXISTS "check_in_logs"(
 
 CREATE TYPE "pay_applies_status" AS ENUM ('Pending', 'Reject', 'Finished');
 
--- 支付申请
-CREATE TABLE  IF NOT EXISTS "pay_applies" (
-	"id" CHAR(20) PRIMARY KEY ,
-	"order_id" CHAR(20) NOT NULL,
-	"user_id" CHAR(20) NOT NULL,
-	"amount" DECIMAL(10,2) NOT NULL,
-	"currency" currency_kind NOT NULL DEFAULT 'USDT',
-	"kind" pay_kind NOT NULL DEFAULT 'TronLink',
-	"tx_id" VARCHAR(255) NOT NULL DEFAULT '',
-	"status" pay_applies_status NOT NULL DEFAULT 'Pending',
-	"dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	"is_del" BOOLEAN NOT NULL DEFAULT FALSE,
-	"img" VARCHAR(255) NOT NULL DEFAULT '',
-	"process_dateline" TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01 08:00:00+08',
-	"reason" VARCHAR(255) NOT NULL DEFAULT ''
-);
+
 
 -- 阅读历史
 CREATE TABLE  IF NOT EXISTS "read_histories" (

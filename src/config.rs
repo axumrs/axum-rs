@@ -1,4 +1,5 @@
 use rand::Rng;
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
@@ -74,6 +75,13 @@ pub struct TronConfig {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct CurrencyConfig {
+    pub trx_rate: Decimal,
+    pub cny_rate: Decimal,
+    pub pointer_rate: Decimal,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Config {
     pub log: String,
     pub cleaner_max_try: u32,
@@ -86,6 +94,7 @@ pub struct Config {
     pub captcha: CaptchaConfig,
     pub upload: UploadConfig,
     pub tron: TronConfig,
+    pub currency: CurrencyConfig,
 }
 
 impl Config {

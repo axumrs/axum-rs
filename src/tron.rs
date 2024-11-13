@@ -31,6 +31,7 @@ impl TransactionTRX {
 
     pub fn amount(&self) -> Decimal {
         Decimal::from_i128_with_scale(self.contract_data.amount as i128, 0)
+            / Decimal::from_i128_with_scale(1000000, 0)
     }
 
     pub fn is_to_my(&self, addr: &str) -> bool {
@@ -73,6 +74,7 @@ impl TransactionTRC20 {
 
     pub fn amount(&self) -> Decimal {
         Decimal::from_str_exact(self.trc20transfer_info[0].amount_str.as_str()).unwrap_or_default()
+            / Decimal::from_i128_with_scale(1000000, 0)
     }
 
     pub fn is_to_my(&self, addr: &str) -> bool {

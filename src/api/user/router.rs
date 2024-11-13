@@ -81,6 +81,6 @@ fn order_init(state: ArcAppState) -> Router {
 fn pay_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/", post(pay::add).put(pay::complete))
-        .route("/:id", get(pay::detail))
+        .route("/order/:order_id", get(pay::detail_by_order))
         .with_state(state)
 }

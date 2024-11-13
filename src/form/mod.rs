@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 pub mod auth;
 pub mod order;
+pub mod pay;
 pub mod profile;
 pub mod service;
 pub mod subject;

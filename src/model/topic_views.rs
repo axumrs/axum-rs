@@ -83,4 +83,5 @@ pub struct TopicSubjectWithTagsAndProctedSections {
     #[serde(flatten)]
     pub topic_subject_with_tags_and_sections: TopicSubjectWithTagsAndSections,
     pub protected: TopicProctedMeta,
+    pub need_buy: bool,
 }

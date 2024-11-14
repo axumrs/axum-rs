@@ -161,10 +161,10 @@ pub async fn purchased_services(
 pub async fn is_a_purchased_service(
     e: impl PgExecutor<'_>,
     user_id: &str,
-    service_id: &str,
+    subject_id: &str,
 ) -> Result<bool> {
-    let psl = purchased_services(e, user_id, &[service_id]).await?;
-    let r = match psl.get(service_id) {
+    let psl = purchased_services(e, user_id, &[subject_id]).await?;
+    let r = match psl.get(subject_id) {
         Some(v) => *v,
         None => false,
     };

@@ -5,6 +5,7 @@ use axum::{
     Json,
 };
 use chrono::Local;
+use rust_decimal::Decimal;
 use validator::Validate;
 
 use crate::{
@@ -84,6 +85,41 @@ pub async fn detail(
         .await
         .map_err(log_error(handler_name))?;
 
+    // 是否购买
+    let is_purchased = if data.topic_subject_with_tags.topic_subjects.price > Decimal::ZERO {
+        match user_auth.user_opt() {
+            Some(u) => service::order::is_a_purchased_service(
+                &*p,
+                &u.id,
+                &data.topic_subject_with_tags.topic_subjects.subject_id,
+            )
+            .await
+            .map_err(log_error(handler_name))?,
+            None => false,
+        }
+    } else {
+        true
+    };
+    let is_need_buy = if data.topic_subject_with_tags.topic_subjects.try_readable {
+        false
+    } else {
+        !is_purchased
+    };
+
+    if is_need_buy {
+        return Ok(resp::ok(
+            model::topic_views::TopicSubjectWithTagsAndProctedSections {
+                topic_subject_with_tags_and_sections:
+                    model::topic_views::TopicSubjectWithTagsAndSections {
+                        sections: vec![],
+                        ..data
+                    },
+                protected: model::topic_views::TopicProctedMeta::default(),
+                need_buy: is_need_buy,
+            },
+        ));
+    }
+
     if let Some(u) = user_auth.user_opt() {
         // 阅读历史
         let rh = Arc::new(model::read_history::ReadHistorie {
@@ -103,7 +139,41 @@ pub async fn detail(
     }
 
     // 是否需要内容保护
-    let need_procted = true;
+    let need_procted = match user_auth.user_opt() {
+        Some(u) => {
+            // 是否订阅用户
+            let is_subscribed = match &u.kind {
+                &model::user::Kind::Normal => false,
+                &model::user::Kind::Subscriber | &model::user::Kind::YearlySubscriber => true,
+            };
+            if !is_subscribed {
+                // // 是否购买专题
+                // let is_purchased = match user_auth.user_opt() {
+                //     Some(u) => service::order::is_a_purchased_service(
+                //         &*p,
+                //         &u.id,
+                //         &data.topic_subject_with_tags.topic_subjects.subject_id,
+                //     )
+                //     .await
+                //     .map_err(log_error(handler_name))?,
+                //     None => false,
+                // };
+                // tracing::debug!(
+                //     "普通用户，是否购买：{is_purchased}, 是否需要内容保护：{}",
+                //     !is_purchased
+                // );
+                // !is_purchased
+                true
+            } else {
+                // tracing::debug!("订阅用户，不需要内容保护");
+                false
+            }
+        }
+        None => {
+            // tracing::debug!("未登录用户，需要内容保护");
+            true
+        }
+    };
     if need_procted {
         let (secs, protected_ids) =
             service::topic::gen_protected_content(&*p, data.sections, &state.cfg.protected_content)
@@ -120,6 +190,7 @@ pub async fn detail(
                     ids: protected_ids,
                     catpcha: state.cfg.protected_content.guest_captcha.clone(),
                 },
+                need_buy: false,
             },
         ));
     }
@@ -127,6 +198,7 @@ pub async fn detail(
         model::topic_views::TopicSubjectWithTagsAndProctedSections {
             topic_subject_with_tags_and_sections: data,
             protected: model::topic_views::TopicProctedMeta::default(),
+            need_buy: false,
         },
     ))
 }

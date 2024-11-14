@@ -50,8 +50,9 @@ pub async fn complete(
         &*p,
         frm.pay_id,
         frm.order_id,
-        Some(user.id.clone()),
         &state.cfg,
+        Some(user.id.clone()),
+        false,
     )
     .await
     .map_err(log_error(handler_name))?;

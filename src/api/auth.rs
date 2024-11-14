@@ -74,6 +74,32 @@ pub async fn login(
         return Err(Error::new("用户名/密码错误").into());
     }
 
+    // 订阅
+    let user = match &user.kind {
+        &model::user::Kind::Subscriber | &model::user::Kind::YearlySubscriber => {
+            let u = if Local::now() >= user.sub_exp {
+                let user = model::user::User {
+                    kind: model::user::Kind::Normal,
+                    allow_device_num: 1,
+                    session_exp: state.cfg.session.default_timeout as i16,
+                    ..user
+                };
+                if let Err(e) = user.update(&mut *tx).await {
+                    tx.rollback()
+                        .await
+                        .map_err(Error::from)
+                        .map_err(log_error(handler_name))?;
+                    return Err(e.into());
+                }
+                user
+            } else {
+                user
+            };
+            u
+        }
+        _ => user,
+    };
+
     // 已登录数量
     let count: (i64,) = match sqlx::query_as(
         "SELECT count(*) FROM sessions WHERE user_id = $1 AND is_admin=false AND expire_time>=$2",

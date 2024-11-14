@@ -70,10 +70,11 @@ pub async fn find(
 
 pub async fn complete(
     p: &PgPool,
-    id: String,
-    order_id: String,
-    user_id: Option<String>,
-    cfg: &config::Config,
+    id: String,                 // 支付ID
+    order_id: String,           // 订单ID
+    cfg: &config::Config,       // 配置
+    user_id: Option<String>,    // 用户ID
+    skip_check_confirmed: bool, // 是否跳过区块链确认
 ) -> Result<u64> {
     let mut tx = p.begin().await?;
     // 获取支付记录
@@ -117,11 +118,12 @@ pub async fn complete(
         }
     };
     let order_id = order.id.clone();
+    let order_user_id = order.user_id.clone();
 
     let mut amount = order.amount.clone();
     // 区块链是否确认
     let is_online = matches!(pay.method, model::pay::Method::Online);
-    if is_online {
+    if is_online && !skip_check_confirmed {
         match &pay.currency {
             &model::currency::Currency::USDT => {
                 let tron_tx = match tron::usdt_tran(&cfg.tron, &pay.tx_id).await {
@@ -167,7 +169,7 @@ pub async fn complete(
         tx.rollback().await.map_err(Error::from)?;
         return Err(e);
     }
-    // TODO:已购服务
+
     // 订单状态
     if let Err(e) = super::order::update_status(
         &mut *tx,
@@ -188,6 +190,13 @@ pub async fn complete(
         Some(&model::pay::Status::Pending),
     )
     .await
+    {
+        tx.rollback().await.map_err(Error::from)?;
+        return Err(Error::from(e));
+    }
+
+    // 已购服务
+    if let Err(e) = super::order::update_purchased_service(&mut tx, &order_id, &order_user_id).await
     {
         tx.rollback().await.map_err(Error::from)?;
         return Err(Error::from(e));

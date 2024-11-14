@@ -1,8 +1,10 @@
+use std::collections::HashMap;
+
 use axum::extract::{Path, Query, State};
 
 use crate::{
     api::{get_pool, log_error},
-    form, model, resp, service, ArcAppState, Error, Result,
+    form, mid, model, resp, service, ArcAppState, Error, Result,
 };
 
 pub async fn top(
@@ -106,4 +108,49 @@ pub async fn get_slug(
         None => return Err(Error::new("不存在的专题")),
     };
     Ok(resp::ok(subject.slug))
+}
+
+#[derive(serde::Deserialize)]
+pub struct Purchased {
+    pub ids: String,
+}
+impl Purchased {
+    pub fn ids(&self) -> Vec<&str> {
+        self.ids.split(',').map(|s| s).collect()
+    }
+}
+pub async fn purchased(
+    State(state): State<ArcAppState>,
+    user_auth: mid::UserAuth,
+    Query(frm): Query<Purchased>,
+) -> Result<resp::JsonResp<HashMap<String, bool>>> {
+    let handler_name = "api/user/subject/purchased";
+    let user = match user_auth.user_opt() {
+        Some(v) => v,
+        None => return Ok(resp::ok(HashMap::new())),
+    };
+
+    let p = get_pool(&state);
+
+    let data = service::order::purchased_services(&*p, &user.id, &frm.ids())
+        .await
+        .map_err(log_error(handler_name))?;
+    Ok(resp::ok(data))
+}
+
+pub async fn is_purchased(
+    State(state): State<ArcAppState>,
+    user_auth: mid::UserAuth,
+    Path(id): Path<String>,
+) -> Result<resp::JsonResp<bool>> {
+    let handler_name = "api/user/subject/is_purchased";
+    let user = match user_auth.user_opt() {
+        Some(v) => v,
+        None => return Ok(resp::ok(false)),
+    };
+    let p = get_pool(&state);
+    let data = service::order::is_a_purchased_service(&*p, &user.id, &id)
+        .await
+        .map_err(log_error(handler_name))?;
+    Ok(resp::ok(data))
 }

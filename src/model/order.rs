@@ -44,7 +44,7 @@ pub struct Order {
 
 impl Order {
     pub fn to_snapshot(&self) -> Vec<OrderSnapshot> {
-        serde_json::from_str(&self.snapshot).unwrap_or_default()
+        serde_json::from_str(&self.snapshot).unwrap()
     }
     pub fn snapshot_to_str(snapshot_list: &Vec<OrderSnapshot>) -> String {
         serde_json::json!(snapshot_list).to_string()

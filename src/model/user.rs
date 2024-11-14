@@ -52,7 +52,7 @@ pub struct User {
     #[db(list_opt_like)]
     pub nickname: String,
 
-    #[serde(skip_serializing)]
+    #[serde(skip)]
     pub password: String,
 
     #[db(find_opt)]

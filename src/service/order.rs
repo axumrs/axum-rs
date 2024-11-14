@@ -143,7 +143,8 @@ pub async fn purchased_services(
     }
 
     for o in order_list {
-        for oss in o.to_snapshot() {
+        let snap_list = o.to_snapshot();
+        for oss in snap_list {
             if oss.service.service.is_subject {
                 let is_purchased =
                     utils::vec::is_in(subject_ids, &oss.service.service.target_id.as_str());

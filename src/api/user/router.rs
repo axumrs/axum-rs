@@ -36,6 +36,8 @@ fn subject_init(state: ArcAppState) -> Router {
         .route("/", get(subject::list))
         .route("/detail/:slug", get(subject::detail))
         .route("/slug/:id", get(subject::get_slug))
+        .route("/purchased", get(subject::purchased))
+        .route("/is-purchased/:id", get(subject::is_purchased))
         .with_state(state)
 }
 

@@ -48,6 +48,18 @@ impl PageQueryStr {
             .parse()
             .unwrap_or(30)
     }
+
+    pub fn page_to_bind(&self) -> i64 {
+        self.page() as i64
+    }
+
+    pub fn page_size_to_bind(&self) -> i64 {
+        self.page_size() as i64
+    }
+
+    pub fn offset_to_bind(&self) -> i64 {
+        self.page_to_bind() * self.page_size_to_bind()
+    }
 }
 
 #[derive(Deserialize)]

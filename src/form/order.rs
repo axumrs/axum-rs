@@ -16,3 +16,9 @@ pub struct ServiceForCreate {
     #[validate(range(min = 1, max = 96))]
     pub num: i16,
 }
+
+#[derive(Deserialize)]
+pub struct ListForAdmin {
+    #[serde(flatten)]
+    pub pq: super::PageQueryStr,
+}

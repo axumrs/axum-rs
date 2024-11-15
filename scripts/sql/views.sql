@@ -23,3 +23,15 @@ INNER JOIN
 ON 
   tt.tag_id = t.id
 ;
+
+-- 订单-用户关联视图
+CREATE VIEW "v_order_users" AS
+SELECT 
+	o.id, user_id, amount, actual_amount, o.status, "snapshot", allow_pointer, o.dateline
+	, u.email, u.nickname 
+FROM 
+orders AS o
+INNER JOIN
+users AS u
+ON o.user_id = u.id
+;

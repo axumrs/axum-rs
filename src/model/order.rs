@@ -67,3 +67,13 @@ pub struct OrderSnapshotService {
     pub discount: i16,
     pub num: i16,
 }
+
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow)]
+
+pub struct OrderWithUser {
+    #[serde(flatten)]
+    #[sqlx(flatten)]
+    pub order: Order,
+    pub email: String,
+    pub nickname: String,
+}

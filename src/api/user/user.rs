@@ -1,11 +1,12 @@
-use axum::extract::State;
+use axum::{extract::State, Json};
 use chrono::Local;
 use rand::Rng;
 use rust_decimal::Decimal;
+use validator::Validate;
 
 use crate::{
     api::{get_pool, log_error},
-    mid, model, resp,
+    form, mid, model, resp,
     utils::{self, dt},
     ArcAppState, Error, Result,
 };
@@ -162,4 +163,111 @@ pub async fn login_log_list(
     .map_err(Error::from)
     .map_err(log_error(handler_name))?;
     Ok(resp::ok(data))
+}
+
+pub async fn change_pwd(
+    State(state): State<ArcAppState>,
+    user_auth: mid::UserAuth,
+    Json(frm): Json<form::profile::ChangePassword>,
+) -> Result<resp::JsonAffResp> {
+    let handler_name = "user/change_pwd";
+    frm.validate()
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    if frm.new_password == frm.password {
+        return Err(Error::new("新密码不能和现用密码相同"));
+    }
+
+    if frm.new_password != frm.re_password {
+        return Err(Error::new("两次密码不一致"));
+    }
+
+    let user = user_auth.user().map_err(log_error(handler_name))?;
+
+    let p = get_pool(&state);
+
+    let m = match model::user::User::find(
+        &*p,
+        &model::user::UserFindFilter {
+            by: model::user::UserFindBy::Id(user.id.clone()),
+            status: Some(model::user::Status::Actived),
+        },
+    )
+    .await
+    {
+        Ok(v) => match v {
+            Some(v) => v,
+            None => return Err(Error::new("用户不存在")),
+        },
+        Err(e) => return Err(e.into()).map_err(log_error(handler_name)),
+    };
+
+    if !utils::password::verify(&frm.password, &m.password).map_err(log_error(handler_name))? {
+        return Err(Error::new("现用密码错误"));
+    }
+
+    let password = utils::password::hash(&frm.new_password).map_err(log_error(handler_name))?;
+    let m = model::user::User { password, ..m };
+
+    let aff = match m.update(&*p).await {
+        Ok(v) => v,
+        Err(e) => return Err(e.into()).map_err(log_error(handler_name)),
+    };
+    Ok(resp::ok(resp::AffResp { aff }))
+}
+
+pub async fn update_profile(
+    State(state): State<ArcAppState>,
+    user_auth: mid::UserAuth,
+    Json(frm): Json<form::profile::UpdateProfile>,
+) -> Result<resp::JsonAffResp> {
+    let handler_name = "user/update_profile";
+    frm.validate()
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    let user = user_auth.user().map_err(log_error(handler_name))?;
+
+    let (allow_device_num, session_exp) = match &user.kind {
+        &model::user::Kind::Normal => (frm.allow_device_num.min(1), frm.session_exp.min(20)),
+        &model::user::Kind::Subscriber => (frm.allow_device_num.min(3), frm.session_exp.min(120)),
+        &model::user::Kind::YearlySubscriber => {
+            (frm.allow_device_num.min(5), frm.session_exp.min(300))
+        }
+    };
+
+    let p = get_pool(&state);
+
+    let m = match model::user::User::find(
+        &*p,
+        &model::user::UserFindFilter {
+            by: model::user::UserFindBy::Id(user.id.clone()),
+            status: Some(model::user::Status::Actived),
+        },
+    )
+    .await
+    {
+        Ok(v) => match v {
+            Some(v) => v,
+            None => return Err(Error::new("用户不存在")),
+        },
+        Err(e) => return Err(e.into()).map_err(log_error(handler_name)),
+    };
+
+    if !utils::password::verify(&frm.password, &m.password).map_err(log_error(handler_name))? {
+        return Err(Error::new("密码错误"));
+    }
+
+    let m = model::user::User {
+        allow_device_num,
+        session_exp,
+        ..m
+    };
+
+    let aff = match m.update(&*p).await {
+        Ok(v) => v,
+        Err(e) => return Err(e.into()).map_err(log_error(handler_name)),
+    };
+    Ok(resp::ok(resp::AffResp { aff }))
 }

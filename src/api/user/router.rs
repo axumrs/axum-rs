@@ -1,6 +1,6 @@
 use axum::{
     middleware,
-    routing::{delete, get, post},
+    routing::{delete, get, post, put},
     Router,
 };
 
@@ -64,6 +64,8 @@ fn user_init(state: ArcAppState) -> Router {
         .route("/check-in", get(user::check_in))
         .route("/sessions", get(user::session_list))
         .route("/login-logs", get(user::login_log_list))
+        .route("/password", put(user::change_pwd))
+        .route("/profile", put(user::update_profile))
         .with_state(state)
 }
 

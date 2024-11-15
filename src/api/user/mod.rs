@@ -1,6 +1,7 @@
 pub mod order;
 pub mod pay;
 pub mod ping;
+pub mod read_history;
 pub mod router;
 pub mod service;
 pub mod subject;

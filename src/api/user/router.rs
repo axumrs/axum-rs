@@ -6,7 +6,7 @@ use axum::{
 
 use crate::{mid, ArcAppState};
 
-use super::{order, pay, ping, service, subject, tag, topic, user};
+use super::{order, pay, ping, read_history, service, subject, tag, topic, user};
 
 pub fn init(state: ArcAppState) -> Router {
     Router::new()
@@ -18,6 +18,7 @@ pub fn init(state: ArcAppState) -> Router {
         .nest("/service", service_init(state.clone()))
         .nest("/order", order_init(state.clone()))
         .nest("/pay", pay_init(state.clone()))
+        .nest("/read-history", read_history_init(state.clone()))
         .layer(middleware::from_extractor_with_state::<
             mid::UserAuth,
             ArcAppState,
@@ -84,5 +85,11 @@ fn pay_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/", post(pay::add).put(pay::complete))
         .route("/order/:order_id", get(pay::detail_by_order))
+        .with_state(state)
+}
+
+fn read_history_init(state: ArcAppState) -> Router {
+    Router::new()
+        .route("/", get(read_history::list))
         .with_state(state)
 }

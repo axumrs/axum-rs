@@ -188,3 +188,64 @@ pub async fn detail(
 
     Ok(resp::ok(data))
 }
+
+pub async fn cancel(
+    State(state): State<ArcAppState>,
+    user_auth: mid::UserAuth,
+    Path(id): Path<String>,
+) -> Result<resp::JsonAffResp> {
+    let handler_name = "user/order/cancel";
+    let user = user_auth.user().map_err(log_error(handler_name))?;
+
+    let p = get_pool(&state);
+    let mut tx = p
+        .begin()
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    let o = match model::order::Order::find(
+        &mut *tx,
+        &model::order::OrderFindFilter {
+            id: Some(id),
+            user_id: Some(user.id.clone()),
+            status: Some(model::order::Status::Pending),
+        },
+    )
+    .await
+    {
+        Ok(v) => match v {
+            Some(v) => v,
+            None => return Err(Error::new("不存在的订单")),
+        },
+        Err(e) => {
+            tx.rollback()
+                .await
+                .map_err(Error::from)
+                .map_err(log_error(handler_name))?;
+            return Err(Error::from(e)).map_err(log_error(handler_name))?;
+        }
+    };
+
+    let o = model::order::Order {
+        status: model::order::Status::Cancelled,
+        ..o
+    };
+
+    let aff = match o.update(&mut *tx).await {
+        Ok(v) => v,
+        Err(e) => {
+            tx.rollback()
+                .await
+                .map_err(Error::from)
+                .map_err(log_error(handler_name))?;
+            return Err(Error::from(e)).map_err(log_error(handler_name))?;
+        }
+    };
+
+    tx.commit()
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+    Ok(resp::ok(resp::AffResp { aff }))
+}

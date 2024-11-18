@@ -3,6 +3,7 @@ use axum::{
     Json,
 };
 use chrono::Local;
+use sqlx::QueryBuilder;
 use validator::Validate;
 
 use crate::{
@@ -150,4 +151,42 @@ pub async fn del(
         .map_err(Error::from)
         .map_err(log_error(handler_name))?;
     Ok(resp::ok(resp::AffResp { aff }))
+}
+
+pub async fn search(
+    State(state): State<ArcAppState>,
+    Query(frm): Query<form::user::SearchForAdmin>,
+) -> Result<resp::JsonResp<Vec<model::user::User>>> {
+    let handler_name = "admin/user/search";
+
+    let p = get_pool(&state);
+    let sql = format!(
+        "SELECT {} FROM {:?} WHERE 1=1 ",
+        &model::user::User::fields(),
+        &model::user::User::table()
+    );
+
+    let mut q = QueryBuilder::new(&sql);
+    if let Some(ref user_id) = frm.user_id {
+        q.push(" AND id =").push_bind(user_id);
+    } else {
+        let keyword = format!("%{}%", frm.q);
+        q.push(" AND (email ILIKE ")
+            .push_bind(keyword.clone())
+            .push("  OR nickname ILIKE ")
+            .push_bind(keyword)
+            .push(")");
+    }
+    // q.push(" AND status=")
+    //     .push_bind(&model::user::Status::Actived);
+    q.push(" ORDER BY id DESC LIMIT 30");
+
+    tracing::debug!("sql: {}", q.sql());
+    let rows = q
+        .build_query_as()
+        .fetch_all(&*p)
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+    Ok(resp::ok(rows))
 }

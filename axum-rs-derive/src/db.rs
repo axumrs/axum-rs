@@ -374,7 +374,7 @@ impl DbMeta {
         let table = self.table.clone();
         let all_fields_str = all_fields
             .iter()
-            .map(|f| format!("{:}", f))
+            .map(|f| format!("{:?}", f))
             .collect::<Vec<_>>()
             .join(",");
         quote! {

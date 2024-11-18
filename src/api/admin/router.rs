@@ -66,6 +66,7 @@ fn user_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/", get(user::list).post(user::add).put(user::edit))
         .route("/:id", delete(user::del))
+        .route("/search", get(user::search))
         .with_state(state)
 }
 
@@ -84,6 +85,7 @@ fn service_init(state: ArcAppState) -> Router {
                 .delete(service::del)
                 .patch(service::sync),
         )
+        .route("/search", get(service::search))
         .with_state(state)
 }
 

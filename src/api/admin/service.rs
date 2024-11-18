@@ -3,6 +3,7 @@ use axum::{
     Json,
 };
 use rust_decimal::Decimal;
+use sqlx::QueryBuilder;
 use validator::Validate;
 
 use crate::{
@@ -447,4 +448,40 @@ pub async fn sync(
         .map_err(log_error(handler_name))?;
 
     Ok(resp::ok(resp::AffResp { aff }))
+}
+
+pub async fn search(
+    State(state): State<ArcAppState>,
+    Query(frm): Query<form::service::SearchForAdmin>,
+) -> Result<resp::JsonResp<Vec<model::service::Service>>> {
+    let handler_name = "admin/service/search";
+    let p = get_pool(&state);
+
+    let sql = format!(
+        "SELECT {} FROM {} WHERE 1=1",
+        &model::service::Service::fields(),
+        &model::service::Service::table()
+    );
+
+    let mut q = QueryBuilder::new(&sql);
+
+    if let Some(ids) = frm.ids() {
+        q.push(" AND id IN");
+        q.push_tuples(ids, |mut b, id| {
+            b.push_bind(id);
+        });
+    } else {
+        q.push(" AND name ILIKE ").push_bind(&frm.q);
+    }
+
+    q.push(" ORDER BY id DESC LIMIT 30");
+
+    let rows = q
+        .build_query_as()
+        .fetch_all(&*p)
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    Ok(resp::ok(rows))
 }

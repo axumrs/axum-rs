@@ -71,3 +71,18 @@ impl ListForAdmin {
 }
 
 pub type ListForUser = super::PageQuery;
+
+#[derive(Deserialize)]
+pub struct SearchForAdmin {
+    pub q: String,
+    pub ids: Option<String>,
+}
+impl SearchForAdmin {
+    pub fn ids(&self) -> Option<Vec<&str>> {
+        if let Some(ref v) = self.ids {
+            Some(v.split(',').map(|s| s).collect())
+        } else {
+            None
+        }
+    }
+}

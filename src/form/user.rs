@@ -89,3 +89,9 @@ pub struct ListForAdmin {
     pub status: Option<model::user::Status>,
     pub kind: Option<model::user::Kind>,
 }
+
+#[derive(Deserialize)]
+pub struct SearchForAdmin {
+    pub q: String,
+    pub user_id: Option<String>,
+}

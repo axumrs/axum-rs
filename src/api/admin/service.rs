@@ -485,3 +485,26 @@ pub async fn search(
 
     Ok(resp::ok(rows))
 }
+
+pub async fn list_all(
+    State(state): State<ArcAppState>,
+) -> Result<resp::JsonResp<Vec<model::service::Service>>> {
+    let handler_name = "admin/service/list_all";
+    let p = get_pool(&state);
+
+    let rows = model::service::Service::list_all(
+        &*p,
+        &model::service::ServiceListAllFilter {
+            limit: None,
+            order: None,
+            name: None,
+            is_subject: None,
+            is_off: Some(false),
+        },
+    )
+    .await
+    .map_err(Error::from)
+    .map_err(log_error(handler_name))?;
+
+    Ok(resp::ok(rows))
+}

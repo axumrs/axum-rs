@@ -86,6 +86,7 @@ fn service_init(state: ArcAppState) -> Router {
                 .patch(service::sync),
         )
         .route("/search", get(service::search))
+        .route("/all", get(service::list_all))
         .with_state(state)
 }
 

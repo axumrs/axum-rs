@@ -1,4 +1,4 @@
-use axum::extract::{Query, State};
+use axum::extract::{Path, Query, State};
 use sqlx::{Postgres, QueryBuilder};
 
 use crate::{
@@ -50,4 +50,33 @@ fn build_list_query<'a>(
     frm: &form::order::ListForAdmin,
 ) -> QueryBuilder<'a, Postgres> {
     q
+}
+
+#[derive(serde::Serialize)]
+pub struct FindPayResp {
+    pub has_pay: bool,
+    pub pay: Option<model::pay::Pay>,
+}
+pub async fn find_pay(
+    State(state): State<ArcAppState>,
+    Path(order_id): Path<String>,
+) -> Result<resp::JsonResp<FindPayResp>> {
+    let handler_name = "admin/order/find_pay";
+    let p = get_pool(&state);
+    let pay = model::pay::Pay::find(
+        &*p,
+        &model::pay::PayFindFilter {
+            id: None,
+            order_id: Some(order_id),
+            user_id: None,
+        },
+    )
+    .await
+    .map_err(Error::from)
+    .map_err(log_error(handler_name))?;
+
+    Ok(resp::ok(FindPayResp {
+        has_pay: pay.is_some(),
+        pay,
+    }))
 }

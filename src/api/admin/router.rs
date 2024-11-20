@@ -91,5 +91,8 @@ fn service_init(state: ArcAppState) -> Router {
 }
 
 fn order_init(state: ArcAppState) -> Router {
-    Router::new().route("/", get(order::list)).with_state(state)
+    Router::new()
+        .route("/", get(order::list))
+        .route("/pay/:order_id", get(order::find_pay))
+        .with_state(state)
 }

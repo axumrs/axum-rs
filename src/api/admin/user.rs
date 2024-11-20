@@ -181,7 +181,6 @@ pub async fn search(
     //     .push_bind(&model::user::Status::Actived);
     q.push(" ORDER BY id DESC LIMIT 30");
 
-    tracing::debug!("sql: {}", q.sql());
     let rows = q
         .build_query_as()
         .fetch_all(&*p)
@@ -189,4 +188,24 @@ pub async fn search(
         .map_err(Error::from)
         .map_err(log_error(handler_name))?;
     Ok(resp::ok(rows))
+}
+
+pub async fn find_by_id(
+    State(state): State<ArcAppState>,
+    Path(id): Path<String>,
+) -> Result<resp::JsonResp<model::user::User>> {
+    let handler_name = "admin/user/find_by_id";
+    let p = get_pool(&state);
+    let m = model::user::User::find(
+        &*p,
+        &model::user::UserFindFilter {
+            by: model::user::UserFindBy::Id(id),
+            status: None,
+        },
+    )
+    .await
+    .map_err(Error::from)
+    .map_err(log_error(handler_name))?
+    .ok_or(Error::new("不存在的用户"))?;
+    Ok(resp::ok(m))
 }

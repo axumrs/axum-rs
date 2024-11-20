@@ -65,7 +65,7 @@ fn session_init(state: ArcAppState) -> Router {
 fn user_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/", get(user::list).post(user::add).put(user::edit))
-        .route("/:id", delete(user::del))
+        .route("/:id", delete(user::del).get(user::find_by_id))
         .route("/search", get(user::search))
         .with_state(state)
 }

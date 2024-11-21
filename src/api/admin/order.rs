@@ -1,4 +1,7 @@
-use axum::extract::{Path, Query, State};
+use axum::{
+    extract::{Path, Query, State},
+    Json,
+};
 use sqlx::{Postgres, QueryBuilder};
 
 use crate::{
@@ -79,4 +82,11 @@ pub async fn find_pay(
         has_pay: pay.is_some(),
         pay,
     }))
+}
+
+pub async fn add(
+    State(state): State<ArcAppState>,
+    Json(frm): Json<form::order::AddForAdmin>,
+) -> Result<resp::JsonIDResp> {
+    Ok(resp::ok(resp::IDResp { id: "".to_string() }))
 }

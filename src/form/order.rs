@@ -22,3 +22,6 @@ pub struct ListForAdmin {
     #[serde(flatten)]
     pub pq: super::PageQueryStr,
 }
+
+#[derive(Deserialize, Validate)]
+pub struct AddForAdmin {}

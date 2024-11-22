@@ -156,7 +156,8 @@ pub async fn add(
     }
 
     // 完成订单
-    if let Err(e) = service::pay::complete(&mut tx, pay.id, order_id, &state.cfg, None, true).await
+    if let Err(e) =
+        service::pay::complete(&mut tx, pay.id, order_id.clone(), &state.cfg, None, true).await
     {
         tx.rollback()
             .await
@@ -169,5 +170,94 @@ pub async fn add(
         .await
         .map_err(Error::from)
         .map_err(log_error(handler_name))?;
-    Ok(resp::ok(resp::IDResp { id: "".to_string() }))
+    Ok(resp::ok(resp::IDResp { id: order_id }))
+}
+
+pub async fn edit(
+    State(state): State<ArcAppState>,
+    Json(frm): Json<form::order::EditForAdmin>,
+) -> Result<resp::JsonAffResp> {
+    let handler_name = "admin/order/edit";
+
+    frm.validate()
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    let p = get_pool(&state);
+
+    let mut tx = p
+        .begin()
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    // 支付
+    let pay = match model::pay::Pay::find(
+        &mut *tx,
+        &model::pay::PayFindFilter {
+            id: None,
+            user_id: None,
+            order_id: Some(frm.id.clone()),
+        },
+    )
+    .await
+    {
+        Ok(pay) => match pay {
+            Some(pay) => pay,
+            None => {
+                let now = Local::now();
+                let new_pay = model::pay::Pay {
+                    id: utils::id::new(),
+                    order_id: frm.id.clone(),
+                    user_id: frm.user_id,
+                    amount: frm.amount,
+                    currency: frm.currency,
+                    tx_id: frm.tx_id,
+                    method: frm.method,
+                    status: model::pay::Status::Pending,
+                    is_via_admin: frm.is_via_admin,
+                    approved_time: now,
+                    approved_opinion: frm.approved_opinion,
+                    proof: frm.proof,
+                    dateline: now,
+                };
+                if let Err(e) = new_pay.insert(&mut *tx).await {
+                    tx.rollback()
+                        .await
+                        .map_err(Error::from)
+                        .map_err(log_error(handler_name))?;
+                    return Err(e.into());
+                };
+                new_pay
+            }
+        },
+        Err(e) => {
+            tx.rollback()
+                .await
+                .map_err(Error::from)
+                .map_err(log_error(handler_name))?;
+            return Err(e.into());
+        }
+    };
+
+    // 完成订单
+    let aff = match service::pay::complete(&mut tx, pay.id, frm.id.clone(), &state.cfg, None, true)
+        .await
+    {
+        Ok(aff) => aff,
+        Err(e) => {
+            tx.rollback()
+                .await
+                .map_err(Error::from)
+                .map_err(log_error(handler_name))?;
+            return Err(e.into());
+        }
+    };
+
+    tx.commit()
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    Ok(resp::ok(resp::AffResp { aff }))
 }

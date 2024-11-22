@@ -38,3 +38,17 @@ pub struct AddForAdmin {
     pub approved_opinion: String,
     pub proof: String,
 }
+#[derive(Deserialize, Validate)]
+pub struct EditForAdmin {
+    #[validate(length(min = 20, max = 20))]
+    pub id: String,
+    #[validate(length(min = 20, max = 20))]
+    pub user_id: String,
+    pub amount: Decimal,
+    pub currency: Currency,
+    pub method: Method,
+    pub tx_id: String,
+    pub is_via_admin: bool,
+    pub approved_opinion: String,
+    pub proof: String,
+}

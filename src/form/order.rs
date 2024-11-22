@@ -2,6 +2,8 @@ use rust_decimal::Decimal;
 use serde::Deserialize;
 use validator::Validate;
 
+use crate::model::{self, currency::Currency, pay::Method};
+
 #[derive(Deserialize, Validate)]
 pub struct Create {
     pub services: Vec<ServiceForCreate>,
@@ -24,4 +26,15 @@ pub struct ListForAdmin {
 }
 
 #[derive(Deserialize, Validate)]
-pub struct AddForAdmin {}
+pub struct AddForAdmin {
+    #[validate(length(min = 20, max = 20))]
+    pub user_id: String,
+    pub snap: Vec<model::order::OrderSnapshot>,
+    pub amount: Decimal,
+    pub currency: Currency,
+    pub method: Method,
+    pub tx_id: String,
+    pub is_via_admin: bool,
+    pub approved_opinion: String,
+    pub proof: String,
+}

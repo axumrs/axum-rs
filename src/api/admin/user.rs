@@ -177,8 +177,8 @@ pub async fn search(
             .push_bind(keyword)
             .push(")");
     }
-    // q.push(" AND status=")
-    //     .push_bind(&model::user::Status::Actived);
+    q.push(" AND status=")
+        .push_bind(&model::user::Status::Actived);
     q.push(" ORDER BY id DESC LIMIT 30");
 
     let rows = q

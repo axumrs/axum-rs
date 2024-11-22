@@ -69,17 +69,17 @@ pub async fn find(
 }
 
 pub async fn complete(
-    p: &PgPool,
+    // p: &PgPool,
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     id: String,                 // 支付ID
     order_id: String,           // 订单ID
     cfg: &config::Config,       // 配置
     user_id: Option<String>,    // 用户ID
     skip_check_confirmed: bool, // 是否跳过区块链确认
 ) -> Result<u64> {
-    let mut tx = p.begin().await?;
     // 获取支付记录
     let pay = match find(
-        &mut *tx,
+        &mut **tx,
         &model::pay::PayFindFilter {
             id: Some(id),
             order_id: Some(order_id),
@@ -93,13 +93,12 @@ pub async fn complete(
             None => return Err(Error::new("支付记录不存在")),
         },
         Err(e) => {
-            tx.rollback().await?;
             return Err(Error::from(e));
         }
     };
     // 获取订单
     let order = match model::order::Order::find(
-        &mut *tx,
+        &mut **tx,
         &model::order::OrderFindFilter {
             id: Some(pay.order_id),
             user_id,
@@ -113,7 +112,6 @@ pub async fn complete(
             None => return Err(Error::new("订单不存在")),
         },
         Err(e) => {
-            tx.rollback().await?;
             return Err(Error::from(e));
         }
     };
@@ -157,7 +155,7 @@ pub async fn complete(
 
     // 校验金额 区块链->订单
     if let Err(e) = super::order::valid_amount(
-        &mut *tx,
+        &mut **tx,
         None,
         &amount,
         &pay.currency,
@@ -166,43 +164,37 @@ pub async fn complete(
     )
     .await
     {
-        tx.rollback().await.map_err(Error::from)?;
         return Err(e);
     }
 
     // 订单状态
     if let Err(e) = super::order::update_status(
-        &mut *tx,
+        &mut **tx,
         &order_id,
         &model::order::Status::Finished,
         Some(&model::order::Status::Pending),
     )
     .await
     {
-        tx.rollback().await.map_err(Error::from)?;
         return Err(Error::from(e));
     }
     // 支付状态
     if let Err(e) = update_status(
-        &mut *tx,
+        &mut **tx,
         &pay.id,
         &model::pay::Status::Success,
         Some(&model::pay::Status::Pending),
     )
     .await
     {
-        tx.rollback().await.map_err(Error::from)?;
         return Err(Error::from(e));
     }
 
     // 已购服务
-    if let Err(e) = super::order::update_purchased_service(&mut tx, &order_id, &order_user_id).await
-    {
-        tx.rollback().await.map_err(Error::from)?;
+    if let Err(e) = super::order::update_purchased_service(tx, &order_id, &order_user_id).await {
         return Err(Error::from(e));
     }
 
-    tx.commit().await?;
     Ok(0)
 }
 

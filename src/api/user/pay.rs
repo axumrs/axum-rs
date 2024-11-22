@@ -5,7 +5,7 @@ use axum::{
 
 use crate::{
     api::{get_pool, log_error},
-    form, mid, model, resp, service, ArcAppState, Result,
+    form, mid, model, resp, service, ArcAppState, Error, Result,
 };
 
 /// 支付
@@ -45,9 +45,14 @@ pub async fn complete(
     let handler_name = "user/pay/complete";
     let user = user_auth.user().map_err(log_error(handler_name))?;
     let p = get_pool(&state);
+    let mut tx = p
+        .begin()
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
 
     let aff = service::pay::complete(
-        &*p,
+        &mut tx,
         frm.pay_id,
         frm.order_id,
         &state.cfg,
@@ -56,6 +61,8 @@ pub async fn complete(
     )
     .await
     .map_err(log_error(handler_name))?;
+
+    tx.commit().await.map_err(Error::from)?;
 
     Ok(resp::ok(resp::AffResp { aff }))
 }

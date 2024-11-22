@@ -94,5 +94,6 @@ fn order_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/", get(order::list).post(order::add).put(order::edit))
         .route("/pay/:order_id", get(order::find_pay))
+        .route("/:id", put(order::close))
         .with_state(state)
 }

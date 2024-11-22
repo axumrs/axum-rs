@@ -132,7 +132,7 @@ pub async fn create(
 pub async fn list(
     State(state): State<ArcAppState>,
     user_auth: mid::UserAuth,
-    Query(frm): Query<form::PageQueryStr>,
+    Query(frm): Query<form::order::ListForUser>,
 ) -> Result<resp::JsonResp<model::order::OrderPaginate>> {
     let handler_name = "user/order/list";
 
@@ -144,12 +144,12 @@ pub async fn list(
         &*p,
         &model::order::OrderListFilter {
             pq: model::order::OrderPaginateReq {
-                page: frm.page(),
-                page_size: frm.page_size(),
+                page: frm.pq.page(),
+                page_size: frm.pq.page_size(),
             },
             order: None,
             user_id: Some(user.id.clone()),
-            status: None,
+            status: frm.status,
         },
     )
     .await

@@ -52,3 +52,10 @@ pub struct EditForAdmin {
     pub approved_opinion: String,
     pub proof: String,
 }
+
+#[derive(Deserialize)]
+pub struct ListForUser {
+    #[serde(flatten)]
+    pub pq: super::PageQueryStr,
+    pub status: Option<model::order::Status>,
+}

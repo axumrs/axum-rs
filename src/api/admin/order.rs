@@ -261,3 +261,40 @@ pub async fn edit(
 
     Ok(resp::ok(resp::AffResp { aff }))
 }
+
+pub async fn close(
+    State(state): State<ArcAppState>,
+    Path(id): Path<String>,
+) -> Result<resp::JsonAffResp> {
+    let handler_name = "admin/order/close";
+    let p = get_pool(&state);
+
+    let order = match model::order::Order::find(
+        &*p,
+        &model::order::OrderFindFilter {
+            id: Some(id),
+            user_id: None,
+            status: None,
+        },
+    )
+    .await
+    {
+        Ok(v) => match v {
+            Some(v) => v,
+            None => return Err(Error::new("不存在的订单")).map_err(log_error(handler_name)),
+        },
+        Err(e) => return Err(e.into()).map_err(log_error(handler_name)),
+    };
+
+    let order = model::order::Order {
+        status: model::order::Status::Closed,
+        ..order
+    };
+
+    let aff = match order.update(&*p).await {
+        Ok(v) => v,
+        Err(e) => return Err(e.into()).map_err(log_error(handler_name)),
+    };
+
+    Ok(resp::ok(resp::AffResp { aff }))
+}

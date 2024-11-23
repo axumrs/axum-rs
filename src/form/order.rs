@@ -23,6 +23,9 @@ pub struct ServiceForCreate {
 pub struct ListForAdmin {
     #[serde(flatten)]
     pub pq: super::PageQueryStr,
+    pub status: Option<model::order::Status>,
+    pub nickname: Option<String>,
+    pub email: Option<String>,
 }
 
 #[derive(Deserialize, Validate)]

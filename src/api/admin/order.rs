@@ -3,7 +3,6 @@ use axum::{
     Json,
 };
 use chrono::Local;
-use rust_decimal::Decimal;
 use sqlx::{Postgres, QueryBuilder};
 use validator::Validate;
 
@@ -53,8 +52,21 @@ pub async fn list(
 
 fn build_list_query<'a>(
     mut q: QueryBuilder<'a, Postgres>,
-    frm: &form::order::ListForAdmin,
+    frm: &'a form::order::ListForAdmin,
 ) -> QueryBuilder<'a, Postgres> {
+    if let Some(v) = &frm.nickname {
+        let param = format!("%{}%", v);
+        q.push(" AND nickname ILIKE ").push_bind(param);
+    }
+
+    if let Some(v) = &frm.email {
+        let param = format!("%{}%", v);
+        q.push(" AND email ILIKE ").push_bind(param);
+    }
+
+    if let Some(v) = &frm.status {
+        q.push(" AND status = ").push_bind(v);
+    }
     q
 }
 

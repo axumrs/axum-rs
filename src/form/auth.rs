@@ -1,46 +1,88 @@
 use serde::Deserialize;
 use validator::Validate;
 
+use crate::model;
+
+use super::user;
+
 #[derive(Deserialize, Validate)]
-pub struct AdminLogin {
-    #[validate(length(max = 50))]
-    pub username: String,
+pub struct LoginForm {
+    #[validate(email)]
+    #[validate(length(max = 255))]
+    pub email: String,
+
     #[validate(length(min = 6))]
     pub password: String,
-    #[validate(length(min = 1))]
-    pub response: String,
+
+    #[validate(length(min = 6))]
+    pub captcha: String,
+}
+#[derive(Deserialize, Validate)]
+pub struct AdminLoginForm {
+    #[validate(length(min = 3, max = 50))]
+    pub username: String,
+
+    #[validate(length(min = 6))]
+    pub password: String,
+
+    #[validate(length(min = 6))]
+    pub captcha: String,
 }
 
 #[derive(Deserialize, Validate)]
-pub struct UserRegister {
-    #[validate(
-        email(message = "请输入正确的邮箱"),
-        length(max = 255, message = "邮箱超过最大长度")
-    )]
+pub struct RegisterForm {
+    #[serde(flatten)]
+    pub user: user::AddForm,
+
+    /// 邀请码
+    pub invite: Option<String>,
+
+    #[validate(length(min = 6))]
+    pub captcha: String,
+}
+
+#[derive(Deserialize, Validate)]
+pub struct SendCodeForm {
+    #[validate(email)]
+    #[validate(length(max = 255))]
     pub email: String,
-    #[validate(length(min = 3, max = 30, message = "昵称长度在3-30之间"))]
-    pub nickname: String,
-    #[validate(length(min = 6, message = "密码最少需要6个字符"))]
+
+    #[validate(length(min = 6))]
+    pub captcha: String,
+
+    pub kind: model::activation_code::Kind,
+}
+
+#[derive(Deserialize, Validate)]
+pub struct ActiveForm {
+    #[validate(email)]
+    #[validate(length(max = 255))]
+    pub email: String,
+
+    #[validate(length(min = 6))]
+    pub activation_code: String,
+
+    #[validate(length(min = 6))]
+    pub captcha: String,
+
+    pub kind: model::activation_code::Kind,
+}
+
+#[derive(Deserialize, Validate)]
+pub struct ResetPasswordForm {
+    #[validate(email)]
+    #[validate(length(max = 255))]
+    pub email: String,
+
+    #[validate(length(min = 6))]
+    pub activation_code: String,
+
+    #[validate(length(min = 6))]
+    pub captcha: String,
+
+    #[validate(length(min = 6))]
     pub password: String,
-    #[validate(must_match(other = "password", message = "两次输入的密码不一致"))]
+
+    #[validate(length(min = 6))]
     pub re_password: String,
-    #[validate(length(min = 1, message = "请完成人机验证"))]
-    pub response: String,
-}
-#[derive(Deserialize, Validate)]
-pub struct UserLogin {
-    #[validate(
-        email(message = "请输入正确的邮箱"),
-        length(max = 255, message = "邮箱超过最大长度")
-    )]
-    pub email: String,
-
-    #[validate(length(min = 6, message = "密码最少需要6个字符"))]
-    pub password: String,
-
-    #[validate(length(min = 1, message = "请完成人机验证"))]
-    pub response: String,
-
-    #[validate(length(min = 1, message = "无法获取IP"))]
-    pub ip: String,
 }

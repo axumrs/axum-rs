@@ -1,83 +1,97 @@
+use chrono::{DateTime, Local};
+use rust_decimal::Decimal;
 use serde::Deserialize;
 use validator::Validate;
 
-use crate::model;
+use crate::{model, utils};
 
 #[derive(Deserialize, Validate)]
-pub struct Create {
+pub struct AddForm {
+    #[validate(email)]
     #[validate(length(max = 255))]
     pub email: String,
-    #[validate(length(max = 30))]
+
+    #[validate(length(min = 3, max = 30))]
     pub nickname: String,
+
     #[validate(length(min = 6))]
     pub password: String,
-    pub status: Option<model::UserStatus>,
-    pub types: Option<model::UserTypes>,
-    #[serde(deserialize_with = "crate::serde_with::chrono::deserialize")]
-    pub sub_exp: chrono::DateTime<chrono::Local>,
-    #[validate(range(min = "std::u32::MIN", max = "std::u32::MAX"))]
-    pub points: u32,
-    #[validate(range(min = 1, max = 3))]
-    pub allow_device_num: u8,
-    #[validate(range(min = 0, max = 120))]
-    pub jwt_exp: u8,
+
+    #[validate(length(min = 6))]
+    #[validate(must_match(other = "password"))]
+    pub re_password: String,
+}
+
+#[derive(Deserialize, Validate)]
+pub struct AddForAdmin {
+    #[serde(flatten)]
+    pub base: AddForm,
+
+    pub status: model::user::Status,
+    pub kind: model::user::Kind,
+    pub sub_exp: Option<String>,
+    pub points: Decimal,
+    pub allow_device_num: i16,
+    pub session_exp: i16,
+}
+impl AddForAdmin {
+    pub fn sub_exp(&self) -> DateTime<Local> {
+        let default_ts = utils::dt::parse("1970-01-01 00:00:00").unwrap_or_default();
+        match self.sub_exp {
+            Some(ref v) => utils::dt::parse(v).unwrap_or(default_ts),
+            None => default_ts,
+        }
+    }
+}
+
+#[derive(Deserialize, Validate)]
+pub struct EditForAdmin {
+    #[validate(email)]
+    #[validate(length(max = 255))]
+    pub email: String,
+
+    #[validate(length(min = 3, max = 30))]
+    pub nickname: String,
+
+    pub status: model::user::Status,
+    pub kind: model::user::Kind,
+    pub sub_exp: Option<String>,
+    pub points: Decimal,
+    pub allow_device_num: i16,
+    pub session_exp: i16,
+
+    #[validate(length(min = 6))]
+    pub password: Option<String>,
+
+    #[validate(length(min = 6))]
+    pub re_password: Option<String>,
+
+    #[validate(length(min = 20, max = 20))]
+    pub id: String,
+}
+
+impl EditForAdmin {
+    pub fn sub_exp(&self) -> DateTime<Local> {
+        let default_ts = utils::dt::parse("1970-01-01 00:00:00").unwrap_or_default();
+        match self.sub_exp {
+            Some(ref v) => utils::dt::parse(v).unwrap_or(default_ts),
+            None => default_ts,
+        }
+    }
+}
+
+#[derive(Deserialize, Validate)]
+pub struct ListForAdmin {
+    #[serde(flatten)]
+    pub pq: super::PageQueryStr,
+    pub email: Option<String>,
+    pub nickname: Option<String>,
+    pub status: Option<model::user::Status>,
+    pub kind: Option<model::user::Kind>,
 }
 
 #[derive(Deserialize)]
-pub struct List {
-    pub email: Option<String>,
-    pub nickname: Option<String>,
-    pub status: Option<model::UserStatus>,
-    pub types: Option<model::UserTypes>,
-    pub is_del: Option<bool>,
-    pub page: u32,
-    pub page_size: u32,
-}
-
-#[derive(Deserialize, Validate)]
-pub struct Update {
-    pub id: u32,
-    #[validate(length(max = 255))]
-    pub email: String,
-    #[validate(length(max = 30))]
-    pub nickname: String,
-    #[validate(length(min = 6))]
-    pub password: Option<String>,
-    pub status: model::UserStatus,
-    pub types: model::UserTypes,
-    #[serde(deserialize_with = "crate::serde_with::chrono::deserialize")]
-    pub sub_exp: chrono::DateTime<chrono::Local>,
-    #[validate(range(min = "std::u32::MIN", max = "std::u32::MAX"))]
-    pub points: u32,
-    #[validate(range(min = 1, max = 3))]
-    pub allow_device_num: u8,
-    #[validate(range(min = 0, max = 120))]
-    pub jwt_exp: u8,
-}
-
-#[derive(Deserialize, Validate)]
-pub struct Profile {
-    pub id: u32,
-    #[validate(length(max = 255))]
-    pub email: String,
-    #[validate(length(max = 30))]
-    pub nickname: String,
-    #[validate(length(min = 6))]
-    pub password: String,
-    #[validate(range(min = 1, max = 3))]
-    pub allow_device_num: u8,
-    #[validate(range(min = 0, max = 120))]
-    pub jwt_exp: u8,
-}
-
-#[derive(Deserialize, Validate)]
-pub struct ChangePassword {
-    #[validate(length(min = 6))]
-    pub password: String,
-
-    #[validate(length(min = 6))]
-    pub new_password: String,
-
-    #[validate(must_match(other = "new_password", message = "两次输入的密码不一致"))]
-    pub re_password: String,
+pub struct SearchForAdmin {
+    pub q: String,
+    pub user_id: Option<String>,
 }

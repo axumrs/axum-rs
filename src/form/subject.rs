@@ -1,48 +1,59 @@
+use rust_decimal::Decimal;
 use serde::Deserialize;
 use validator::Validate;
 
-use crate::model;
+use crate::model::{self, subject::Status};
+
+#[derive(Deserialize)]
+pub struct ListForAdmin {
+    #[serde(flatten)]
+    pub pq: super::PageQueryStr,
+    pub name: Option<String>,
+    pub slug: Option<String>,
+    pub status: Option<model::subject::Status>,
+    pub is_del: Option<String>,
+}
+
+impl ListForAdmin {
+    pub fn is_del(&self) -> Option<bool> {
+        if let Some(ref v) = self.is_del {
+            Some(v == "1")
+        } else {
+            None
+        }
+    }
+}
 
 #[derive(Deserialize, Validate)]
-pub struct Create {
-    #[validate(length(max = 100))]
+pub struct Add {
+    #[validate(length(min = 1, max = 100))]
     pub name: String,
-    #[validate(length(max = 100))]
+
+    #[validate(length(min = 1, max = 100))]
     pub slug: String,
-    #[validate(length(max = 255))]
+
+    #[validate(length(min = 1, max = 255))]
     pub summary: String,
-    #[validate(length(max = 100))]
+
+    #[validate(length(min = 0, max = 100))]
     pub cover: String,
-    #[validate(range(min = 0))]
-    pub price: u32,
-    pub status: Option<model::SubjectStatus>,
-    pub pin: u8,
+
+    pub status: Status,
+
+    pub price: Decimal,
+    pub pin: i32,
+}
+
+#[derive(Deserialize, Validate)]
+pub struct Edit {
+    #[validate(length(min = 20, max = 20))]
+    pub id: String,
+
+    #[serde(flatten)]
+    pub base: Add,
 }
 
 #[derive(Deserialize)]
-pub struct List {
-    pub name: Option<String>,
-    pub slug: Option<String>,
-    pub status: Option<model::SubjectStatus>,
-    pub is_del: Option<bool>,
-    pub page: u32,
-    pub page_size: u32,
-}
-
-#[derive(Deserialize, Validate)]
-pub struct Update {
-    #[validate(length(max = 100))]
-    pub name: String,
-    #[validate(length(max = 100))]
-    pub slug: String,
-    #[validate(length(max = 255))]
-    pub summary: String,
-    #[validate(length(max = 100))]
-    pub cover: String,
-    #[validate(range(min = 0))]
-    pub price: u32,
-    pub status: model::SubjectStatus,
-    #[validate(range(min = 1))]
-    pub id: u32,
-    pub pin: u8,
+pub struct RealDel {
+    pub real: Option<bool>,
 }

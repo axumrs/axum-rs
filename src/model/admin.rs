@@ -1,21 +1,22 @@
+use axum_rs_derive::Db;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow)]
+use crate::interfaces;
+
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow, Db)]
+#[db(table = admins, pk = id)]
 pub struct Admin {
-    pub id: u32,
+    #[db(skip_update)]
+    #[db(find)]
+    pub id: String,
+
+    #[db(find)]
+    #[db(skip_update)]
+    #[db(exists)]
     pub username: String,
+
+    #[serde(skip_serializing)]
     pub password: String,
-    pub is_del: bool,
 }
 
-pub enum AdminFindBy<'a> {
-    ID(u32),
-    Username(&'a str),
-}
-
-#[derive(Default)]
-pub struct Admin2Edit {
-    pub id: u32,
-    pub username: String,
-    pub password: Option<String>,
-}
+impl interfaces::AsAuth for Admin {}

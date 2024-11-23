@@ -1,120 +1,79 @@
+use axum_rs_derive::Db;
+use chrono::{DateTime, Local};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
-use crate::{order_meta, Result};
-
 #[derive(Debug, Default, Deserialize, Serialize, sqlx::Type)]
-#[repr(u8)]
-pub enum OrderStatus {
+#[sqlx(type_name = "order_status")]
+pub enum Status {
     #[default]
-    Pending = 0,
-    Finished = 1,
+    Pending,
+    Finished,
+    Cancelled,
+    Closed,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize, sqlx::Type, sqlx::FromRow)]
-pub struct Order {
-    pub id: u64,
-    pub user_id: u32,
-    pub price: u32,
-    pub status: OrderStatus,
-    pub code: String,
-    pub full_code: String,
-    pub order_num: String,
-    pub dateline: chrono::DateTime<chrono::Local>,
-    pub pay_id: u64,
-    pub is_del: bool,
-}
-
-impl Order {
-    pub fn new(user_id: u32, price: u32, mul: bool) -> Result<Self> {
-        let order_num = order_meta::order::number();
-        let (full_code, code) = order_meta::order::code(&order_num)?;
-        Ok(Self {
-            user_id,
-            price: if mul { price * 100 } else { price },
-            dateline: chrono::Local::now(),
-            order_num,
-            full_code,
-            code,
-            ..Default::default()
-        })
+impl std::fmt::Display for Status {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
 
-#[derive(Debug, Default, Deserialize, Serialize, sqlx::Type, sqlx::FromRow)]
-pub struct OrderSnap {
-    pub order_id: u64,
-    pub snap: String,
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow, Db)]
+#[db(table = orders, pk = id)]
+pub struct Order {
+    #[db(find_opt)]
+    #[db(skip_update)]
+    pub id: String,
+
+    #[db(find_opt)]
+    #[db(list_opt)]
+    #[db(skip_update)]
+    pub user_id: String,
+
+    pub amount: Decimal,
+    pub actual_amount: Decimal,
+
+    #[db(find_opt)]
+    #[db(list_opt)]
+    pub status: Status,
+    pub snapshot: String,
+    pub allow_pointer: bool,
+    pub dateline: DateTime<Local>,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize, sqlx::Type, sqlx::FromRow)]
-pub struct OrderFull {
-    pub id: u64,
-    pub user_id: u32,
-    pub price: u32,
-    pub status: OrderStatus,
-    pub code: String,
-    pub full_code: String,
-    pub order_num: String,
-    pub dateline: chrono::DateTime<chrono::Local>,
-    pub pay_id: u64,
-    pub is_del: bool,
-    pub snap: String,
+impl Order {
+    pub fn to_snapshot(&self) -> Vec<OrderSnapshot> {
+        serde_json::from_str(&self.snapshot).unwrap()
+    }
+    pub fn snapshot_to_str(snapshot_list: &Vec<OrderSnapshot>) -> String {
+        serde_json::json!(snapshot_list).to_string()
+    }
 }
 
-#[derive(Debug, Default, Deserialize, Serialize, sqlx::Type, sqlx::FromRow)]
-pub struct OrderWithUser {
-    pub id: u64,
-    pub user_id: u32,
-    pub price: u32,
-    pub status: OrderStatus,
-    pub code: String,
-    pub full_code: String,
-    pub order_num: String,
-    pub dateline: chrono::DateTime<chrono::Local>,
-    pub pay_id: u64,
-    pub is_del: bool,
-    pub email: String,
-    pub nickname: String,
-}
-#[derive(Default)]
-pub struct OrderListWith {
-    pub email: Option<String>,
-    pub nickname: Option<String>,
-    pub user_id: Option<u32>,
-    pub pay_id: Option<u64>,
-    pub code: Option<String>,
-    pub order_num: Option<String>,
-    pub status: Option<OrderStatus>,
-    pub is_del: Option<bool>,
-    pub page: u32,
-    pub page_size: u32,
-}
-
-// [{"type":"订阅","service":"成为尊贵的订阅用户","serviceID":1,"price":1,"number":1,"idx":1,"id":"订阅成为尊贵的订阅用户1"}]
 #[derive(Debug, Default, Deserialize, Serialize)]
-pub struct OrderSnapItem {
-    #[serde(rename = "type")]
-    pub types: String,
-    pub service: String,
-    #[serde(rename = "serviceID")]
-    pub server_id: u32,
-    pub price: u32,
-    pub number: u32,
+pub struct OrderSnapshot {
+    pub service: OrderSnapshotService,
+    pub user: super::user::User,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize, sqlx::Type, sqlx::FromRow)]
-pub struct OrderFullWithUser {
-    pub id: u64,
-    pub user_id: u32,
-    pub price: u32,
-    pub status: OrderStatus,
-    pub code: String,
-    pub full_code: String,
-    pub order_num: String,
-    pub dateline: chrono::DateTime<chrono::Local>,
-    pub pay_id: u64,
-    pub is_del: bool,
-    pub snap: String,
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct OrderSnapshotService {
+    #[serde(flatten)]
+    pub service: super::service::Service,
+    pub actual_price: Decimal,
+    pub amount: Decimal,
+    pub actual_amount: Decimal,
+    pub discount: i16,
+    pub num: i16,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow)]
+
+pub struct OrderWithUser {
+    #[serde(flatten)]
+    #[sqlx(flatten)]
+    pub order: Order,
     pub email: String,
     pub nickname: String,
 }

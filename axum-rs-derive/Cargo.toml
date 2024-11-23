@@ -1,0 +1,27 @@
+[package]
+name = "axum-rs-derive"
+version = "0.1.0"
+edition = "2021"
+authors = ["axum.rs <team@axum.rs>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/axumrs/axum-rs"
+homepage = "https://axum.rs"
+description = "axum.rs数据库宏"
+
+[lib]
+proc-macro = true
+
+
+[dependencies]
+syn = { version = "2", features = ["extra-traits"] }
+quote = "1"
+proc-macro2 = "1"
+
+
+[dev-dependencies]
+tokio.workspace = true
+serde.workspace = true
+sqlx.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true

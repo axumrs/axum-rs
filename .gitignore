@@ -6,3 +6,6 @@
 *.log
 .DS_Store
 /templates
+/config.toml
+/.env.*
+/test-sections-data

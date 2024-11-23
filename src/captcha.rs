@@ -1,60 +1,63 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-use crate::{Error, Result};
+use crate::{config, Error, Result};
 
-#[derive(Serialize)]
-pub struct VerifyRequest<'a> {
+pub struct Captcha<'a> {
+    pub kind: config::CaptchaKind,
     pub secret: &'a str,
-    pub response: &'a str,
+    pub validation_url: &'a str,
+    pub timeout: u8,
 }
+
 #[derive(Deserialize)]
-pub struct VerifyResponse {
+pub struct Response {
     pub success: bool,
 }
 
-enum Provider {
-    HCaptcha,
-    ReCaptcha,
-}
-
-impl Provider {
-    fn url(&self) -> &str {
-        match self {
-            &Self::HCaptcha => "https://hcaptcha.com/siteverify",
-            &Self::ReCaptcha => "https://www.google.com/recaptcha/api/siteverify",
+impl<'a> Captcha<'a> {
+    pub fn from_cfg(kind: config::CaptchaKind, cfg: &'a config::Config) -> Self {
+        let (secret, validation_url) = match kind {
+            config::CaptchaKind::HCaptcha => (
+                &cfg.captcha.hcaptcha.secret_key,
+                &cfg.captcha.hcaptcha.validation_url,
+            ),
+            config::CaptchaKind::Turnstile => (
+                &cfg.captcha.turnstile.secret_key,
+                &cfg.captcha.turnstile.validation_url,
+            ),
+        };
+        Self {
+            kind,
+            secret,
+            validation_url,
+            timeout: cfg.captcha.timeout,
         }
     }
+    pub fn hcaptch(cfg: &'a config::Config) -> Self {
+        Self::from_cfg(config::CaptchaKind::HCaptcha, cfg)
+    }
+
+    pub fn turnstile(cfg: &'a config::Config) -> Self {
+        Self::from_cfg(config::CaptchaKind::Turnstile, cfg)
+    }
 }
 
-pub struct Captcha<'a> {
-    provider: Provider,
-    secret: &'a str,
+pub async fn verify<'a>(c: Captcha<'a>, token: &'a str) -> Result<Response> {
+    let form = [("secret", c.secret), ("response", token)];
+    let client = reqwest::ClientBuilder::new()
+        .timeout(std::time::Duration::from_secs(c.timeout as u64))
+        .build()
+        .map_err(Error::from)?;
+    let res = client.post(c.validation_url).form(&form).send().await?;
+    let res = res.json().await?;
+    Ok(res)
 }
-impl<'a> Captcha<'a> {
-    fn new(provider: Provider, secret: &'a str) -> Self {
-        Self { provider, secret }
-    }
-    pub fn new_hcaptcha(secret: &'a str) -> Self {
-        Self::new(Provider::HCaptcha, secret)
-    }
-    pub fn new_recaptcha(secret: &'a str) -> Self {
-        Self::new(Provider::ReCaptcha, secret)
-    }
-    pub async fn verify(&self, response: &'a str) -> Result<bool> {
-        let url = self.provider.url();
-        let req = VerifyRequest {
-            secret: self.secret,
-            response,
-        };
-        let client = reqwest::Client::new();
-        let res = client
-            .post(url)
-            .form(&req)
-            .send()
-            .await
-            .map_err(Error::from)?;
-        let res = res.text().await.map_err(Error::from)?;
-        let res: VerifyResponse = serde_json::from_str(&res).map_err(Error::from)?;
-        Ok(res.success)
-    }
+
+pub async fn verify_hcaptcha<'a>(cfg: &'a config::Config, token: &'a str) -> Result<bool> {
+    let res = verify(Captcha::hcaptch(cfg), token).await?;
+    Ok(res.success)
+}
+pub async fn verify_turnstile<'a>(cfg: &'a config::Config, token: &'a str) -> Result<bool> {
+    let res = verify(Captcha::turnstile(cfg), token).await?;
+    Ok(res.success)
 }

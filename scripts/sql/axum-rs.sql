@@ -1,348 +1,250 @@
-CREATE TABLE subject (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL,
-    slug VARCHAR(100) NOT NULL,
-    summary VARCHAR(255) NOT NULL,
-    is_del BOOLEAN NOT NULL DEFAULT FALSE,
-    cover VARCHAR(100) NOT NULL DEFAULT '',
-    status TINYINT UNSIGNED NOT NULL DEFAULT 0,
-    price INT UNSIGNED NOT NULL DEFAULT 0,
+-- 标签
+CREATE TABLE IF NOT EXISTS "tags" (
+    "id" CHAR(20) PRIMARY KEY,
+    "name" VARCHAR(100) NOT NULL UNIQUE,
+    "is_del" BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+-- 专题状态
+CREATE TYPE "subject_status" AS ENUM ('Writing', 'Finished');
+
+-- 专题
+CREATE TABLE  IF NOT EXISTS "subjects" (
+    "id" CHAR(20) PRIMARY KEY,
+    "name" VARCHAR(100) NOT NULL,
+    "slug" VARCHAR(100) NOT NULL,
+    "summary" VARCHAR(255) NOT NULL,
+    "is_del" BOOLEAN NOT NULL DEFAULT FALSE,
+    "cover" VARCHAR(100) NOT NULL DEFAULT '',
+    "status" subject_status NOT NULL DEFAULT 'Writing',
+    "price" DECIMAL(10,2) NOT NULL DEFAULT 0,
+    "pin" INTEGER NOT NULL DEFAULT 0,
     UNIQUE(slug)
-) ENGINE=INNODB CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
-CREATE INDEX idx_subject_slug ON subject (slug);
+-- 文章
+CREATE TABLE IF NOT EXISTS "topics" (
+    "id" CHAR(20)  PRIMARY KEY ,
+    "title" VARCHAR(255) NOT NULL,
+    "subject_id" CHAR(20)  NOT NULL,
+    "slug" VARCHAR(100) NOT NULL,
+    "summary" VARCHAR(255) NOT NULL,
+    "author" VARCHAR(50) NOT NULL,
+    "src" VARCHAR(50) NOT NULL,
+    "hit" BIGINT  NOT NULL DEFAULT 0,
+    "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "try_readable" BOOLEAN NOT NULL DEFAULT FALSE,
+    "is_del" BOOLEAN NOT NULL DEFAULT FALSE,
+    "cover" VARCHAR(100) NOT NULL DEFAULT '',
+    "md" VARCHAR NOT NULL,
+    "pin" INTEGER NOT NULL DEFAULT 0,
+    UNIQUE("subject_id", "slug")
+);
 
-CREATE TABLE topic (
-    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    title VARCHAR(255) NOT NULL,
-    subject_id INT UNSIGNED NOT NULL REFERENCES subject(id),
-    slug VARCHAR(100) NOT NULL,
-    summary VARCHAR(255) NOT NULL,
-    author VARCHAR(50) NOT NULL,
-    src VARCHAR(50) NOT NULL,
-    hit BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    dateline DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    try_readable BOOLEAN NOT NULL DEFAULT FALSE,
-    is_del BOOLEAN NOT NULL DEFAULT FALSE,
-    cover VARCHAR(100) NOT NULL DEFAULT '',
-    UNIQUE(subject_id, slug)
-) ENGINE=INNODB CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci;
+-- 文章段落
+CREATE TABLE IF NOT EXISTS "topic_sections"(
+    "id" CHAR(20)  PRIMARY KEY ,
+    "topic_id" CHAR(20) NOT NULL,
+    "sort" INTEGER NOT NULL,
+    "hash"  CHAR(64) NOT NULL,
+    "content" VARCHAR
+);
 
-CREATE INDEX idx_topic_slug ON topic (slug);
+-- 文章-标签
+CREATE TABLE IF NOT EXISTS "topic_tags" (
+    "id" CHAR(20)  PRIMARY KEY ,
+    "topic_id" CHAR(20) NOT NULL,
+    "tag_id" CHAR(20) NOT NULL,
+    UNIQUE("topic_id","tag_id")
+);
 
-CREATE TABLE topic_content (
-    topic_id BIGINT UNSIGNED NOT NULL PRIMARY KEY REFERENCES topic(id),
-    md TEXT NOT NULL,
-    html TEXT NOT NULL
-) ENGINE=INNODB CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci;
+-- 管理员
+CREATE TABLE IF NOT EXISTS "admins" (
+    "id" CHAR(20) PRIMARY KEY ,
+    "username" VARCHAR(50) NOT NULL,
+    "password" VARCHAR(72) NOT NULL,
+    UNIQUE("username")
+);
 
-CREATE TABLE tag (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL,
-    is_del BOOLEAN NOT NULL DEFAULT FALSE,
-    UNIQUE(name)
-) ENGINE=INNODB CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci;
+-- 用户状态
+CREATE TYPE "user_status" AS ENUM ('Pending', 'Actived', 'Freezed');
+-- 用户类型
+CREATE TYPE "user_kind" AS ENUM ('Normal', 'Subscriber', 'YearlySubscriber');
 
-CREATE INDEX idx_tag_name ON tag (name);
+-- 用户
+CREATE TABLE IF NOT EXISTS "users" (
+    "id" CHAR(20) PRIMARY KEY,
+    "email" VARCHAR(255) NOT NULL,
+    "nickname" VARCHAR(30) NOT NULL,
+    "password" VARCHAR(72) NOT NULL,
+    "status" user_status DEFAULT 'Pending',
+    "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "kind" user_kind  NOT NULL DEFAULT 'Normal',
+    "sub_exp" TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01 08:00:00+08',
+    "points" DECIMAL(8,0)  NOT NULL DEFAULT 0,
+    "allow_device_num" SMALLINT  NOT NULL DEFAULT 1,
+    "session_exp" SMALLINT  NOT NULL DEFAULT 0,
+    UNIQUE("email"),
+    UNIQUE("nickname")
+);
 
-CREATE TABLE topic_tag (
-    topic_id BIGINT UNSIGNED NOT NULL REFERENCES topic(id),
-    tag_id INT UNSIGNED NOT NULL REFERENCES tag(id),
-    is_del BOOLEAN NOT NULL DEFAULT FALSE,
-    PRIMARY KEY(topic_id,tag_id)
-)ENGINE=INNODB CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci;
+-- 激活码类型
+CREATE TYPE "activation_kind" AS ENUM('Active', 'ResetPassword');
 
-CREATE TABLE admin (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    username VARCHAR(50) NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    is_del BOOLEAN NOT NULL DEFAULT FALSE,
-    UNIQUE(username)
-) ENGINE=INNODB CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci;
+-- 激活码
+CREATE UNLOGGED TABLE  IF NOT EXISTS "activation_codes"(
+    "id" CHAR(20) PRIMARY KEY,
+    "email" VARCHAR(255) NOT NULL,
+    "code"  CHAR(20) NOT NULL UNIQUE,
+    "kind" activation_kind NOT NULL DEFAULT 'Active',
+    "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expire_time" TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01 08:00:00+08'
+);
 
-CREATE TABLE `user` (
-    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    email VARCHAR(255) NOT NULL,
-    nickname VARCHAR(30) NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    status TINYINT UNSIGNED NOT NULL DEFAULT 0,
-    dateline DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    types TINYINT UNSIGNED NOT NULL DEFAULT 0,
-    sub_exp DATETIME NOT NULL DEFAULT '1970-1-1 0:0:0',
-    points INT UNSIGNED NOT NULL DEFAULT 0,
-    allow_device_num TINYINT UNSIGNED NOT NULL DEFAULT 1,
-    jwt_exp TINYINT UNSIGNED NOT NULL DEFAULT 0,
-    is_del BOOLEAN NOT NULL DEFAULT FALSE,
-    UNIQUE(email),
-    UNIQUE(nickname)
-) ENGINE=INNODB CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci;
+-- 用户登录日志
+CREATE UNLOGGED TABLE IF NOT EXISTS "login_logs"(
+     "id" CHAR(20) PRIMARY KEY,
+     "user_id" CHAR(20) NOT NULL,
+     "ip" VARCHAR(39) NOT NULL DEFAULT '',
+     "user_agent" VARCHAR NOT NULL DEFAULT '',
+     "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
-CREATE TABLE `user_login_log` (
-    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    user_id INT UNSIGNED NOT NULL,
-    ip VARCHAR(45) NOT NULL DEFAULT '',
-    browser VARCHAR(50) NOT NULL DEFAULT  '',
-    os VARCHAR(50) NOT NULL DEFAULT '',
-    device VARCHAR(50) NOT NULL DEFAULT '',
-    dateline DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    is_del BOOLEAN NOT NULL DEFAULT FALSE
-) ENGINE=INNODB CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci;
+-- 服务
+CREATE TABLE IF NOT EXISTS "services" (
+    "id" CHAR(20) PRIMARY KEY,
+    "name" VARCHAR(100) NOT NULL,
+    -- 是否专题
+    "is_subject" BOOLEAN NOT NULL DEFAULT FALSE,
+    -- 目标ID
+    "target_id" CHAR(20) NOT NULL,
+    --时效(天)
+    "duration" SMALLINT NOT NULL DEFAULT 0,
+    -- 价格
+    "price" DECIMAL(10,2) NOT NULL,
+    -- 封面
+    "cover" VARCHAR(100) NOT NULL DEFAULT '',
+    -- 是否允许积分兑换
+    "allow_pointer" BOOLEAN NOT NULL DEFAULT FALSE,
+    -- 普通用户折扣
+    "normal_discount" SMALLINT NOT NULL DEFAULT 0,
+    -- 订阅用户折扣
+    "sub_discount" SMALLINT NOT NULL DEFAULT 0,
+    -- 年费用户折扣
+    "yearly_sub_discount" SMALLINT NOT NULL DEFAULT 0,
+    -- 是否下架
+    "is_off" BOOLEAN NOT NULL DEFAULT FALSE,
+    -- 说明
+    "desc" VARCHAR NOT NULL DEFAULT '',
+    -- 排序
+    "pin" INTEGER NOT NULL DEFAULT 0
+);
 
-CREATE TABLE `user_login_log_agent` (
-    log_id BIGINT UNSIGNED PRIMARY KEY ,
-    user_agent TINYTEXT NOT NULL
-) ENGINE=INNODB CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci;
+-- 订单状态
+CREATE TYPE "order_status" AS ENUM ('Pending', 'Finished', 'Cancelled', 'Closed');
 
-CREATE TABLE `order` (
-	id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-	user_id INT UNSIGNED NOT NULL,
-	price INT UNSIGNED NOT NULL,
-	status TINYINT UNSIGNED NOT NULL DEFAULT 0,
-	code CHAR(7) NOT NULL DEFAULT '',
-	full_code CHAR(64) NOT NULL DEFAULT '',
-	order_num CHAR(20) NOT NULL DEFAULT '',
-	dateline DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	pay_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-	is_del TINYINT UNSIGNED NOT NULL DEFAULT 0,
-	UNIQUE (order_num)
-) ENGINE=INNODB CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci;
+-- 订单
+CREATE TABLE IF NOT EXISTS "orders"(
+    "id" CHAR(20) PRIMARY KEY ,
+    -- 用户
+    "user_id" CHAR(20) NOT NULL,
+    -- 金额
+    "amount" DECIMAL(10,2) NOT NULL,
+    -- 实付金额
+    "actual_amount" DECIMAL(10,2) NOT NULL,
+    -- 状态
+    "status" order_status NOT NULL DEFAULT 'Pending',
+     -- 快照（服务详情&数量&金额（折扣前后）&用户ID&用户类型）
+    "snapshot" VARCHAR NOT NULL,
+    -- 是否允许积分兑换
+    "allow_pointer" BOOLEAN NOT NULL DEFAULT FALSE,
+    -- 创建时间
+    "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
-CREATE TABLE `order_snap` (
-	order_id BIGINT UNSIGNED PRIMARY KEY,
-	snap TEXT NOT NULL
-) ENGINE=INNODB CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci;
+-- 货币
+CREATE TYPE "currency" AS ENUM (
+    'USDT', 
+    'TRX', 
+    'CNY', 
+    -- 积分
+    'PNT'
+);
 
-CREATE TABLE `pay` (
-	id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-	order_id BIGINT UNSIGNED NOT NULL,
-	user_id INT UNSIGNED NOT NULL,
-	price INT UNSIGNED NOT NULL,
-	currency TINYINT UNSIGNED NOT NULL DEFAULT 0,
-	types TINYINT UNSIGNED NOT NULL DEFAULT 0,
-	tx_id VARCHAR(255) NOT NULL DEFAULT '',
-	status TINYINT UNSIGNED NOT NULL DEFAULT 0,
-	dateline DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	is_del TINYINT UNSIGNED NOT NULL DEFAULT 0
-) ENGINE=INNODB CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci;
+-- 支付状态
+CREATE TYPE "pay_status" AS ENUM ('Pending', 'Failed', 'Success');
 
-CREATE TABLE user_purchased_service(
-	id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-	order_id BIGINT UNSIGNED NOT NULL,
-	user_id INT UNSIGNED NOT NULL,
-	service_id INT UNSIGNED NOT NULL,
-	service_type TINYINT UNSIGNED NOT NULL DEFAULT 0,
-	server_num INT UNSIGNED NOT NULL,
-	status TINYINT UNSIGNED NOT NULL DEFAULT 0,
-	dateline DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=INNODB CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci;
+-- 支付方式
+CREATE TYPE "pay_method" AS ENUM ('Online', 'QrCode', 'WechatAlipay', 'Pointer');
 
-CREATE TABLE user_check_in(
-	id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-	user_id INT UNSIGNED NOT NULL,
-	points  INT UNSIGNED NOT NULL DEFAULT 0,
-	dateline DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=INNODB CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `pay_apply` (
-	id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-	order_id BIGINT UNSIGNED NOT NULL,
-	user_id INT UNSIGNED NOT NULL,
-	price INT UNSIGNED NOT NULL,
-	currency TINYINT UNSIGNED NOT NULL DEFAULT 0,
-	types TINYINT UNSIGNED NOT NULL DEFAULT 0,
-	tx_id VARCHAR(255) NOT NULL DEFAULT '',
-	status TINYINT UNSIGNED NOT NULL DEFAULT 0,
-	dateline DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	is_del TINYINT UNSIGNED NOT NULL DEFAULT 0,
-	img VARCHAR(255) NOT NULL DEFAULT '',
-	process_dateline DATETIME NOT NULL,
-	reason VARCHAR(255) NOT NULL DEFAULT ''
-) ENGINE=INNODB CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `user_read_history` (
-    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    user_id INT UNSIGNED NOT NULL,
-    subject_slug VARCHAR(100) NOT NULL,
-    slug VARCHAR(100) NOT NULL,
-    dateline DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    is_del BOOLEAN NOT NULL DEFAULT FALSE
-) 
-ENGINE=Archive CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci;
--- ENGINE=INNODB CHARSET=UTF8MB4 COLLATE=utf8mb4_unicode_ci;
-
--- 视图
-
-CREATE VIEW v_topic_admin_list AS
-SELECT 
-	t.id, t.title, t.slug, t.hit, t.dateline, t.try_readable, t.is_del, t.cover
-	, s.name AS subject_name , s.slug  as subject_slug 
-FROM 
-	topic AS t 
-INNER JOIN
-	subject as s 
-ON 
-	t.subject_id = s.id 
-;
-
-CREATE  VIEW v_topic_web_list AS
-SELECT 
-	t.id, t.title, t.slug, t.try_readable, t.cover,t.summary ,t.hit 
-	, s.name AS subject_name , s.slug  as subject_slug 
-	, CONCAT(',',GROUP_CONCAT( tg.name),',')  as tag_names
-FROM 
-	topic AS t 
-INNER JOIN
-	subject as s 
-ON 
-	t.subject_id = s.id 
-LEFT JOIN 
-	topic_tag as tt 
-ON 
-	t.id=tt.topic_id 
-INNER JOIN 
-	tag as tg 
-ON 
-	tt.tag_id = tg.id
-WHERE t.is_del = false
-GROUP BY 
-	t.id
-;
-
-CREATE  VIEW v_tag_web_list AS
-SELECT 
-	COUNT(t.id) AS topic_total,tg.name,tg.id
-FROM 
-	topic as t 
-INNER JOIN 
-	topic_tag as tt 
-ON 
-	t.id=tt.topic_id 
-INNER JOIN 
-	tag as tg 
-ON tt.tag_id  = tg.id 
-WHERE tg.is_del = false AND t.is_del =false
-group by tg.id;
+-- 支付
+CREATE TABLE  IF NOT EXISTS "pays" (
+	"id" CHAR(20) PRIMARY KEY ,
+    -- 订单ID
+	"order_id" CHAR(20) NOT NULL,
+    -- 用户ID
+	"user_id" CHAR(20) NOT NULL,
+    -- 支付金额
+	"amount" DECIMAL(10,2) NOT NULL,
+    -- 货币
+    "currency" currency NOT NULL DEFAULT 'USDT',
+    -- 支付工具的交易ID
+	"tx_id" VARCHAR(255) NOT NULL DEFAULT '',
+    -- 支付方式
+    "method" pay_method NOT NULL DEFAULT 'Online',
+    -- 支付状态
+	"status" pay_status NOT NULL DEFAULT 'Pending',
+    -- 是否管理员生成
+    "is_via_admin" BOOLEAN NOT NULL DEFAULT FALSE,
+    -- 审核时间
+    "approved_time" TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01 08:00:00+08',
+    -- 审核意见
+    "approved_opinion" VARCHAR(255) NOT NULL DEFAULT '',
+    -- 支付证明截图
+    "proof" VARCHAR(255) NOT NULL DEFAULT '',
+    -- 时间
+	"dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
 
-CREATE  VIEW v_topic_web_detail AS
-SELECT 
-	t.id, t.title, t.slug, t.try_readable, t.cover ,t.hit,t.dateline 
-	, tc.html
-	, s.name AS subject_name , s.slug  as subject_slug,s.price,s.id as subject_id
-	, GROUP_CONCAT( tg.name)  as tag_names
-FROM 
-	topic AS t 
-INNER JOIN
-	subject as s 
-ON 
-	t.subject_id = s.id 
-INNER JOIN 
-	topic_content as tc 
-ON 
-	t.id  = tc.topic_id 
-LEFT JOIN 
-	topic_tag as tt 
-ON 
-	t.id=tt.topic_id 
-INNER JOIN 
-	tag as tg 
-ON 
-	tt.tag_id = tg.id
-WHERE t.is_del = false
-GROUP BY 
-	t.id
-;
+-- 签到日志
+CREATE TABLE IF NOT EXISTS "check_in_logs"(
+	"id" CHAR(20) PRIMARY KEY ,
+	"user_id" CHAR(20) NOT NULL,
+	"points"  SMALLINT NOT NULL DEFAULT 0,
+	"dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
-CREATE VIEW v_user_login_log_full as
-SELECT id, user_id, ip, browser, os, device, dateline, is_del,lla.user_agent
-FROM user_login_log as ll
-INNER JOIN user_login_log_agent as lla
-on ll.id = lla.log_id;
-
-CREATE VIEW v_order_full AS 
-SELECT 
-	id, user_id, price, status, code, full_code, order_num, dateline, pay_id, is_del,snap 
-FROM 
-	`order` as o 
-INNER JOIN 
-	order_snap as os 
-ON o.id  = os.order_id ;
-
-CREATE VIEW v_order_with_user AS 
-SELECT 
-	o.id, user_id, price, o.status, code, full_code, order_num, o.dateline, pay_id, o.is_del
-	, u.email , u.nickname 
-FROM 
-	`order` as o 
-INNER JOIN 
-	`user` as u
-ON o.user_id  = u.id ;
-
-CREATE VIEW v_order_full_with_user AS 
-SELECT 
-	o.id, o.user_id, o.price, o.status, o.code, o.full_code, o.order_num, o.dateline, o.pay_id, o.is_del,snap 
-	,ou.email,ou.nickname
-FROM 
-	v_order_with_user as ou
-INNER JOIN 
-	v_order_full as o
-ON ou.id=o.id;
+CREATE TYPE "pay_applies_status" AS ENUM ('Pending', 'Reject', 'Finished');
 
 
-CREATE VIEW v_user_read_history AS
-SELECT 
-	urh.id,urh.dateline,urh.is_del
-	, vtwl.id as topic_id , title, vtwl.slug, try_readable, cover, summary, hit, subject_name, vtwl.subject_slug, tag_names
-	, u.id as user_id, email ,nickname 
-FROM 
-	user_read_history as urh 
-INNER JOIN 
-	v_topic_web_list as vtwl 
-ON 
-	urh.subject_slug = vtwl.subject_slug AND urh.slug = vtwl.slug 
-INNER JOIN 
-	`user` as u 
-ON urh.user_id = u.id ;
 
-CREATE VIEW v_user_purchased_subject AS
-SELECT 
-	 ups.id as purchased_id, order_id, user_id, service_id, service_type, server_num, ups.status as purchased_status, ups.dateline as purchased_dateline
-	 ,u.email,u.nickname
-	 ,s.id,s.slug,s.name,s.summary,s.cover,s.status,s.price,s.is_del
+-- 阅读历史
+CREATE TABLE  IF NOT EXISTS "read_histories" (
+    "id" CHAR(20) PRIMARY KEY,
+    "user_id" CHAR(20) NOT NULL,
+    "subject_slug" VARCHAR(100) NOT NULL,
+    "slug" VARCHAR(100) NOT NULL,
+    "subject_name" VARCHAR(100) NOT NULL,
+    "topic_title" VARCHAR(255) NOT NULL,
+    "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
-FROM 
-	user_purchased_service as ups 
-INNER JOIN 
-	`user` as u 
-ON 
-	ups.user_id = u.id
-INNER JOIN
-	subject as s 
-ON 
-	ups.service_id=s.id 
-WHERE 
-	ups.service_type=1 AND ups.status=1;
+CREATE UNLOGGED TABLE  IF NOT EXISTS "sessions"(
+    "id" CHAR(20) PRIMARY KEY,
+    "user_id" CHAR(20) NOT NULL,
+    "token"  CHAR(64) NOT NULL UNIQUE,
+    "is_admin" BOOLEAN NOT NULL DEFAULT FALSE,
+    "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "loc" VARCHAR(100) NOT NULL DEFAULT '',
+    "ip" VARCHAR(39) NOT NULL DEFAULT '',
+    "ua" VARCHAR NOT NULL DEFAULT '',
+    "expire_time" TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01 08:00:00+08'
+);
 
-CREATE VIEW v_user_purchased_service as
-SELECT 
-	 ups.id , order_id, ups.user_id, service_id, service_type, server_num, ups.status , ups.dateline
-	 ,u.email,u.nickname
-	  ,s.id as subject_id,s.slug as subject_slug,s.name as subject_name,s.summary as subject_summary,s.cover as subject_cover,s.status as subject_status,s.price as subject_price,s.is_del as subject_is_del
-	  ,o.order_num
-
-FROM 
-	user_purchased_service as ups 
-left join
-	`order` as o 
-on ups.order_id=o.id
-left JOIN 
-	`user` as u 
-ON 
-	ups.user_id = u.id
-LEFT JOIN 
-	subject as s 
-ON 
-	ups.service_id=s.id AND ups.service_type=1
-	;
-
-
+CREATE UNLOGGED TABLE IF NOT EXISTS "protected_contents"(
+    "id" CHAR(20)  PRIMARY KEY ,
+    "section_id" CHAR(20) NOT NULL,
+    "content" VARCHAR,
+    "expire_time" TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01 08:00:00+08'
+);

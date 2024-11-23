@@ -1,12 +1,64 @@
+use rust_decimal::Decimal;
 use serde::Deserialize;
 use validator::Validate;
 
+use crate::model::{self, currency::Currency, pay::Method};
+
 #[derive(Deserialize, Validate)]
 pub struct Create {
-    // #[validate(range(min = 1))]
-    // pub user_id: u32,
-    #[validate(range(min = 1))]
-    pub price: u32,
-    #[validate(length(min = 1))]
-    pub snap: String,
+    pub services: Vec<ServiceForCreate>,
+    pub amount: Decimal,
+    pub actual_amount: Decimal,
+}
+
+#[derive(Deserialize, Validate)]
+pub struct ServiceForCreate {
+    #[validate(length(min = 20, max = 20))]
+    pub id: String,
+    #[validate(range(min = 1, max = 96))]
+    pub num: i16,
+}
+
+#[derive(Deserialize)]
+pub struct ListForAdmin {
+    #[serde(flatten)]
+    pub pq: super::PageQueryStr,
+    pub status: Option<model::order::Status>,
+    pub nickname: Option<String>,
+    pub email: Option<String>,
+}
+
+#[derive(Deserialize, Validate)]
+pub struct AddForAdmin {
+    #[validate(length(min = 20, max = 20))]
+    pub user_id: String,
+    pub snap: Vec<model::order::OrderSnapshot>,
+    pub amount: Decimal,
+    pub currency: Currency,
+    pub method: Method,
+    pub tx_id: String,
+    pub is_via_admin: bool,
+    pub approved_opinion: String,
+    pub proof: String,
+}
+#[derive(Deserialize, Validate)]
+pub struct EditForAdmin {
+    #[validate(length(min = 20, max = 20))]
+    pub id: String,
+    #[validate(length(min = 20, max = 20))]
+    pub user_id: String,
+    pub amount: Decimal,
+    pub currency: Currency,
+    pub method: Method,
+    pub tx_id: String,
+    pub is_via_admin: bool,
+    pub approved_opinion: String,
+    pub proof: String,
+}
+
+#[derive(Deserialize)]
+pub struct ListForUser {
+    #[serde(flatten)]
+    pub pq: super::PageQueryStr,
+    pub status: Option<model::order::Status>,
 }

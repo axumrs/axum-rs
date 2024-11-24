@@ -14,9 +14,7 @@
 
 - Axum
 
-- MySQL
-
-- Redis
+- PostgreSQL
 
 ## 捐助
 

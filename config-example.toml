@@ -1,0 +1,64 @@
+log = "axum_rs="
+cleaner_max_try = 0
+topic_section_secret_key = "<YOUR KEY>"
+
+[web]
+addr = "0.0.0.0:9527"
+prefix = "/v1"
+
+[db]
+dsn = "postgres://axum_rs:axum_rs@127.0.0.1:5432/axum_rs?sslmode=disable"
+max_conns = 5
+
+[session]
+secret_key = "<YOUR KEY>"
+default_timeout = 20
+max_timeout = 1440
+admin_timeout = 600
+
+[[mails]]
+name = "user@cock.li"
+smtp = "mail.cock.li"
+user = "user@cock.li"
+password = "password"
+
+[[mails]]
+name = "user@user.serv00.net"
+smtp = "mail<N>.serv00.com"
+user = "user@user.serv00.net"
+password = "password"
+
+
+[protected_content]
+max_sections = 3
+min_sections = 2
+guest_captcha = 'HCaptcha'
+user_captcha = 'Turnstile'
+timeout = 5
+placeholder = ''
+
+[captcha]
+timeout = 30
+
+[captcha.hcaptcha]
+secret_key = '0x0000000000000000000000000000000000000000'
+validation_url = 'https://api.hcaptcha.com/siteverify'
+
+[captcha.turnstile]
+secret_key = '1x0000000000000000000000000000000AA'
+validation_url = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
+
+[upload]
+max_size = 5242880 # 5m
+
+[tron]
+wallet = "TPGEtKJmPJU3naosCcRrVReE2ckFhE9sYM"
+usdt_contract_addr = "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj" # TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t
+api_url = "https://nileapi.tronscan.org"                  # https://apilist.tronscanapi.com
+fetch_timeout = 10
+proxy = ''
+
+[currency]
+trx_rate = 8
+cny_rate = 8.1
+pointer_rate = 1000

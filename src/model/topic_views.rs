@@ -85,3 +85,9 @@ pub struct TopicSubjectWithTagsAndProctedSections {
     pub protected: TopicProctedMeta,
     pub need_buy: bool,
 }
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct TopicSubjectWithTagsAndProctedSectionsAndNeedLogin {
+    #[serde(flatten)]
+    pub topic_subject_with_tags_and_procted_sections: TopicSubjectWithTagsAndProctedSections,
+    pub need_login: bool,
+}

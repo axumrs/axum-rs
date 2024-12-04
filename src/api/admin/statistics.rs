@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     api::{get_pool, log_error},
-    resp, utils, ArcAppState, Error, Result,
+    model, resp, utils, ArcAppState, Error, Result,
 };
 
 #[derive(Serialize, Default, Deserialize, sqlx::FromRow)]
@@ -76,7 +76,30 @@ GROUP BY title"#,
         }
     }
 
-    // TODO：处理已购服务
+    // 处理已购服务
+
+    let ol = model::order::Order::list_all(
+        &*p,
+        &model::order::OrderListAllFilter {
+            limit: None,
+            order: None,
+            user_id: None,
+            status: Some(model::order::Status::Finished),
+        },
+    )
+    .await
+    .map_err(Error::from)
+    .map_err(log_error(handler_name))?;
+
+    let mut purchased_service = 0;
+    let order_service_list = ol.into_iter().map(|o| o.to_snapshot()).collect::<Vec<_>>();
+    for oss in order_service_list {
+        for os in oss {
+            purchased_service += os.service.num as i64;
+        }
+    }
+
+    data.purchased_service = purchased_service;
 
     Ok(resp::ok(data))
 }

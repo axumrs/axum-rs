@@ -1,3 +1,4 @@
+pub mod announcement;
 pub mod order;
 pub mod profile;
 pub mod router;

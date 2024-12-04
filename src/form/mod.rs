@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+pub mod announcement;
 pub mod auth;
 pub mod order;
 pub mod pay;

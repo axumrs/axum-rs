@@ -484,6 +484,48 @@ pub async fn get_protected_content(
     q.build_query_as().fetch_all(p).await.map_err(Error::from)
 }
 
+pub async fn gen_guess_content(
+    secs: Vec<model::topic::TopicSection>,
+    cfg: &config::ProtectedContentConfig,
+    is_need_buy: bool,
+) -> Result<Vec<model::topic::TopicSection>> {
+    if is_need_buy {
+        return Ok(vec![]);
+    }
+    if secs.len() <= cfg.min_sections as usize {
+        return Ok(secs);
+    }
+
+    // 保护的数量
+    let procted_num = match secs.len() {
+        0..=2 => 0,
+        3..=5 => 1,
+        6..=8 => 2,
+        _ => cfg.max_sections as usize,
+    };
+
+    // 随机选择
+    let mut procted_idx = Vec::with_capacity(procted_num);
+    for _ in 0..procted_num {
+        loop {
+            let idx = rand::thread_rng().gen_range(0..secs.len());
+            if !utils::vec::is_in(&procted_idx, &idx) {
+                procted_idx.push(idx);
+                break;
+            }
+        }
+    }
+    procted_idx.sort();
+
+    let mut guess_sects = vec![];
+    for (idx, s) in secs.into_iter().enumerate() {
+        if utils::vec::is_in(&procted_idx, &idx) {
+            guess_sects.push(s)
+        }
+    }
+    Ok(guess_sects)
+}
+
 #[cfg(test)]
 mod test {
     use sqlx::{postgres::PgPoolOptions, PgPool, Result};

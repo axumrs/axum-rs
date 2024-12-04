@@ -248,3 +248,12 @@ CREATE UNLOGGED TABLE IF NOT EXISTS "protected_contents"(
     "content" VARCHAR,
     "expire_time" TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01 08:00:00+08'
 );
+
+-- 公告
+CREATE TABLE IF NOT EXISTS "announcements"(
+    "id" CHAR(20)  PRIMARY KEY ,
+    "title" VARCHAR(255) NOT NULL,
+    "content" VARCHAR NOT NULL,
+    "hit" BIGINT NOT NULL DEFAULT 0,
+    "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

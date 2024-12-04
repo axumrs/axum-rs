@@ -77,7 +77,8 @@ pub async fn detail(
     State(state): State<ArcAppState>,
     user_auth: mid::UserAuth,
     Path((subject_slug, slug)): Path<(String, String)>,
-) -> Result<resp::JsonResp<model::topic_views::TopicSubjectWithTagsAndProctedSections>> {
+) -> Result<resp::JsonResp<model::topic_views::TopicSubjectWithTagsAndProctedSectionsAndNeedLogin>>
+{
     let handler_name = "api/user/topic/detail";
     let p = get_pool(&state);
 
@@ -106,16 +107,47 @@ pub async fn detail(
         !is_purchased
     };
 
+    // 是否登录
+    if user_auth.token_opt().is_none() && !is_need_buy {
+        let secs = service::topic::gen_guess_content(
+            data.sections,
+            &state.cfg.protected_content,
+            is_need_buy,
+        )
+        .await
+        .map_err(log_error(handler_name))?;
+        let data = model::topic_views::TopicSubjectWithTagsAndSections {
+            sections: secs,
+            ..data
+        };
+
+        return Ok(resp::ok(
+            model::topic_views::TopicSubjectWithTagsAndProctedSectionsAndNeedLogin {
+                topic_subject_with_tags_and_procted_sections:
+                    model::topic_views::TopicSubjectWithTagsAndProctedSections {
+                        topic_subject_with_tags_and_sections: data,
+                        protected: model::topic_views::TopicProctedMeta::default(),
+                        need_buy: is_need_buy,
+                    },
+                need_login: true,
+            },
+        ));
+    }
+
     if is_need_buy {
         return Ok(resp::ok(
-            model::topic_views::TopicSubjectWithTagsAndProctedSections {
-                topic_subject_with_tags_and_sections:
-                    model::topic_views::TopicSubjectWithTagsAndSections {
-                        sections: vec![],
-                        ..data
+            model::topic_views::TopicSubjectWithTagsAndProctedSectionsAndNeedLogin {
+                topic_subject_with_tags_and_procted_sections:
+                    model::topic_views::TopicSubjectWithTagsAndProctedSections {
+                        topic_subject_with_tags_and_sections:
+                            model::topic_views::TopicSubjectWithTagsAndSections {
+                                sections: vec![],
+                                ..data
+                            },
+                        protected: model::topic_views::TopicProctedMeta::default(),
+                        need_buy: is_need_buy,
                     },
-                protected: model::topic_views::TopicProctedMeta::default(),
-                need_buy: is_need_buy,
+                need_login: false,
             },
         ));
     }
@@ -184,21 +216,29 @@ pub async fn detail(
             ..data
         };
         return Ok(resp::ok(
-            model::topic_views::TopicSubjectWithTagsAndProctedSections {
-                topic_subject_with_tags_and_sections: data,
-                protected: model::topic_views::TopicProctedMeta {
-                    ids: protected_ids,
-                    catpcha: state.cfg.protected_content.guest_captcha.clone(),
-                },
-                need_buy: false,
+            model::topic_views::TopicSubjectWithTagsAndProctedSectionsAndNeedLogin {
+                topic_subject_with_tags_and_procted_sections:
+                    model::topic_views::TopicSubjectWithTagsAndProctedSections {
+                        topic_subject_with_tags_and_sections: data,
+                        protected: model::topic_views::TopicProctedMeta {
+                            ids: protected_ids,
+                            catpcha: state.cfg.protected_content.guest_captcha.clone(),
+                        },
+                        need_buy: false,
+                    },
+                need_login: false,
             },
         ));
     }
     Ok(resp::ok(
-        model::topic_views::TopicSubjectWithTagsAndProctedSections {
-            topic_subject_with_tags_and_sections: data,
-            protected: model::topic_views::TopicProctedMeta::default(),
-            need_buy: false,
+        model::topic_views::TopicSubjectWithTagsAndProctedSectionsAndNeedLogin {
+            topic_subject_with_tags_and_procted_sections:
+                model::topic_views::TopicSubjectWithTagsAndProctedSections {
+                    topic_subject_with_tags_and_sections: data,
+                    protected: model::topic_views::TopicProctedMeta::default(),
+                    need_buy: false,
+                },
+            need_login: false,
         },
     ))
 }

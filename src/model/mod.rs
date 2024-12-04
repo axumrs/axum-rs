@@ -1,5 +1,6 @@
 pub mod activation_code;
 pub mod admin;
+pub mod announcement;
 pub mod check_in_log;
 pub mod currency;
 pub mod login_log;

@@ -1,3 +1,4 @@
+pub mod announcement;
 pub mod order;
 pub mod pay;
 pub mod ping;

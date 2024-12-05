@@ -499,9 +499,10 @@ pub async fn gen_guess_content(
     // 保护的数量
     let procted_num = match secs.len() {
         0..=2 => 0,
-        3..=5 => 1,
-        6..=8 => 2,
-        _ => cfg.max_sections as usize,
+        3..=4 => 1,
+        5..=7 => 2,
+        8..=10 => 3,
+        _ => 5,
     };
 
     // 随机选择
@@ -519,8 +520,11 @@ pub async fn gen_guess_content(
 
     let mut guess_sects = vec![];
     for (idx, s) in secs.into_iter().enumerate() {
-        if utils::vec::is_in(&procted_idx, &idx) {
+        if !utils::vec::is_in(&procted_idx, &idx) {
             guess_sects.push(s)
+        } else {
+            let content = format!(r#"<div data-guess-id="{}"></div>"#, s.id.clone());
+            guess_sects.push(model::topic::TopicSection { content, ..s });
         }
     }
     Ok(guess_sects)

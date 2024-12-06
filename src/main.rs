@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use axum_rs::{api, config, AppState};
+use axum_rs::{api, config, model, AppState};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use tokio::net::TcpListener;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -32,6 +32,8 @@ async fn main() {
     let mut ses_handler = tokio::spawn(session_cleaner(pool.clone(), cfg.cleaner_max_try));
     let mut act_handler = tokio::spawn(activation_cleaner(pool.clone(), cfg.cleaner_max_try));
     let mut pc_handler = tokio::spawn(protected_content_cleaner(pool.clone(), cfg.cleaner_max_try));
+    let mut user_sub_handler =
+        tokio::spawn(user_subscriber_cleaner(pool.clone(), cfg.cleaner_max_try));
 
     let web_addr = cfg.web.addr.as_str();
 
@@ -54,6 +56,7 @@ async fn main() {
                 ses_handler.abort();
                 act_handler.abort();
                 pc_handler.abort();
+                user_sub_handler.abort();
                 break;
             }
             _ = &mut ses_handler => {
@@ -61,6 +64,7 @@ async fn main() {
                 act_handler.abort();
                 pc_handler.abort();
                 svr_handler.abort();
+                user_sub_handler.abort();
                 break;
             }
             _ = &mut act_handler => {
@@ -68,12 +72,22 @@ async fn main() {
                 ses_handler.abort();
                 pc_handler.abort();
                 svr_handler.abort();
+                user_sub_handler.abort();
                 break;
             }
             _ = &mut pc_handler => {
                 tracing::info!("内容保护清理退出");
                 ses_handler.abort();
                 act_handler.abort();
+                svr_handler.abort();
+                user_sub_handler.abort();
+                break;
+            }
+            _ = &mut user_sub_handler => {
+                tracing::info!("用户订阅清理退出");
+                ses_handler.abort();
+                act_handler.abort();
+                pc_handler.abort();
                 svr_handler.abort();
                 break;
             }
@@ -82,6 +96,7 @@ async fn main() {
                 ses_handler.abort();
                 act_handler.abort();
                 pc_handler.abort();
+                user_sub_handler.abort();
                 svr_handler.abort();
                 break;
             }
@@ -170,6 +185,38 @@ async fn protected_content_cleaner(pool: Arc<PgPool>, max_try: u32) {
             }
         };
         tracing::info!("[protected_content_cleaner] 已清理 {} 个过期保护内容", aff);
+        tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+    }
+}
+
+async fn user_subscriber_cleaner(pool: Arc<PgPool>, max_try: u32) {
+    let mut tried = 0u32;
+    loop {
+        if max_try > 0 && tried >= max_try {
+            tracing::info!("[user_subscriber_cleaner] 已尝试 {} 次", tried);
+            break;
+        }
+
+        let aff = match sqlx::query(
+            "UPDATE users SET kind=$2,allow_device_num=1,session_exp=20 WHERE sub_exp <=$1 AND kind<>$2",
+        )
+        .bind(&chrono::Local::now())
+        .bind(&model::user::Kind::Normal)
+        .execute(&*pool)
+        .await
+        {
+            Ok(v) => {
+                tried = 0;
+                v.rows_affected()
+            }
+            Err(e) => {
+                tried += 1;
+                tracing::error!("[user_subscriber_cleaner] {}", e);
+                tokio::time::sleep(std::time::Duration::from_secs(5000)).await;
+                continue;
+            }
+        };
+        tracing::info!("[user_subscriber_cleaner] 已清理 {} 个过期订阅", aff);
         tokio::time::sleep(std::time::Duration::from_secs(60)).await;
     }
 }

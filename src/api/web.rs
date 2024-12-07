@@ -56,6 +56,7 @@ pub async fn rss(State(state): State<ArcAppState>) -> Result<axum::response::Res
                         // .domain(format!("{}/subject/{}", host, &i.topic_subjects.slug))
                         .build(),
                 )
+                .description(Some(i.topic_subjects.summary))
                 .build()
         })
         .collect::<Vec<_>>();

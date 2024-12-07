@@ -8,25 +8,30 @@ use crate::{
 pub async fn list(
     State(state): State<ArcAppState>,
     Query(frm): Query<form::PageQueryStr>,
-) -> Result<resp::JsonResp<model::announcement::AnnouncementPaginate>> {
+) -> Result<resp::JsonResp<model::pagination::Paginate<model::announcement::AnnouncementLite>>> {
     let handler_name = "api/user/announcement/list";
     let p = get_pool(&state);
 
-    let data = model::announcement::Announcement::list(
-        &*p,
-        &model::announcement::AnnouncementListFilter {
-            pq: model::announcement::AnnouncementPaginateReq {
-                page: frm.page(),
-                page_size: frm.page_size(),
-            },
-            order: None,
-            title: None,
-        },
-    )
-    .await
-    .map_err(Error::from)
-    .map_err(log_error(handler_name))?;
+    let mut q = sqlx::QueryBuilder::new("SELECT id,title,dateline FROM announcements ");
+    q.push(" ORDER BY id DESC ")
+        .push(" LIMIT ")
+        .push_bind(frm.page_size_to_bind())
+        .push(" OFFSET ")
+        .push_bind(frm.offset_to_bind());
 
+    let ls = q
+        .build_query_as()
+        .fetch_all(&*p)
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+    let c: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM announcements")
+        .fetch_one(&*p)
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    let data = model::pagination::Paginate::quick(c, frm.page(), frm.page_size(), ls);
     Ok(resp::ok(data))
 }
 
@@ -67,7 +72,7 @@ pub async fn detail(
         ..data
     };
 
-    if let Err(e) = data.insert(&mut *tx).await {
+    if let Err(e) = data.update(&mut *tx).await {
         tx.rollback()
             .await
             .map_err(Error::from)

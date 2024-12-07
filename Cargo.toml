@@ -1,6 +1,6 @@
 [package]
 name = "axum-rs"
-version = "2.1.1"
+version = "2.1.2"
 edition = "2021"
 authors = ["axum.rs <team@axum.rs>"]
 license = "MIT"
@@ -40,6 +40,7 @@ scraper.workspace = true
 lettre.workspace = true
 bitflags.workspace = true
 utf8_slice.workspace = true
+rss.workspace = true
 axum-rs-derive = { path = "./axum-rs-derive" }
 
 
@@ -76,3 +77,4 @@ scraper = "0.21"
 lettre = { version = "0.11", features = ["tokio1-native-tls"] }
 bitflags = "2.6"
 utf8_slice = "1"
+rss = "2"

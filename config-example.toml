@@ -1,6 +1,7 @@
 log = "axum_rs="
 cleaner_max_try = 0
 topic_section_secret_key = "<YOUR KEY>"
+host = "https://axum.rs"
 
 [web]
 addr = "0.0.0.0:9527"

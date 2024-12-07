@@ -36,6 +36,7 @@ pub fn init(state: ArcAppState) -> Router {
 fn web_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/ping", get(web::ping))
+        .route("/rss", get(web::rss))
         .with_state(state)
 }
 

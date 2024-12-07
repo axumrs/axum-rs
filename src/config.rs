@@ -86,6 +86,7 @@ pub struct Config {
     pub log: String,
     pub cleaner_max_try: u32,
     pub topic_section_secret_key: String,
+    pub host: String,
     pub web: WebConfig,
     pub db: DbConfig,
     pub session: SessionConfig,

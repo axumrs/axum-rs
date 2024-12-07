@@ -245,12 +245,15 @@ pub async fn detail(
 
 pub async fn get_protected_content(
     State(state): State<ArcAppState>,
+    user_auth: mid::UserAuth,
     Json(frm): Json<form::topic::GetProtectedContent>,
 ) -> Result<resp::JsonResp<Vec<model::protected_content::ProtectedContent>>> {
     let handler_name = "api/user/topic/get_protected_content";
     frm.validate()
         .map_err(Error::from)
         .map_err(log_error(handler_name))?;
+
+    user_auth.user().map_err(log_error(handler_name))?;
 
     let p = get_pool(&state);
     let secs = service::topic::get_protected_content(&*p, &frm.ids)

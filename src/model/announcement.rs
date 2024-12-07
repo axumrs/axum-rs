@@ -19,3 +19,10 @@ pub struct Announcement {
     #[db(skip_update)]
     pub dateline: DateTime<Local>,
 }
+
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow)]
+pub struct AnnouncementLite {
+    pub id: String,
+    pub title: String,
+    pub dateline: DateTime<Local>,
+}

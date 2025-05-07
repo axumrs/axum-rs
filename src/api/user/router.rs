@@ -43,6 +43,7 @@ fn subject_init(state: ArcAppState) -> Router {
         .route("/slug/:id", get(subject::get_slug))
         .route("/purchased", get(subject::purchased))
         .route("/is-purchased/:id", get(subject::is_purchased))
+        .route("/latest", get(subject::latest))
         .with_state(state)
 }
 
@@ -52,6 +53,7 @@ fn topic_init(state: ArcAppState) -> Router {
         .route("/", get(topic::list))
         .route("/detail/:subject_slug/:slug", get(topic::detail))
         .route("/protected-content", post(topic::get_protected_content))
+        .route("/latest", get(topic::latest))
         .with_state(state)
 }
 

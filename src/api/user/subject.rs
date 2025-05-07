@@ -27,6 +27,26 @@ pub async fn top(
     Ok(resp::ok(ls))
 }
 
+pub async fn latest(
+    State(state): State<ArcAppState>,
+) -> Result<resp::JsonResp<Vec<model::subject::Subject>>> {
+    let handler_name = "api/user/subject/top";
+    let sql = format!(
+        "SELECT {} FROM {} WHERE is_del=false ORDER BY id DESC LIMIT 6",
+        &model::subject::Subject::fields(),
+        &model::subject::Subject::table()
+    );
+
+    let p = get_pool(&state);
+
+    let ls = sqlx::query_as(&sql)
+        .fetch_all(&*p)
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+    Ok(resp::ok(ls))
+}
+
 pub async fn list(
     State(state): State<ArcAppState>,
     Query(frm): Query<form::PageQuery>,

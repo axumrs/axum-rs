@@ -41,6 +41,34 @@ pub async fn top(
     Ok(resp::ok(data))
 }
 
+pub async fn latest(
+    State(state): State<ArcAppState>,
+) -> Result<resp::JsonResp<Vec<model::topic_views::TopicSubjectWithTags>>> {
+    let handler_name = "api/user/topic/top";
+    let p = get_pool(&state);
+
+    let data = service::topic::list_all_opt(
+        &*p,
+        &model::topic_views::VTopicSubjectListAllFilter {
+            limit: Some(10),
+            order: Some("id DESC".into()),
+            title: None,
+            subject_id: None,
+            slug: None,
+            is_del: Some(false),
+            subject_slug: None,
+            subject_is_del: Some(false),
+            status: None,
+            v_topic_subject_list_all_between_datelines: None,
+        },
+    )
+    .await
+    .map_err(Error::from)
+    .map_err(log_error(handler_name))?;
+
+    Ok(resp::ok(data))
+}
+
 pub async fn list(
     State(state): State<ArcAppState>,
     Query(frm): Query<form::PageQuery>,

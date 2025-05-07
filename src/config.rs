@@ -107,7 +107,7 @@ impl Config {
     }
 
     pub fn get_mail(&self) -> crate::Result<&MailConfig> {
-        let idx = rand::thread_rng().gen_range(0..self.mails.len());
+        let idx = rand::rng().random_range(0..self.mails.len());
         let m = match self.mails.get(idx) {
             Some(m) => m,
             None => return Err(crate::Error::new("msg")),

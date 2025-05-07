@@ -12,7 +12,7 @@ use super::{
 
 pub fn init(state: ArcAppState) -> Router {
     Router::new()
-        .nest("/", ping(state.clone()))
+        .merge(ping(state.clone()))
         .nest("/subject", subject_init(state.clone()))
         .nest("/topic", topic_init(state.clone()))
         .nest("/tag", tag_init(state.clone()))
@@ -39,10 +39,10 @@ fn subject_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/top", get(subject::top))
         .route("/", get(subject::list))
-        .route("/detail/:slug", get(subject::detail))
-        .route("/slug/:id", get(subject::get_slug))
+        .route("/detail/{slug}", get(subject::detail))
+        .route("/slug/{id}", get(subject::get_slug))
         .route("/purchased", get(subject::purchased))
-        .route("/is-purchased/:id", get(subject::is_purchased))
+        .route("/is-purchased/{id}", get(subject::is_purchased))
         .route("/latest", get(subject::latest))
         .with_state(state)
 }
@@ -51,7 +51,7 @@ fn topic_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/top", get(topic::top))
         .route("/", get(topic::list))
-        .route("/detail/:subject_slug/:slug", get(topic::detail))
+        .route("/detail/{subject_slug}/{slug}", get(topic::detail))
         .route("/protected-content", post(topic::get_protected_content))
         .route("/latest", get(topic::latest))
         .with_state(state)
@@ -60,7 +60,7 @@ fn topic_init(state: ArcAppState) -> Router {
 fn tag_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/", get(tag::list))
-        .route("/:name", get(tag::detail))
+        .route("/{name}", get(tag::detail))
         .with_state(state)
 }
 
@@ -78,21 +78,21 @@ fn user_init(state: ArcAppState) -> Router {
 fn service_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/", get(service::list))
-        .route("/subject/:subject_id", get(service::find_by_subject))
+        .route("/subject/{subject_id}", get(service::find_by_subject))
         .with_state(state)
 }
 
 fn order_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/", get(order::list).post(order::create))
-        .route("/:id", get(order::detail).put(order::cancel))
+        .route("/{id}", get(order::detail).put(order::cancel))
         .with_state(state)
 }
 
 fn pay_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/", post(pay::add).put(pay::complete))
-        .route("/order/:order_id", get(pay::detail_by_order))
+        .route("/order/{order_id}", get(pay::detail_by_order))
         .with_state(state)
 }
 
@@ -105,13 +105,13 @@ fn read_history_init(state: ArcAppState) -> Router {
 fn announcement_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/", get(announcement::list))
-        .route("/:id", get(announcement::detail))
+        .route("/{id}", get(announcement::detail))
         .with_state(state)
 }
 
 fn promotion_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/take", get(promotion::take))
-        .route("/:id", get(promotion::get))
+        .route("/{id}", get(promotion::get))
         .with_state(state)
 }

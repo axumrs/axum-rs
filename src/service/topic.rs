@@ -397,7 +397,7 @@ pub async fn gen_protected_content(
     let mut procted_idx = Vec::with_capacity(procted_num);
     for _ in 0..procted_num {
         loop {
-            let idx = rand::thread_rng().gen_range(0..secs.len());
+            let idx = rand::rng().random_range(0..secs.len());
             if !utils::vec::is_in(&procted_idx, &idx) {
                 procted_idx.push(idx);
                 break;
@@ -509,7 +509,7 @@ pub async fn gen_guess_content(
     let mut procted_idx = Vec::with_capacity(procted_num);
     for _ in 0..procted_num {
         loop {
-            let idx = rand::thread_rng().gen_range(0..secs.len());
+            let idx = rand::rng().random_range(0..secs.len());
             if !utils::vec::is_in(&procted_idx, &idx) {
                 procted_idx.push(idx);
                 break;

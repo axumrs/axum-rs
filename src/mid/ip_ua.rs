@@ -1,4 +1,4 @@
-use axum::{async_trait, extract::FromRequestParts, http::request::Parts};
+use axum::{extract::FromRequestParts, http::request::Parts};
 use serde::{Deserialize, Serialize};
 
 use crate::{utils, Error};
@@ -10,7 +10,6 @@ pub struct IpAndUserAgent {
     pub user_agent: String,
 }
 
-#[async_trait]
 impl<S> FromRequestParts<S> for IpAndUserAgent
 where
     S: Send + Sync,

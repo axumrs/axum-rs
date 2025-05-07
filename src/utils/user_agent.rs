@@ -15,6 +15,6 @@ lazy_static! {
 }
 
 pub fn get() -> &'static str {
-    let idx = rand::thread_rng().gen_range(0..USER_AGENT_LIST.len());
+    let idx = rand::rng().random_range(0..USER_AGENT_LIST.len());
     USER_AGENT_LIST[idx]
 }

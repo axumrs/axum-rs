@@ -5,6 +5,7 @@ pub mod auth;
 pub mod order;
 pub mod pay;
 pub mod profile;
+pub mod promotion;
 pub mod service;
 pub mod subject;
 pub mod tag;

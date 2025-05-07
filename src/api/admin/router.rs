@@ -7,7 +7,8 @@ use axum::{
 use crate::{mid, ArcAppState};
 
 use super::{
-    announcement, order, profile, service, session, statistics, subject, tag, topic, user,
+    announcement, order, profile, promotion, service, session, statistics, subject, tag, topic,
+    user,
 };
 
 pub fn init(state: ArcAppState) -> Router {
@@ -22,6 +23,7 @@ pub fn init(state: ArcAppState) -> Router {
         .nest("/order", order_init(state.clone()))
         .nest("/statistics", statistics_init(state.clone()))
         .nest("/announcement", announcement_init(state.clone()))
+        .nest("/promotion", promotion_init(state.clone()))
         .layer(middleware::from_extractor_with_state::<
             mid::AdminAuth,
             ArcAppState,
@@ -117,5 +119,17 @@ fn announcement_init(state: ArcAppState) -> Router {
                 .put(announcement::edit),
         )
         .route("/:id", delete(announcement::del))
+        .with_state(state)
+}
+
+fn promotion_init(state: ArcAppState) -> Router {
+    Router::new()
+        .route(
+            "/",
+            get(promotion::list)
+                .post(promotion::create)
+                .put(promotion::edit),
+        )
+        .route("/:id", delete(promotion::del))
         .with_state(state)
 }

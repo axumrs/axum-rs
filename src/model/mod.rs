@@ -7,6 +7,7 @@ pub mod login_log;
 pub mod order;
 pub mod pagination;
 pub mod pay;
+pub mod promotion;
 pub mod protected_content;
 pub mod read_history;
 pub mod service;

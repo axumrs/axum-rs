@@ -1,6 +1,7 @@
 pub mod announcement;
 pub mod order;
 pub mod profile;
+pub mod promotion;
 pub mod router;
 pub mod service;
 pub mod session;

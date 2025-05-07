@@ -2,6 +2,7 @@ pub mod announcement;
 pub mod order;
 pub mod pay;
 pub mod ping;
+pub mod promotion;
 pub mod read_history;
 pub mod router;
 pub mod service;

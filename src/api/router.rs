@@ -15,7 +15,7 @@ use super::{admin, auth, user, web};
 
 pub fn init(state: ArcAppState) -> Router {
     let r = Router::new()
-        .nest("/", web_init(state.clone()))
+        .merge(web_init(state.clone()))
         .nest("/auth", auth_init(state.clone()))
         .nest("/user", user::router::init(state.clone()))
         .nest("/admin", admin::router::init(state.clone()));

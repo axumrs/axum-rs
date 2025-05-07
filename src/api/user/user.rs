@@ -46,7 +46,7 @@ pub async fn check_in(
         &model::user::Kind::YearlySubscriber => 30,
     };
 
-    let points = rand::thread_rng().gen_range(1..=max_point);
+    let points = rand::rng().random_range(1..=max_point);
 
     let p = get_pool(&state);
 

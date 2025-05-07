@@ -37,7 +37,7 @@ pub fn rand_opt(len: usize, ty: Option<RandomType>) -> String {
     let dict = rand_dict(ty);
     let mut s = String::with_capacity(len);
     for _ in 0..len {
-        let idx = rand::thread_rng().gen_range(0..dict.len());
+        let idx = rand::rng().random_range(0..dict.len());
         s.push(dict.chars().nth(idx).unwrap_or_default());
     }
     s

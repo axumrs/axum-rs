@@ -1,4 +1,4 @@
-use axum::{async_trait, extract::FromRequestParts, http::request::Parts};
+use axum::{extract::FromRequestParts, http::request::Parts};
 use chrono::Local;
 
 use crate::{model, utils, ArcAppState, Error};
@@ -31,7 +31,6 @@ impl UserAuth {
     }
 }
 
-#[async_trait]
 impl FromRequestParts<ArcAppState> for UserAuth {
     type Rejection = Error;
 

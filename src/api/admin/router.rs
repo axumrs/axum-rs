@@ -36,7 +36,7 @@ fn subject_init(state: ArcAppState) -> Router {
             "/",
             get(subject::list).post(subject::add).put(subject::edit),
         )
-        .route("/:id", delete(subject::del).patch(subject::res))
+        .route("/{id}", delete(subject::del).patch(subject::res))
         .route("/all", get(subject::all))
         .with_state(state)
 }
@@ -45,14 +45,14 @@ fn tag_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/", get(tag::list).post(tag::add).put(tag::edit))
         .route("/all", get(tag::all))
-        .route("/:id", delete(tag::real_del))
+        .route("/{id}", delete(tag::real_del))
         .with_state(state)
 }
 
 fn topic_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/", post(topic::add).put(topic::edit).get(topic::list))
-        .route("/:id", delete(topic::del).patch(topic::res))
+        .route("/{id}", delete(topic::del).patch(topic::res))
         .with_state(state)
 }
 
@@ -71,7 +71,7 @@ fn session_init(state: ArcAppState) -> Router {
 fn user_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/", get(user::list).post(user::add).put(user::edit))
-        .route("/:id", delete(user::del).get(user::find_by_id))
+        .route("/{id}", delete(user::del).get(user::find_by_id))
         .route("/search", get(user::search))
         .with_state(state)
 }
@@ -86,7 +86,7 @@ fn service_init(state: ArcAppState) -> Router {
                 .patch(service::import),
         )
         .route(
-            "/:id",
+            "/{id}",
             put(service::on_off)
                 .delete(service::del)
                 .patch(service::sync),
@@ -99,8 +99,8 @@ fn service_init(state: ArcAppState) -> Router {
 fn order_init(state: ArcAppState) -> Router {
     Router::new()
         .route("/", get(order::list).post(order::add).put(order::edit))
-        .route("/pay/:order_id", get(order::find_pay))
-        .route("/:id", put(order::close))
+        .route("/pay/{order_id}", get(order::find_pay))
+        .route("/{id}", put(order::close))
         .with_state(state)
 }
 
@@ -118,7 +118,7 @@ fn announcement_init(state: ArcAppState) -> Router {
                 .post(announcement::add)
                 .put(announcement::edit),
         )
-        .route("/:id", delete(announcement::del))
+        .route("/{id}", delete(announcement::del))
         .with_state(state)
 }
 
@@ -130,6 +130,6 @@ fn promotion_init(state: ArcAppState) -> Router {
                 .post(promotion::create)
                 .put(promotion::edit),
         )
-        .route("/:id", delete(promotion::del))
+        .route("/{id}", delete(promotion::del))
         .with_state(state)
 }

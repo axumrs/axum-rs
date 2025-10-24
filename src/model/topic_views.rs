@@ -91,3 +91,23 @@ pub struct TopicSubjectWithTagsAndProctedSectionsAndNeedLogin {
     pub topic_subject_with_tags_and_procted_sections: TopicSubjectWithTagsAndProctedSections,
     pub need_login: bool,
 }
+
+#[derive(Debug, Default, Deserialize, Serialize, sqlx::FromRow)]
+pub struct TopicSubjectForSearch {
+    pub id: String,
+    pub title: String,
+    pub subject_id: String,
+    pub slug: String,
+    pub summary: String,
+    pub try_readable: bool,
+
+    // subject
+    pub name: String,
+    pub subject_slug: String,
+}
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct TopicSubjectForSearchWithTags {
+    #[serde(flatten)]
+    pub topic_subjects: TopicSubjectForSearch,
+    pub tags: Vec<super::topic_tag::VTopicTagWithTag>,
+}

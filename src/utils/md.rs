@@ -1,6 +1,6 @@
 use pulldown_cmark::{html, Options, Parser};
 
-fn get_parser(md: &str) -> Parser {
+fn get_parser(md: &str) -> Parser<'_> {
     Parser::new_ext(md, Options::all())
 }
 pub fn to_html(md: &str) -> String {

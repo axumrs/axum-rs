@@ -211,7 +211,10 @@ pub async fn find_opt(
         model::topic_views::VTopicSubject::find(p, f.unwrap()).await?
     };
     let topic_subjects = match topic_subjects {
-        Some(v) => v,
+        Some(v) => model::topic_views::VTopicSubject {
+            md: "<HIDDEN>".to_string(),
+            ..v
+        },
         None => return Ok(None),
     };
 
@@ -270,6 +273,21 @@ pub async fn list_opt(
     f: &model::topic_views::VTopicSubjectListFilter,
 ) -> Result<model::pagination::Paginate<model::topic_views::TopicSubjectWithTags>> {
     let tsp = model::topic_views::VTopicSubject::list(p, f).await?;
+    let tsp = model::topic_views::VTopicSubjectPaginate {
+        total: tsp.total,
+        total_page: tsp.total_page,
+        page: tsp.page,
+        page_size: tsp.page_size,
+        data: tsp
+            .data
+            .into_iter()
+            .map(|ts| model::topic_views::VTopicSubject {
+                md: "<HIDDEN>".to_string(),
+                ..ts
+            })
+            .collect(),
+    };
+
     let mut r = Vec::with_capacity(tsp.data.len());
     for ts in tsp.data.into_iter() {
         let tf = model::topic_tag::VTopicTagWithTagListAllFilter {
@@ -312,7 +330,10 @@ pub async fn find_detail(
     )
     .await?
     {
-        Some(v) => v,
+        Some(v) => model::topic_views::VTopicSubject {
+            md: "<HIDDEN>".to_string(),
+            ..v
+        },
         None => return Err(Error::new("文章不存在")),
     };
 

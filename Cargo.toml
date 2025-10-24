@@ -1,8 +1,8 @@
 [package]
 name = "axum-rs"
-version = "2.2.1"
+version = "2.2.2"
 edition = "2021"
-authors = ["axum.rs <team@mail.axum.eu.org>"]
+authors = ["axum中文网 <team@mail.axum.eu.org>"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/axumrs/axum-rs"
@@ -54,6 +54,7 @@ sqlx = { version = "0.8", features = [
     "postgres",
     "chrono",
     "rust_decimal",
+    "json",
 ] }
 pulldown-cmark = "0.13"
 bcrypt = "0.17"

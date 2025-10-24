@@ -16,6 +16,7 @@ pub mod subject;
 pub mod tag;
 pub mod tag_views;
 pub mod topic;
+pub mod topic_page;
 pub mod topic_tag;
 pub mod topic_views;
 pub mod user;

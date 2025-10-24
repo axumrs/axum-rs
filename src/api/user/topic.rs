@@ -301,3 +301,44 @@ async fn read_history(
     }
     m.insert(&*p).await.map_err(Error::from)
 }
+
+pub async fn nav_page(
+    State(state): State<ArcAppState>,
+    Path(id): Path<String>,
+) -> Result<resp::JsonResp<model::topic_page::NavPage>> {
+    let handler_name = "/api/user/topic/nav_page";
+    let p = get_pool(&state);
+    let m = model::topic_page::NavPage::find(&*p, &id)
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+    let m = match m {
+        Some(v) => v,
+        None => return Err(Error::new("不存在的文章")),
+    };
+    Ok(resp::ok(m))
+}
+
+pub async fn search(
+    State(state): State<ArcAppState>,
+    Json(frm): Json<form::topic::Search>,
+) -> Result<resp::JsonResp<Vec<model::topic_views::TopicSubjectForSearch>>> {
+    let handler_name = "/api/user/topic/search";
+    let p = get_pool(&state);
+    let sql = r#"
+    WITH search_topics AS (
+        SELECT id, TS_RANK(search_vector, WEBSEARCH_TO_TSQUERY('chinese', $1)) AS rank FROM topics WHERE search_vector @@ WEBSEARCH_TO_TSQUERY('chinese', $1)
+    )
+
+    SELECT ts."id", "title", "subject_id", "slug", "summary", "try_readable", "name", "subject_slug" FROM v_topic_subjects AS ts INNER JOIN search_topics AS s ON s.id=ts.id ORDER BY rank DESC LIMIT 30
+    "#;
+
+    let data = sqlx::query_as(sql)
+        .bind(&frm.keyword)
+        .fetch_all(&*p)
+        .await
+        .map_err(Error::from)
+        .map_err(log_error(handler_name))?;
+
+    Ok(resp::ok(data))
+}

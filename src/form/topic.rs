@@ -77,3 +77,10 @@ impl ListForAdmin {
         }
     }
 }
+
+#[derive(Deserialize)]
+pub struct Search {
+    // #[serde(flatten)]
+    // pub pq: super::PageQuery,
+    pub keyword: String,
+}

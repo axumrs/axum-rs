@@ -53,7 +53,9 @@ fn topic_init(state: ArcAppState) -> Router {
         .route("/", get(topic::list))
         .route("/detail/{subject_slug}/{slug}", get(topic::detail))
         .route("/protected-content", post(topic::get_protected_content))
+        .route("/nav-page/{id}", get(topic::nav_page))
         .route("/latest", get(topic::latest))
+        .route("/search", post(topic::search))
         .with_state(state)
 }
 

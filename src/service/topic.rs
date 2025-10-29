@@ -204,6 +204,7 @@ pub async fn find_opt(
     f: Option<&model::topic_views::VTopicSubjectFindFilter>,
     tf: &model::topic_tag::VTopicTagWithTagListAllFilter,
     ts: Option<Option<model::topic_views::VTopicSubject>>,
+    hidd_md: bool,
 ) -> Result<Option<model::topic_views::TopicSubjectWithTags>> {
     let topic_subjects = if let Some(ts) = ts {
         ts
@@ -211,10 +212,16 @@ pub async fn find_opt(
         model::topic_views::VTopicSubject::find(p, f.unwrap()).await?
     };
     let topic_subjects = match topic_subjects {
-        Some(v) => model::topic_views::VTopicSubject {
-            md: "<HIDDEN>".to_string(),
-            ..v
-        },
+        Some(v) => {
+            if hidd_md {
+                model::topic_views::VTopicSubject {
+                    md: "<HIDDEN>".to_string(),
+                    ..v
+                }
+            } else {
+                v
+            }
+        }
         None => return Ok(None),
     };
 
@@ -239,7 +246,7 @@ pub async fn list_all_opt(
             name: None,
             is_del: Some(false),
         };
-        let tst = find_opt(p, None, &tf, Some(Some(ts))).await?;
+        let tst = find_opt(p, None, &tf, Some(Some(ts)), true).await?;
         if let Some(tst) = tst {
             r.push(tst);
         }
@@ -271,21 +278,32 @@ pub async fn list_all_for_subject(
 pub async fn list_opt(
     p: &PgPool,
     f: &model::topic_views::VTopicSubjectListFilter,
+    hidd_md: bool,
 ) -> Result<model::pagination::Paginate<model::topic_views::TopicSubjectWithTags>> {
     let tsp = model::topic_views::VTopicSubject::list(p, f).await?;
-    let tsp = model::topic_views::VTopicSubjectPaginate {
-        total: tsp.total,
-        total_page: tsp.total_page,
-        page: tsp.page,
-        page_size: tsp.page_size,
-        data: tsp
-            .data
+
+    let data = if hidd_md {
+        tracing::debug!("hidd md");
+        tsp.data
             .into_iter()
             .map(|ts| model::topic_views::VTopicSubject {
                 md: "<HIDDEN>".to_string(),
                 ..ts
             })
-            .collect(),
+            .collect()
+    } else {
+        tracing::debug!("NOT hidd md");
+        for d in &tsp.data {
+            tracing::debug!("md len: {}", d.md.len());
+        }
+        tsp.data
+    };
+    let tsp = model::topic_views::VTopicSubjectPaginate {
+        total: tsp.total,
+        total_page: tsp.total_page,
+        page: tsp.page,
+        page_size: tsp.page_size,
+        data,
     };
 
     let mut r = Vec::with_capacity(tsp.data.len());
@@ -297,7 +315,7 @@ pub async fn list_opt(
             name: None,
             is_del: Some(false),
         };
-        let tst = find_opt(p, None, &tf, Some(Some(ts))).await?;
+        let tst = find_opt(p, None, &tf, Some(Some(ts)), hidd_md).await?;
         if let Some(tst) = tst {
             r.push(tst);
         }
@@ -606,7 +624,9 @@ mod test {
             name: None,
             is_del: Some(false),
         };
-        let ls = super::find_opt(&p, Some(&f), &tf, None).await.unwrap();
+        let ls = super::find_opt(&p, Some(&f), &tf, None, true)
+            .await
+            .unwrap();
         println!("{:#?}", ls);
     }
 

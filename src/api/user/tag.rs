@@ -74,7 +74,7 @@ pub async fn detail(
             name: None,
             is_del: Some(false),
         };
-        let m = service::topic::find_opt(&*p, Some(&f), &tf, None)
+        let m = service::topic::find_opt(&*p, Some(&f), &tf, None, true)
             .await
             .map_err(Error::from)
             .map_err(log_error(handler_name))?;

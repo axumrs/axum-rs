@@ -1,6 +1,6 @@
 # AXUM 中文网官方网站
 
-本仓库为[AXUM 中文网](https://axum.rs)后端程序。我们整个项目由 3 部分组成：
+本仓库为[AXUM 中文网](https://axum.eu.org)后端程序。我们整个项目由 3 部分组成：
 
 - 后端程序：[axumrs/axum-rs](https://github.com/axumrs/axum-rs) （本仓库）
 
@@ -16,8 +16,4 @@
 
 - PostgreSQL
 
-## 捐助
-
-- USDT/TRX: `TPGEtKJmPJU3naosCcRrVReE2ckFhE9sYM`
-
-更多详细内容，请访问[关于我们](https://axum.rs/about)
+更多详细内容，请访问[关于我们](https://axum.eu.org/about)

@@ -93,6 +93,7 @@ pub async fn list(
             },
             v_topic_subject_list_between_datelines: None,
         },
+        true,
     )
     .await
     .map_err(Error::from)

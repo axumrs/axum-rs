@@ -20,6 +20,10 @@ path = "src/bin/axum-rs.rs"
 name = "fix-md"
 path = "src/bin/fix-md.rs"
 
+[[bin]]
+name = "fix-tag"
+path = "src/bin/fix-tag.rs"
+
 [dependencies]
 tokio.workspace = true
 axum.workspace = true

@@ -49,6 +49,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 async fn fix_markdown(pool: &sqlx::PgPool, hash_secret_key: &str) -> anyhow::Result<()> {
+    tracing::info!("开始修复 markdown");
     let topic_list = model::topic::Topic::list_all(
         pool,
         &model::topic::TopicListAllFilter {
@@ -59,7 +60,10 @@ async fn fix_markdown(pool: &sqlx::PgPool, hash_secret_key: &str) -> anyhow::Res
     )
     .await?;
 
+    tracing::info!("共有 {} 篇文章需要修复", topic_list.len());
+
     for topic in &topic_list {
+        tracing::debug!("正在修复《{}》", topic.title);
         let mut tx = pool.begin().await?;
         // 清空段落
         if let Err(e) = service::topic_section::clean(&mut *tx, &topic.id).await {
@@ -95,8 +99,10 @@ async fn fix_markdown(pool: &sqlx::PgPool, hash_secret_key: &str) -> anyhow::Res
         }
 
         tx.commit().await?;
+        tracing::debug!("《{}》完成修复", topic.title);
     }
 
+    tracing::info!("文章 markdown 修复完成");
     Ok(())
 }
 

@@ -16,9 +16,4 @@
 
 - PostgreSQL
 
-<<<<<<< HEAD
-
-更多详细内容，请访问[关于我们](https://axum.rs/about)
-=======
 更多详细内容，请访问[关于我们](https://axum.eu.org/about)
->>>>>>> 2.2.3

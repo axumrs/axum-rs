@@ -1,11 +1,43 @@
-/target
+target
 .vscode
 .idea
 .atom
-/.env
+.env
 *.log
 .DS_Store
-/templates
-/config.toml
-/.env.*
-/test-sections-data
+templates
+config.toml
+.env.*
+!.env.example
+test-sections-data
+materials
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies and Build Outputs
+node_modules
+dist
+dist-ssr
+*.local
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+

@@ -1,0 +1,12 @@
+[package]
+name = "axum-rs"
+version = "0.1.0"
+edition = "2024"
+authors = ["axum中文网 <team@mail.axum.eu.org>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/axumrs/axum-rs"
+homepage = "https://axum.eu.org"
+description = "axum中文网"
+
+[dependencies]

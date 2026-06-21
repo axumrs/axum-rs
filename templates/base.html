@@ -17,27 +17,55 @@
       href="https://lib.axum.eu.org/basecoat/0.3.11/basecoat.min.css"
     />
   </head>
-  <body class="font-light">
+  <body
+    class="font-light"
+    x-data="{asideMenuOpen:false, asideMenuTrigger(){this.asideMenuOpen=!this.asideMenuOpen}}"
+  >
     <header class="area-bg border-b">
-      <div
-        class="container mx-auto flex justify-between items-center gap-x-4 px-3 py-1.5"
-      >
-        <a href="/" class="flex justify-start items-center gap-x-2">
-          <img
-            src="https://file.axum.eu.org/asset/logo.png"
-            class="size-8 object-cover"
-          />
-          <h2 class="text-xl">AXUM中文网</h2>
-        </a>
-        <div class="flex items-center gap-x-2">
-          <button
-            class="btn-lg-icon-ghost"
-            aria-label="全文搜索"
-            data-tooltip="全文搜索"
-            data-side="bottom"
-          >
-            {{iconset::icon(name = "search", class = "size-5")}}
+      <div class="flex justify-between items-center gap-x-4 px-6 py-1.5">
+        <div class="flex items-center gap-x-4">
+          <button @click="asideMenuTrigger()">
+            {{iconset::icon(name = "bars-3", class = "size-5")}}
           </button>
+          <a href="/" class="flex justify-start items-center gap-x-2">
+            <img
+              src="https://file.axum.eu.org/asset/logo.png"
+              class="size-8 object-cover"
+            />
+            <h2 class="text-xl">AXUM中文网</h2>
+          </a>
+        </div>
+        <div class="grow flex justify-center items-center">
+          <div
+            x-data="{focus:false}"
+            class="flex items-center w-1/2 border rounded-2xl group focus-within:w-2/3 transition-all relative"
+          >
+            <div
+              class="group border border-transparent rounded-s-2xl focus-within:border-primary flex items-center w-full"
+            >
+              <div :class="{'block':focus, 'hidden':!focus}" class="pl-3">
+                {{iconset::icon(name = "search", class = "size-5")}}
+              </div>
+              <input
+                type="text"
+                placeholder="搜索"
+                class="grow px-3 py-1.5 outline-0"
+                @focus="focus=true"
+                @blur="focus=false"
+              />
+            </div>
+            <button class="px-3 py-2 border-l bg-accent rounded-r-2xl">
+              {{iconset::icon(name = "search", class = "size-5")}}
+            </button>
+            <div
+              class="absolute bg-primary left-0 top-10 z-1 min-h-64 w-[calc(100%-2.8rem)] rounded-xl"
+              :class="{'hidden':!focus, 'block':focus}"
+            >
+              搜索历史
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-x-2">
           <button
             class="btn-lg-icon-ghost"
             aria-label="用户中心"
@@ -51,13 +79,28 @@
       </div>
     </header>
     <section
-      class="container mx-auto flex justify-start items-start gap-4 my-6"
+      class="fixed inset-0 bg-background/30 backdrop-blur-xs z-10"
+      x-show="asideMenuOpen"
     >
-      <aside class="w-2/12 border rounded-md overflow-hidden area-bg">
+      <aside
+        class="border shadow overflow-hidden bg-background absolute top-0 left-0 z-10 w-64 h-screen"
+      >
+        <div class="flex justify-start items-center gap-x-4 px-6 my-2.5">
+          <button @click="asideMenuTrigger()">
+            {{iconset::icon(name = "bars-3", class = "size-5")}}
+          </button>
+          <a href="/" class="flex justify-start items-center gap-x-2">
+            <img
+              src="https://file.axum.eu.org/asset/logo.png"
+              class="size-8 object-cover"
+            />
+            <h2 class="text-xl">AXUM中文网</h2>
+          </a>
+        </div>
         {% include "aside-menu.html" %}
       </aside>
-      <main class="w-10/12">{% block content %}aaa {% endblock %}</main>
     </section>
+    <main class="w-10/12">{% block content %}aaa {% endblock %}</main>
 
     <script
       src="https://lib.axum.eu.org/htmx/2.0.10/htmx.min.js"

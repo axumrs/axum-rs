@@ -1,0 +1,11 @@
+<button
+  type="button"
+  aria-label="切换主题"
+  data-tooltip="切换主题"
+  data-side="bottom"
+  onclick="document.dispatchEvent(new CustomEvent('basecoat:theme'))"
+  class="btn-lg-icon-ghost"
+>
+  {{ iconset::icon(name = "moon", class = "size-5 hidden dark:block")}} {{
+  iconset::icon(name = "sun", class = "size-5 block dark:hidden")}}
+</button>

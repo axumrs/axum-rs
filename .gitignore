@@ -5,7 +5,6 @@ target
 .env
 *.log
 .DS_Store
-templates
 config.toml
 .env.*
 !.env.example

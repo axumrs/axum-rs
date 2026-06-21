@@ -1,0 +1,18 @@
+{
+  "name": "axum-rs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "css:watch": " npx @tailwindcss/cli -i style.css -o assets/css/axum-rs.css --watch",
+    "css:build": " npx @tailwindcss/cli build -i style.css -o assets/css/axum-rs.css --minify"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.33.2",
+  "dependencies": {
+    "@tailwindcss/cli": "^4.3.1",
+    "tailwindcss": "^4.3.1"
+  }
+}

@@ -1,7 +1,5 @@
-[package]
-name = "axum-rs"
-version = "0.1.0"
-edition = "2024"
+[workspace.package]
+version = "2.2.5"
 authors = ["axum中文网 <team@mail.axum.eu.org>"]
 license = "MIT"
 readme = "README.md"
@@ -9,4 +7,78 @@ repository = "https://github.com/axumrs/axum-rs"
 homepage = "https://axum.eu.org"
 description = "axum中文网"
 
+[package]
+name = "axum-rs"
+edition = "2024"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description.workspace = true
+
 [dependencies]
+tokio.workspace = true
+axum.workspace = true
+serde.workspace = true
+anyhow.workspace = true
+chrono.workspace = true
+sqlx.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+jsonwebtoken.workspace = true
+mime_guess.workspace = true
+rand.workspace = true
+rust-embed.workspace = true
+validator.workspace = true
+uuid.workspace = true
+config.workspace = true
+reqwest.workspace = true
+hex.workspace = true
+sha2.workspace = true
+bcrypt.workspace = true
+num_cpus.workspace = true
+tower-http = { version = "0.6.11", features = ["fs"] }
+askama = "0.16"
+dotenv = "0.15.0"
+
+[workspace]
+resolver = "3"
+members = [".", "axum-rs-db", "axum-rs-model"]
+
+[workspace.dependencies]
+tokio = { version = "1", features = [
+    "rt-multi-thread",
+    "macros",
+    "time",
+    "net",
+    "signal",
+] }
+axum = { version = "0.8" }
+serde = { version = "1", features = ["derive"] }
+anyhow = "1"
+chrono = { version = "0.4", features = ["serde"] }
+sqlx = { version = "0.8", features = [
+    "runtime-tokio",
+    "postgres",
+    "chrono",
+    "json",
+    "uuid",
+] }
+thiserror = "2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+jsonwebtoken = { version = "10", features = ["aws_lc_rs"] }
+mime_guess = "2"
+rand = "0.10"
+rust-embed = "8"
+validator = { version = "0.20", features = ["derive"] }
+uuid = { version = "1", features = ["v7", "serde"] }
+config = "0.15"
+reqwest = { version = "0.13", features = ["form", "json"] }
+hex = "0.4"
+sha2 = "0.11"
+bcrypt = "0.19"
+num_cpus = "1"

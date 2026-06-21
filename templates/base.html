@@ -1,0 +1,79 @@
+{% import "icon.html" as iconset %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AXUM中文网</title>
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://file.axum.eu.org/asset/logo.png"
+    />
+    {% include "theme-mode.html" %}
+    <link rel="stylesheet" href="/css/axum-rs.css" />
+    <link
+      rel="stylesheet"
+      href="https://lib.axum.eu.org/basecoat/0.3.11/basecoat.min.css"
+    />
+  </head>
+  <body class="font-light">
+    <header class="area-bg border-b">
+      <div
+        class="container mx-auto flex justify-between items-center gap-x-4 px-3 py-1.5"
+      >
+        <a href="/" class="flex justify-start items-center gap-x-2">
+          <img
+            src="https://file.axum.eu.org/asset/logo.png"
+            class="size-8 object-cover"
+          />
+          <h2 class="text-xl">AXUM中文网</h2>
+        </a>
+        <div class="flex items-center gap-x-2">
+          <button
+            class="btn-lg-icon-ghost"
+            aria-label="全文搜索"
+            data-tooltip="全文搜索"
+            data-side="bottom"
+          >
+            {{iconset::icon(name = "search", class = "size-5")}}
+          </button>
+          <button
+            class="btn-lg-icon-ghost"
+            aria-label="用户中心"
+            data-tooltip="用户中心"
+            data-side="bottom"
+          >
+            {{iconset::icon(name = "user", class = "size-5")}}
+          </button>
+          {%include "theme-mode-button.html"%}
+        </div>
+      </div>
+    </header>
+    <section
+      class="container mx-auto flex justify-start items-start gap-4 my-6"
+    >
+      <aside class="w-2/12 border rounded-md overflow-hidden area-bg">
+        {% include "aside-menu.html" %}
+      </aside>
+      <main class="w-10/12">{% block content %}aaa {% endblock %}</main>
+    </section>
+
+    <script
+      src="https://lib.axum.eu.org/htmx/2.0.10/htmx.min.js"
+      defer
+    ></script>
+    <script
+      src="https://lib.axum.eu.org/htmx-ext/htmx-ext-response-targets-2.0.4.js"
+      defer
+    ></script>
+    <script
+      src="https://lib.axum.eu.org/basecoat/0.3.11/basecoat.all.min.js"
+      defer
+    ></script>
+    <script
+      src="https://lib.axum.eu.org/alpinejs/3.15.12/alpinejs.min.js"
+      defer
+    ></script>
+  </body>
+</html>

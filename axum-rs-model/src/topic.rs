@@ -41,8 +41,26 @@ pub struct Topic {
     #[serde(flatten)]
     #[sqlx(flatten)]
     pub base: TopicBase,
-    pub author: String,
-    pub src: String,
     pub md: String,
-    pub sections: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Default)]
+pub struct TopicSection {
+    pub id: Uuid,
+    pub topic_id: Uuid,
+    pub content: String,
+    pub sort: i32,
+    pub note_count: i64,
+}
+
+impl TopicSection {
+    pub fn new(topic_id: Uuid, content: impl Into<String>, sort: i32) -> Self {
+        Self {
+            id: Uuid::now_v7(),
+            topic_id,
+            content: content.into(),
+            sort,
+            ..Default::default()
+        }
+    }
 }

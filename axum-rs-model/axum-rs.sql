@@ -22,19 +22,25 @@ CREATE TABLE IF NOT EXISTS "topics" (
     "subject_id" UUID  NOT NULL,
     "slug" TEXT NOT NULL,
     "summary" TEXT NOT NULL,
-    "author" TEXT NOT NULL,
-    "src" TEXT NOT NULL,
     "hit" BIGINT CHECK("hit" >= 0)  NOT NULL DEFAULT 0,
     "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "try_readable" BOOLEAN NOT NULL DEFAULT FALSE,
     "is_del" BOOLEAN NOT NULL DEFAULT FALSE,
     "cover" TEXT NOT NULL DEFAULT '',
     "md" TEXT NOT NULL,
-    "sections" TEXT[] NOT NULL DEFAULT '{}',
     "tags" TEXT[] NOT NULL DEFAULT '{}',
     "pin" INTEGER NOT NULL DEFAULT 0,
     UNIQUE("subject_id", "slug")
 );
+-- 文章段落
+CREATE TABLE IF NOT EXISTS "topic_sections" (
+    "id" UUID DEFAULT uuidv7() PRIMARY KEY,
+    "topic_id" UUID NOT NULL,
+    "content" TEXT NOT NULL,
+    "sort" INTEGER NOT NULL DEFAULT 0,
+    "note_count" BIGINT CHECK("note_count" >= 0) NOT NULL DEFAULT 0
+);
+
 
 -- 管理员
 CREATE TABLE IF NOT EXISTS "admins" (
@@ -67,4 +73,14 @@ CREATE TABLE IF NOT EXISTS "users" (
     "session_exp" SMALLINT  NOT NULL DEFAULT 0,
     UNIQUE("identifier"),
     UNIQUE("username"),
+);
+
+-- 文章笔记
+CREATE TABLE IF NOT EXISTS "topic_notes" (
+    "id" UUID DEFAULT uuidv7() PRIMARY KEY,
+    "topic_id" UUID NOT NULL,
+    "section_id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "content" TEXT NOT NULL,
+    "dateline" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

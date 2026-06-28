@@ -1,26 +1,50 @@
-# AXUM 中文网
+# Development
 
-鉴于 nodejs 对性能的严重影响，我们将 AXUM 中文网由之前的 nodejs 工具链进行渲染，改为由 axum 直接对 UI 进行渲染。
+Your new bare-bones project includes minimal organization with a single `main.rs` file and a few assets.
 
-我们将使用以下技术栈：
+```
+project/
+├─ assets/ # Any assets that are used by the app should be placed here
+├─ src/
+│  ├─ main.rs # main.rs is the entry point to your application and currently contains all components for the app
+├─ Cargo.toml # The Cargo.toml file defines the dependencies and feature flags for your project
+```
 
-- axum
-- postgres
-- askama
-- rust embed
-- htmx
-- tailwind css（with basecoat ui）
-- alpine.js
+### Automatic Tailwind (Dioxus 0.7+)
 
-以此为契机，我们：
+As of Dioxus 0.7, there no longer is a need to manually install tailwind. Simply `dx serve` and you're good to go!
 
-- 对 AXUM 中文网进行再次重构。为了保持职责明晰，我们依然将整站划分为几个独立部分，并由不同的子域名提供服务
-    - API 服务：提供全站的 RESTFul API 服务，域名：`api.axum.eu.org`
-    - WEB 服务：就是直接呈现给用户的服务，域名：`axum.eu.org`
-    - OAuth 服务：提供 OAuth 2.0 接入服务，域名：`oauth.axum.eu.org`
-    - 后台：提供后台管理，只有管理员可操作，域名：`admin.axum.eu.org`
-- 除了完成对已有功能的重构，我们还将增加以下功能
-    - 站内通知：使用 SSE 技术，对订单、支付、订阅等进行系统级的站内通知
-    - OAuth
-        - 我们将实现并开放 OAuth 2.0, 通过接入我们的 OAuth 2.0，你也可以使用 AXUM 中文网的登录功能
-        - 我们将把通过邮箱注册的功能进行关闭（免费的邮件服务送达率太低），而改由第三方 OAuth 2.0 登录，比如 github
+Automatic tailwind is supported by checking for a file called `tailwind.css` in your app's manifest directory (next to Cargo.toml). To customize the file, use the dioxus.toml:
+
+```toml
+[application]
+tailwind_input = "my.css"
+tailwind_output = "assets/out.css" # also customize the location of the out file!
+```
+
+### Tailwind Manual Install
+
+To use tailwind plugins or manually customize tailwind, you can can install the Tailwind CLI and use it directly.
+
+### Tailwind
+1. Install npm: https://docs.npmjs.com/downloading-and-installing-node-js-and-npm
+2. Install the Tailwind CSS CLI: https://tailwindcss.com/docs/installation/tailwind-cli
+3. Run the following command in the root of the project to start the Tailwind CSS compiler:
+
+```bash
+npx @tailwindcss/cli -i ./input.css -o ./assets/tailwind.css --watch
+```
+
+### Serving Your App
+
+Run the following command in the root of your project to start developing with the default platform:
+
+```bash
+dx serve --platform web
+```
+
+To run for a different platform, use the `--platform platform` flag. E.g.
+```bash
+dx serve --platform desktop
+```
+

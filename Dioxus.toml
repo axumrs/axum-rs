@@ -3,7 +3,7 @@
 [web.app]
 
 # HTML title tag content
-title = "axum-rs"
+title = "AXUM中文网 - 带你使用 axum 构建企业应用"
 
 # include `assets` in web platform
 [web.resource]

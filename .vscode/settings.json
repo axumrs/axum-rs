@@ -1,7 +1,26 @@
 {
   "rust-analyzer.cargo.features": "all",
-
   "rust-analyzer.procMacro.enable": true,
-
-  "rust-analyzer.inlayHints.typeHints.enable": true
+  "rust-analyzer.inlayHints.typeHints.enable": true,
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.wordWrap": "on",
+  "editor.fontFamily": "'Maple Mono NF CN',Consolas, 'Courier New', monospace",
+  "emmet.includeLanguages": {
+    "rust": "html",
+    "*.rs": "html"
+  },
+  "tailwindCSS.includeLanguages": {
+    "rust": "html",
+    "*.rs": "html"
+  },
+  "files.associations": {
+    "*.rs": "rust"
+  },
+  "editor.quickSuggestions": {
+    "other": "on",
+    "comments": "on",
+    "strings": true
+  },
+  "css.validate": false
 }
